@@ -139,6 +139,93 @@ const SimulateurImpots = () => {
 
   const selectedCanton = form.watch("canton");
 
+  // Barème Genève 2024 - Impôt de base sur le revenu (indice 108.7)
+  const baremeGeneve2024 = [
+    { seuilMin: 0, seuilMax: 18479, taux: 0, impotCumul: 0 },
+    { seuilMin: 18480, seuilMax: 22264, taux: 8.0, impotCumul: 0 },
+    { seuilMin: 22265, seuilMax: 24491, taux: 9.0, impotCumul: 302.80 },
+    { seuilMin: 24492, seuilMax: 26717, taux: 10.0, impotCumul: 503.25 },
+    { seuilMin: 26718, seuilMax: 28943, taux: 11.0, impotCumul: 725.85 },
+    { seuilMin: 28944, seuilMax: 34509, taux: 12.0, impotCumul: 970.70 },
+    { seuilMin: 34510, seuilMax: 38962, taux: 13.0, impotCumul: 1638.60 },
+    { seuilMin: 38963, seuilMax: 43416, taux: 14.0, impotCumul: 2217.50 },
+    { seuilMin: 43417, seuilMax: 47868, taux: 14.5, impotCumul: 2841.05 },
+    { seuilMin: 47869, seuilMax: 76811, taux: 15.0, impotCumul: 3486.60 },
+    { seuilMin: 76812, seuilMax: 125793, taux: 15.5, impotCumul: 7828.05 },
+    { seuilMin: 125794, seuilMax: 169208, taux: 16.0, impotCumul: 15420.25 },
+    { seuilMin: 169209, seuilMax: 191473, taux: 16.5, impotCumul: 22366.65 },
+    { seuilMin: 191474, seuilMax: 273850, taux: 17.0, impotCumul: 26040.40 },
+    { seuilMin: 273851, seuilMax: 291661, taux: 17.5, impotCumul: 40044.50 },
+    { seuilMin: 291662, seuilMax: 410775, taux: 18.0, impotCumul: 43161.45 },
+    { seuilMin: 410776, seuilMax: 643435, taux: 18.5, impotCumul: 64601.95 },
+    { seuilMin: 643436, seuilMax: Infinity, taux: 19.0, impotCumul: 107644.05 },
+  ];
+
+  // Calcul de l'impôt cantonal et communal pour Genève selon le barème officiel 2024
+  const calculateGenevaTax = (
+    revenuNet: number, 
+    etatCivil: string,
+    coefficientCommunal: number
+  ): { impotCantonal: number; impotCommunal: number; impotBase: number } => {
+    // Déterminer le coefficient de splitting selon la situation
+    let splittingCoeff = 1.0;
+    if (etatCivil === "marie") {
+      splittingCoeff = 0.5; // Splitting intégral (50%)
+    } else if (etatCivil === "parent") {
+      splittingCoeff = 0.5556; // Splitting partiel (55.56%)
+    }
+
+    // Revenu servant au calcul du taux
+    const revenuPourTaux = revenuNet * splittingCoeff;
+
+    // Trouver la tranche applicable
+    let trancheIndex = 0;
+    for (let i = 0; i < baremeGeneve2024.length; i++) {
+      if (revenuPourTaux <= baremeGeneve2024[i].seuilMax) {
+        trancheIndex = i;
+        break;
+      }
+    }
+
+    const tranche = baremeGeneve2024[trancheIndex];
+    
+    // Calculer l'impôt de base
+    let impotBase = 0;
+    if (tranche.taux === 0) {
+      impotBase = 0;
+    } else {
+      // Impôt cumulé des tranches précédentes + impôt sur la différence
+      const difference = revenuPourTaux - tranche.seuilMin;
+      impotBase = tranche.impotCumul + (difference * tranche.taux / 100);
+    }
+
+    // Si splitting appliqué, multiplier par le ratio
+    if (splittingCoeff < 1.0) {
+      impotBase = (revenuNet / revenuPourTaux) * impotBase;
+    }
+
+    // Appliquer la réduction de 12% (art. loi du 26 septembre 1999)
+    const impotBaseReduit = impotBase * 0.88;
+
+    // Calcul de l'impôt cantonal
+    // Centimes additionnels cantonaux: 47.5% de l'impôt de base
+    const centimesCantonal = impotBase * 0.475;
+    // Centime additionnel cantonal supplémentaire pour l'aide à domicile: 1%
+    const supplementAideDomicile = impotBase * 0.01;
+    const impotCantonal = impotBaseReduit + centimesCantonal + supplementAideDomicile;
+
+    // Calcul de l'impôt communal
+    // Centimes additionnels communaux (calculés sur l'impôt de base, pas le réduit)
+    const centimesCommunal = impotBase * coefficientCommunal;
+    const impotCommunal = centimesCommunal;
+
+    return {
+      impotBase,
+      impotCantonal: Math.round(impotCantonal * 100) / 100,
+      impotCommunal: Math.round(impotCommunal * 100) / 100,
+    };
+  };
+
   // Barème officiel de l'impôt fédéral direct 2025 (personne seule)
   const calculateFederalTax = (revenuImposable: number): number => {
     if (revenuImposable < 18500) return 0;
@@ -230,13 +317,27 @@ const SimulateurImpots = () => {
     const cantonData = cantons.find(c => c.value === values.canton);
     const communeData = communesDisponibles.find(c => c.value === values.commune);
 
-    // Calcul de l'impôt cantonal de base (simplifié - environ 6-8% du revenu imposable selon canton)
-    const impotCantonalBase = revenuImposable * 0.065 + fortuneImposable * 0.002;
-    const impotCantonal = impotCantonalBase * (cantonData?.tauxCantonal || 1.00);
+    let impotCantonal = 0;
+    let impotCommunal = 0;
 
-    // Calcul de l'impôt communal avec le coefficient multiplicateur réel
-    const impotCommunalBase = revenuImposable * 0.025 + fortuneImposable * 0.001;
-    const impotCommunal = impotCommunalBase * (communeData?.coefficientCommunal || 1.00);
+    // Calcul spécifique pour le canton de Genève avec barème officiel 2024
+    if (values.canton === "GE") {
+      const genevaResult = calculateGenevaTax(
+        revenuImposable,
+        values.etatCivil,
+        communeData?.coefficientCommunal || 0.455
+      );
+      impotCantonal = genevaResult.impotCantonal;
+      impotCommunal = genevaResult.impotCommunal;
+    } else {
+      // Calcul simplifié pour les autres cantons
+      const impotCantonalBase = revenuImposable * 0.065 + fortuneImposable * 0.002;
+      impotCantonal = impotCantonalBase * (cantonData?.tauxCantonal || 1.00);
+
+      // Calcul de l'impôt communal avec le coefficient multiplicateur réel
+      const impotCommunalBase = revenuImposable * 0.025 + fortuneImposable * 0.001;
+      impotCommunal = impotCommunalBase * (communeData?.coefficientCommunal || 1.00);
+    }
 
     const totalImpots = impotFederal + impotCantonal + impotCommunal;
     const tauxEffectif = revenu > 0 ? (totalImpots / revenu) * 100 : 0;
@@ -374,6 +475,7 @@ const SimulateurImpots = () => {
                               <SelectContent>
                                 <SelectItem value="celibataire">Célibataire</SelectItem>
                                 <SelectItem value="marie">Marié(e)</SelectItem>
+                                <SelectItem value="parent">Parent seul avec enfants</SelectItem>
                                 <SelectItem value="divorce">Divorcé(e)</SelectItem>
                                 <SelectItem value="veuf">Veuf/Veuve</SelectItem>
                               </SelectContent>
