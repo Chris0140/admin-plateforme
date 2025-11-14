@@ -8,7 +8,7 @@ const Header = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <div className="bg-primary rounded-xl p-2.5">
               <Shield className="h-6 w-6 text-primary-foreground" />
             </div>
@@ -16,7 +16,7 @@ const Header = () => {
               <h1 className="text-xl font-bold text-foreground">admin.</h1>
               <p className="text-xs text-muted-foreground">Plateforme d'administration</p>
             </div>
-          </div>
+          </Link>
 
           {/* Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
