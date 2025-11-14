@@ -6,6 +6,7 @@ import { Calculator, TrendingDown, Info, FileText } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { calculateVaudIncomeTax, calculateVaudWealthTax } from "@/lib/vaudTaxCalculations";
 import {
   Form,
   FormControl,
@@ -53,16 +54,45 @@ const tauxEcclesiastiqueParCanton: Record<string, Record<string, number>> = {
 };
 
 const cantons = [
-  { value: "ZH", label: "Zürich", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
-  { value: "BE", label: "Berne", tauxCantonal: 3.06, coefficientCantonal: 1.00 },
   { value: "VD", label: "Vaud", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
   { value: "GE", label: "Genève", tauxCantonal: 1.00, coefficientCantonal: 45.50 },
+  { value: "ZH", label: "Zürich", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
+  { value: "BE", label: "Berne", tauxCantonal: 3.06, coefficientCantonal: 1.00 },
   { value: "VS", label: "Valais", tauxCantonal: 1.67, coefficientCantonal: 1.00 },
   { value: "FR", label: "Fribourg", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
   { value: "NE", label: "Neuchâtel", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
   { value: "JU", label: "Jura", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
   { value: "TI", label: "Ticino", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
   { value: "GR", label: "Grisons", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
+];
+
+// Barème officiel de l'impôt sur le revenu 2025 pour Vaud (coefficient 100%)
+const baremeRevenuVD2025: Array<{ revenu: number; impot: number }> = [
+  { revenu: 100, impot: 1.00 }, { revenu: 1000, impot: 10.00 }, { revenu: 2000, impot: 24.00 },
+  { revenu: 3000, impot: 44.00 }, { revenu: 4000, impot: 70.00 }, { revenu: 5000, impot: 99.00 },
+  { revenu: 6000, impot: 139.00 }, { revenu: 7000, impot: 179.00 }, { revenu: 8000, impot: 219.00 },
+  { revenu: 9000, impot: 266.00 }, { revenu: 10000, impot: 313.00 }, { revenu: 11000, impot: 360.00 },
+  { revenu: 12000, impot: 407.00 }, { revenu: 13000, impot: 454.00 }, { revenu: 14000, impot: 505.00 },
+  { revenu: 15000, impot: 556.00 }, { revenu: 16000, impot: 607.00 }, { revenu: 17000, impot: 658.00 },
+  { revenu: 18000, impot: 713.00 }, { revenu: 19000, impot: 768.00 }, { revenu: 20000, impot: 823.00 },
+  { revenu: 25000, impot: 1120.00 }, { revenu: 30000, impot: 1466.00 }, { revenu: 35000, impot: 1849.00 },
+  { revenu: 40000, impot: 2269.00 }, { revenu: 45000, impot: 2726.00 }, { revenu: 50000, impot: 3220.00 },
+  { revenu: 60000, impot: 4294.00 }, { revenu: 70000, impot: 5488.00 }, { revenu: 80000, impot: 6802.00 },
+  { revenu: 90000, impot: 8236.00 }, { revenu: 100000, impot: 9790.00 }, { revenu: 120000, impot: 13168.00 },
+  { revenu: 140000, impot: 17056.00 }, { revenu: 160000, impot: 21454.00 }, { revenu: 180000, impot: 26362.00 },
+  { revenu: 200000, impot: 31780.00 }, { revenu: 250000, impot: 46530.00 }, { revenu: 300000, impot: 63030.00 },
+  { revenu: 400000, impot: 100530.00 }, { revenu: 500000, impot: 143030.00 }
+];
+
+// Barème officiel de l'impôt sur la fortune 2025 pour Vaud
+const baremeFortuneVD2025: Array<{ fortune: number; impot: number }> = [
+  { fortune: 50000, impot: 22.95 }, { fortune: 60000, impot: 32.65 }, { fortune: 70000, impot: 42.35 },
+  { fortune: 80000, impot: 52.05 }, { fortune: 90000, impot: 61.75 }, { fortune: 100000, impot: 75.05 },
+  { fortune: 120000, impot: 108.85 }, { fortune: 140000, impot: 142.65 }, { fortune: 160000, impot: 180.45 },
+  { fortune: 180000, impot: 218.25 }, { fortune: 200000, impot: 260.05 }, { fortune: 250000, impot: 364.80 },
+  { fortune: 300000, impot: 479.55 }, { fortune: 400000, impot: 724.05 }, { fortune: 500000, impot: 983.55 },
+  { fortune: 600000, impot: 1258.05 }, { fortune: 700000, impot: 1547.55 }, { fortune: 800000, impot: 1852.05 },
+  { fortune: 900000, impot: 2171.55 }, { fortune: 1000000, impot: 2506.05 }
 ];
 
 // Communes par canton avec leurs coefficients multiplicateurs réels (2024)
@@ -111,24 +141,26 @@ const communesParCanton: Record<string, Array<{ value: string; label: string; co
     { value: "zollikofen", label: "Zollikofen", coefficientCommunal: 1.52 },
   ],
   VD: [
-    { value: "lausanne", label: "Lausanne", coefficientCommunal: 0.79 },
-    { value: "yverdon", label: "Yverdon-les-Bains", coefficientCommunal: 0.78 },
-    { value: "montreux", label: "Montreux", coefficientCommunal: 0.72 },
-    { value: "vevey", label: "Vevey", coefficientCommunal: 0.77 },
-    { value: "nyon", label: "Nyon", coefficientCommunal: 0.71 },
-    { value: "renens", label: "Renens", coefficientCommunal: 0.81 },
+    { value: "aigle", label: "Aigle", coefficientCommunal: 0.66 },
+    { value: "lausanne", label: "Lausanne", coefficientCommunal: 0.76 },
+    { value: "yverdon-les-bains", label: "Yverdon-les-Bains", coefficientCommunal: 0.78 },
+    { value: "montreux", label: "Montreux", coefficientCommunal: 0.68 },
+    { value: "vevey", label: "Vevey", coefficientCommunal: 0.73 },
+    { value: "nyon", label: "Nyon", coefficientCommunal: 0.66 },
+    { value: "renens", label: "Renens", coefficientCommunal: 0.79 },
     { value: "pully", label: "Pully", coefficientCommunal: 0.67 },
-    { value: "morges", label: "Morges", coefficientCommunal: 0.73 },
-    { value: "prilly", label: "Prilly", coefficientCommunal: 0.80 },
+    { value: "morges", label: "Morges", coefficientCommunal: 0.72 },
+    { value: "prilly", label: "Prilly", coefficientCommunal: 0.77 },
     { value: "ecublens", label: "Ecublens", coefficientCommunal: 0.75 },
-    { value: "aigle", label: "Aigle", coefficientCommunal: 0.74 },
-    { value: "gland", label: "Gland", coefficientCommunal: 0.70 },
-    { value: "payerne", label: "Payerne", coefficientCommunal: 0.77 },
-    { value: "lutry", label: "Lutry", coefficientCommunal: 0.69 },
-    { value: "epalinges", label: "Epalinges", coefficientCommunal: 0.72 },
-    { value: "rolle", label: "Rolle", coefficientCommunal: 0.68 },
-    { value: "crissier", label: "Crissier", coefficientCommunal: 0.76 },
-    { value: "chavannes", label: "Chavannes-près-Renens", coefficientCommunal: 0.78 },
+    { value: "gland", label: "Gland", coefficientCommunal: 0.64 },
+    { value: "payerne", label: "Payerne", coefficientCommunal: 0.70 },
+    { value: "lutry", label: "Lutry", coefficientCommunal: 0.72 },
+    { value: "epalinges", label: "Epalinges", coefficientCommunal: 0.71 },
+    { value: "rolle", label: "Rolle", coefficientCommunal: 0.69 },
+    { value: "crissier", label: "Crissier", coefficientCommunal: 0.73 },
+    { value: "bex", label: "Bex", coefficientCommunal: 0.71 },
+    { value: "la-tour-de-peilz", label: "La Tour-de-Peilz", coefficientCommunal: 0.71 },
+    { value: "cossonay", label: "Cossonay", coefficientCommunal: 0.76 },
   ],
   GE: [
     { value: "geneve", label: "Genève", coefficientCommunal: 0.455 },
@@ -466,7 +498,7 @@ const SimulateurImpots = () => {
     let impotCantonal = 0;
     let impotCommunal = 0;
 
-    // Calcul spécifique pour le canton de Genève avec barème officiel 2024
+    // Calcul spécifique par canton
     let impotEcclesiastique = 0;
     if (values.canton === "GE") {
       const genevaResult = calculateGenevaTax(
@@ -478,16 +510,21 @@ const SimulateurImpots = () => {
       impotCantonal = genevaResult.impotCantonal;
       impotCommunal = genevaResult.impotCommunal;
       impotEcclesiastique = genevaResult.impotEcclesiastique;
+    } else if (values.canton === "VD") {
+      // Barème officiel 2025 pour Vaud
+      const impotRevenuBase = calculateVaudIncomeTax(revenuImposable);
+      const impotFortuneBase = calculateVaudWealthTax(fortuneImposable);
+      const impotBase = impotRevenuBase + impotFortuneBase;
+      
+      impotCantonal = impotBase;
+      impotCommunal = impotBase * (communeData?.coefficientCommunal || 0.70);
+      impotEcclesiastique = calculateEcclesiasticalTax(impotCantonal, values.canton, values.confession);
     } else {
       // Calcul simplifié pour les autres cantons
       const impotCantonalBase = revenuImposable * 0.065 + fortuneImposable * 0.002;
       impotCantonal = impotCantonalBase * (cantonData?.tauxCantonal || 1.00);
-
-      // Calcul de l'impôt communal avec le coefficient multiplicateur réel
       const impotCommunalBase = revenuImposable * 0.025 + fortuneImposable * 0.001;
       impotCommunal = impotCommunalBase * (communeData?.coefficientCommunal || 1.00);
-      
-      // Calcul de l'impôt ecclésiastique pour les autres cantons
       impotEcclesiastique = calculateEcclesiasticalTax(impotCantonal, values.canton, values.confession);
     }
 
