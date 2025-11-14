@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Contact from "./pages/Contact";
 import AccountSettings from "./pages/AccountSettings";
+import AccountSecurity from "./pages/AccountSecurity";
 import AccountDocuments from "./pages/AccountDocuments";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/account/settings" element={<AccountSettings />} />
+            <Route path="/account/security" element={<AccountSecurity />} />
             <Route path="/account/documents" element={<AccountDocuments />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
