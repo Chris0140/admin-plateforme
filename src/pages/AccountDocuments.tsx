@@ -375,10 +375,10 @@ const AccountDocuments = () => {
       <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           <div className="mb-6">
-            <Link to="/account/settings">
+            <Link to="/">
               <Button variant="ghost" className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Retour au compte
+                Retour à l'accueil
               </Button>
             </Link>
           </div>
