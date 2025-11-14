@@ -86,129 +86,45 @@ const Contact = () => {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-12">
-            {/* Contact Form */}
-            <div className="bg-card border border-border rounded-2xl p-8 shadow-card">
-              <h2 className="text-2xl font-bold text-foreground mb-6">
-                Envoyez-nous un message
-              </h2>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Nom */}
-                <div className="space-y-2">
-                  <Label htmlFor="nom">
-                    Nom complet <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="nom"
-                    value={formData.nom}
-                    onChange={(e) => handleChange("nom", e.target.value)}
-                    className="bg-background"
-                    placeholder="Votre nom"
-                  />
-                  {errors.nom && <p className="text-sm text-destructive">{errors.nom}</p>}
-                </div>
-
-                {/* Email */}
-                <div className="space-y-2">
-                  <Label htmlFor="email">
-                    Email <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
-                    className="bg-background"
-                    placeholder="votre@email.com"
-                  />
-                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-                </div>
-
-                {/* Téléphone */}
-                <div className="space-y-2">
-                  <Label htmlFor="telephone">Téléphone (optionnel)</Label>
-                  <Input
-                    id="telephone"
-                    type="tel"
-                    value={formData.telephone}
-                    onChange={(e) => handleChange("telephone", e.target.value)}
-                    className="bg-background"
-                    placeholder="+41 00 000 00 00"
-                  />
-                </div>
-
-                {/* Message */}
-                <div className="space-y-2">
-                  <Label htmlFor="message">
-                    Message <span className="text-destructive">*</span>
-                  </Label>
-                  <Textarea
-                    id="message"
-                    value={formData.message}
-                    onChange={(e) => handleChange("message", e.target.value)}
-                    className="bg-background min-h-[150px]"
-                    placeholder="Votre message..."
-                  />
-                  {errors.message && (
-                    <p className="text-sm text-destructive">{errors.message}</p>
-                  )}
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze"
-                >
-                  {loading ? "Envoi en cours..." : "Envoyer le message"}
-                </Button>
-              </form>
-            </div>
-
-            {/* Contact Information */}
-            <div className="space-y-8">
-              <div className="bg-card border border-border rounded-2xl p-8 shadow-card">
-                <h2 className="text-2xl font-bold text-foreground mb-6">
-                  Nos coordonnées
+          <div className="grid lg:grid-cols-2 gap-16">
+            {/* Contact Information - Left Side */}
+            <div className="space-y-12">
+              <div>
+                <h2 className="text-3xl font-bold text-foreground mb-8">
+                  Informations de Contact
                 </h2>
 
                 <div className="space-y-6">
                   {/* Phone */}
                   <div className="flex items-start gap-4">
-                    <div className="bg-primary/10 rounded-xl p-3">
-                      <Phone className="h-6 w-6 text-primary" />
+                    <div className="bg-gradient-to-br from-bronze to-bronze-light rounded-xl p-3 shadow-bronze">
+                      <Phone className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-1">Téléphone</h3>
-                      <p className="text-muted-foreground">0800 123 456</p>
-                      <p className="text-sm text-muted-foreground">
-                        Lun-Ven: 8h00 - 18h00
-                      </p>
+                      <h3 className="font-semibold text-foreground text-lg mb-1">Téléphone</h3>
+                      <p className="text-muted-foreground text-lg">0800 123 456</p>
                     </div>
                   </div>
 
                   {/* Email */}
                   <div className="flex items-start gap-4">
-                    <div className="bg-primary/10 rounded-xl p-3">
-                      <Mail className="h-6 w-6 text-primary" />
+                    <div className="bg-gradient-to-br from-bronze to-bronze-light rounded-xl p-3 shadow-bronze">
+                      <Mail className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-1">Email</h3>
-                      <p className="text-muted-foreground">info@admin.ch</p>
-                      <p className="text-sm text-muted-foreground">
-                        Réponse sous 24h
-                      </p>
+                      <h3 className="font-semibold text-foreground text-lg mb-1">Email</h3>
+                      <p className="text-muted-foreground text-lg">info@admin.ch</p>
                     </div>
                   </div>
 
                   {/* Address */}
                   <div className="flex items-start gap-4">
-                    <div className="bg-primary/10 rounded-xl p-3">
-                      <MapPin className="h-6 w-6 text-primary" />
+                    <div className="bg-gradient-to-br from-bronze to-bronze-light rounded-xl p-3 shadow-bronze">
+                      <MapPin className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-1">Adresse</h3>
-                      <p className="text-muted-foreground">
+                      <h3 className="font-semibold text-foreground text-lg mb-1">Adresse</h3>
+                      <p className="text-muted-foreground text-lg">
                         Rue de la Confédération 12<br />
                         1204 Genève<br />
                         Suisse
@@ -219,26 +135,98 @@ const Contact = () => {
               </div>
 
               {/* Hours */}
-              <div className="bg-card border border-border rounded-2xl p-8 shadow-card">
-                <h2 className="text-2xl font-bold text-foreground mb-6">
-                  Horaires d'ouverture
+              <div>
+                <h2 className="text-3xl font-bold text-foreground mb-6">
+                  Horaires de Disponibilité
                 </h2>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Lundi - Vendredi</span>
-                    <span className="font-semibold text-foreground">8h00 - 18h00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Samedi</span>
-                    <span className="font-semibold text-foreground">9h00 - 13h00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Dimanche</span>
-                    <span className="font-semibold text-foreground">Fermé</span>
-                  </div>
+                <div className="space-y-3 text-lg">
+                  <p className="text-muted-foreground">
+                    <span className="font-semibold text-foreground">Lundi - Vendredi:</span> 9h00 - 18h00
+                  </p>
+                  <p className="text-muted-foreground">
+                    <span className="font-semibold text-foreground">Weekend:</span> Sur rendez-vous
+                  </p>
                 </div>
               </div>
+            </div>
+
+            {/* Contact Form - Right Side */}
+            <div>
+              <h2 className="text-3xl font-bold text-foreground mb-8">
+                Formulaire de Contact
+              </h2>
+
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Nom */}
+                <div className="space-y-2">
+                  <Label htmlFor="nom" className="text-base">
+                    Nom complet <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="nom"
+                    value={formData.nom}
+                    onChange={(e) => handleChange("nom", e.target.value)}
+                    className="bg-background border-border/50 focus:border-primary h-12 text-base"
+                    placeholder="Votre nom"
+                  />
+                  {errors.nom && <p className="text-sm text-destructive">{errors.nom}</p>}
+                </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-base">
+                    Email <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleChange("email", e.target.value)}
+                    className="bg-background border-border/50 focus:border-primary h-12 text-base"
+                    placeholder="votre@email.com"
+                  />
+                  {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                </div>
+
+                {/* Téléphone */}
+                <div className="space-y-2">
+                  <Label htmlFor="telephone" className="text-base">Téléphone (optionnel)</Label>
+                  <Input
+                    id="telephone"
+                    type="tel"
+                    value={formData.telephone}
+                    onChange={(e) => handleChange("telephone", e.target.value)}
+                    className="bg-background border-border/50 focus:border-primary h-12 text-base"
+                    placeholder="+41 00 000 00 00"
+                  />
+                </div>
+
+                {/* Message */}
+                <div className="space-y-2">
+                  <Label htmlFor="message" className="text-base">
+                    Message <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="message"
+                    value={formData.message}
+                    onChange={(e) => handleChange("message", e.target.value)}
+                    className="bg-background border-border/50 focus:border-primary min-h-[180px] text-base resize-none"
+                    placeholder="Votre message..."
+                  />
+                  {errors.message && (
+                    <p className="text-sm text-destructive">{errors.message}</p>
+                  )}
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze shadow-bronze h-12 text-base font-semibold"
+                >
+                  {loading ? "Envoi en cours..." : "Envoyer le message"}
+                </Button>
+              </form>
             </div>
           </div>
         </div>
