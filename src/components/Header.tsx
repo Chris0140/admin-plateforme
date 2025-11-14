@@ -53,6 +53,9 @@ const Header = () => {
             <Link to="/" className="text-primary font-medium hover:text-bronze-light transition-colors">
               Accueil
             </Link>
+            <Link to="/simulateur-impots" className="text-foreground hover:text-primary transition-colors font-medium">
+              Simulateur d'impôts
+            </Link>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 text-foreground hover:text-primary transition-colors font-medium">
                 Comparateur
