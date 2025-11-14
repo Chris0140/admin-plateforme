@@ -11,6 +11,10 @@ import AccountSettings from "./pages/AccountSettings";
 import AccountSecurity from "./pages/AccountSecurity";
 import AccountDocuments from "./pages/AccountDocuments";
 import NotFound from "./pages/NotFound";
+import AssuranceMaladie from "./pages/comparateur/AssuranceMaladie";
+import AssuranceVehicule from "./pages/comparateur/AssuranceVehicule";
+import TroisiemePilier from "./pages/comparateur/TroisiemePilier";
+import AssuranceAnimaux from "./pages/comparateur/AssuranceAnimaux";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +32,10 @@ const App = () => (
             <Route path="/account/settings" element={<AccountSettings />} />
             <Route path="/account/security" element={<AccountSecurity />} />
             <Route path="/account/documents" element={<AccountDocuments />} />
+            <Route path="/comparateur/assurance-maladie" element={<AssuranceMaladie />} />
+            <Route path="/comparateur/assurance-vehicule" element={<AssuranceVehicule />} />
+            <Route path="/comparateur/troisieme-pilier" element={<TroisiemePilier />} />
+            <Route path="/comparateur/assurance-animaux" element={<AssuranceAnimaux />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
