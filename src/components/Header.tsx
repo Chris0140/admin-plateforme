@@ -20,9 +20,9 @@ const Header = () => {
 
           {/* Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
-            <a href="#" className="text-primary font-medium hover:text-bronze-light transition-colors">
+            <Link to="/" className="text-primary font-medium hover:text-bronze-light transition-colors">
               Accueil
-            </a>
+            </Link>
             <a href="#" className="text-foreground hover:text-primary transition-colors">
               Comparateur
             </a>
@@ -35,9 +35,9 @@ const Header = () => {
             <a href="#" className="text-foreground hover:text-primary transition-colors">
               Mes documents
             </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors">
+            <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
               Contact
-            </a>
+            </Link>
           </nav>
 
           {/* Account Button */}
