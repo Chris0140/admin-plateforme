@@ -481,9 +481,9 @@ const SimulateurImpots = () => {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {/* Formulaire */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-2">
             <Card className="bg-card border-border shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
