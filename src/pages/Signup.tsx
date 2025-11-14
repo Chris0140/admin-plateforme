@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield } from "lucide-react";
+import { Shield, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 
 const signupSchema = z.object({
@@ -98,6 +98,14 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
+      <Link
+        to="/"
+        className="fixed top-6 left-6 flex items-center gap-2 text-foreground hover:text-primary transition-colors"
+      >
+        <ArrowLeft className="h-5 w-5" />
+        <span className="font-medium">Retour</span>
+      </Link>
+      
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
