@@ -95,6 +95,23 @@ const AccountSettings = () => {
 
       if (!user) return;
 
+      // Update email in auth if changed
+      if (validatedData.email !== user.email) {
+        const { error: authError } = await supabase.auth.updateUser({
+          email: validatedData.email,
+        });
+
+        if (authError) {
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de mettre à jour l'email: " + authError.message,
+          });
+          return;
+        }
+      }
+
+      // Update profile in database
       const { error } = await supabase
         .from("profiles")
         .update({
