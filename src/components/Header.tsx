@@ -53,9 +53,38 @@ const Header = () => {
             <Link to="/" className="text-primary font-medium hover:text-bronze-light transition-colors">
               Accueil
             </Link>
-            <a href="#" className="text-foreground hover:text-primary transition-colors">
-              Comparateur
-            </a>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 text-foreground hover:text-primary transition-colors">
+                Comparateur
+                <ChevronDown className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 bg-card border-border z-50">
+                <DropdownMenuItem asChild>
+                  <a href="#" className="cursor-pointer">Assurance maladie</a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href="#" className="cursor-pointer">Assurance Véhicule</a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href="#" className="cursor-pointer">Assurance Moto</a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href="#" className="cursor-pointer">Protection juridique</a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href="#" className="cursor-pointer">Assurance voyage</a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href="#" className="cursor-pointer">Inventaire du ménage et RC privée</a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href="#" className="cursor-pointer">Assurance animaux</a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href="#" className="cursor-pointer">3ème pilier</a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <a href="#" className="text-foreground hover:text-primary transition-colors">
               Simulation d'impôts
             </a>
