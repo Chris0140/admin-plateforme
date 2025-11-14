@@ -11,18 +11,18 @@ const Services = () => {
       iconBg: "bg-purple-600",
     },
     {
-      icon: Calculator,
-      title: "Simulateur d'impôts",
-      description: "Calculez vos impôts et découvrez comment optimiser votre fiscalité",
-      savings: "Économisez jusqu'à 3'000 CHF/an",
-      iconBg: "bg-blue-600",
-    },
-    {
       icon: Wallet,
       title: "Budget",
       description: "Gérez votre budget personnel et planifiez vos finances",
       savings: "Contrôlez vos dépenses efficacement",
       iconBg: "bg-emerald-600",
+    },
+    {
+      icon: Calculator,
+      title: "Simulateur d'impôts",
+      description: "Calculez vos impôts et découvrez comment optimiser votre fiscalité",
+      savings: "Économisez jusqu'à 3'000 CHF/an",
+      iconBg: "bg-blue-600",
     },
   ];
 
