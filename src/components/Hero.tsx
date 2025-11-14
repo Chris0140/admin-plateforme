@@ -1,8 +1,6 @@
 import { Users, Building2, Clock } from "lucide-react";
-
 const Hero = () => {
-  return (
-    <section className="relative py-24 overflow-hidden">
+  return <section className="relative py-24 overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-[image:var(--gradient-hero)] opacity-50"></div>
       
@@ -23,8 +21,7 @@ const Hero = () => {
 
           {/* Subtitle */}
           <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto">
-            Plateforme officielle suisse pour comparer les assurances et optimiser vos
-            finances personnelles
+            La plateforme pour comparer les assurances et optimiser vos finances personnelles
           </p>
 
           {/* Stats */}
@@ -55,8 +52,6 @@ const Hero = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
