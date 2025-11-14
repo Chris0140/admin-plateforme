@@ -1,11 +1,13 @@
-import { Settings, FileText, LogOut, ChevronDown, Heart, Car, Bike, Shield, Plane, Home, PawPrint, PiggyBank } from "lucide-react";
+import { Settings, FileText, LogOut, ChevronDown, Heart, Car, Bike, Shield, Plane, Home, PawPrint, PiggyBank, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import adminLogo from "@/assets/admin-logo.png";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 const Header = () => {
   const {
     user,
@@ -15,6 +17,7 @@ const Header = () => {
   const {
     toast
   } = useToast();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const handleLogout = async () => {
     const {
       error
@@ -137,8 +140,8 @@ const Header = () => {
             </Link>
           </nav>
 
-          {/* Account Button/Menu */}
-          <div className="hidden md:flex items-center">
+          {/* Account Button/Menu - Desktop */}
+          <div className="hidden lg:flex items-center">
             {loading ? <Button disabled className="bg-gradient-to-r from-bronze to-bronze-light">
                 Chargement...
               </Button> : user ? <DropdownMenu>
@@ -172,6 +175,166 @@ const Header = () => {
                   Connexion / Inscription
                 </Button>
               </Link>}
+          </div>
+
+          {/* Mobile Menu */}
+          <div className="lg:hidden">
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-80 overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <nav className="flex flex-col gap-4 mt-8">
+                  <Link 
+                    to="/simulateur-impots" 
+                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Simulateur d'impôts
+                  </Link>
+
+                  {/* Comparateur Section */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-muted-foreground">Comparateur</p>
+                    <Link 
+                      to="/comparateur/assurance-maladie" 
+                      className="flex items-center gap-3 py-2 pl-4 hover:bg-accent rounded-md transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Heart className="h-4 w-4 text-red-500" />
+                      <span>Assurance maladie</span>
+                    </Link>
+                    <Link 
+                      to="/comparateur/assurance-vehicule" 
+                      className="flex items-center gap-3 py-2 pl-4 hover:bg-accent rounded-md transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Car className="h-4 w-4 text-blue-500" />
+                      <span>Assurance Véhicule</span>
+                    </Link>
+                    <a 
+                      href="#" 
+                      className="flex items-center gap-3 py-2 pl-4 hover:bg-accent rounded-md transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Bike className="h-4 w-4 text-orange-500" />
+                      <span>Assurance Moto</span>
+                    </a>
+                    <a 
+                      href="#" 
+                      className="flex items-center gap-3 py-2 pl-4 hover:bg-accent rounded-md transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Shield className="h-4 w-4 text-green-500" />
+                      <span>Protection Juridique</span>
+                    </a>
+                    <a 
+                      href="#" 
+                      className="flex items-center gap-3 py-2 pl-4 hover:bg-accent rounded-md transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Home className="h-4 w-4 text-purple-500" />
+                      <span>Inventaire ménage & RC</span>
+                    </a>
+                    <a 
+                      href="#" 
+                      className="flex items-center gap-3 py-2 pl-4 hover:bg-accent rounded-md transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Plane className="h-4 w-4 text-sky-500" />
+                      <span>Assurance voyage</span>
+                    </a>
+                    <a 
+                      href="#" 
+                      className="flex items-center gap-3 py-2 pl-4 hover:bg-accent rounded-md transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <PawPrint className="h-4 w-4 text-amber-500" />
+                      <span>Assurance animal</span>
+                    </a>
+                    <Link 
+                      to="/comparateur/troisieme-pilier" 
+                      className="flex items-center gap-3 py-2 pl-4 hover:bg-accent rounded-md transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <PiggyBank className="h-4 w-4 text-pink-500" />
+                      <span>3ème Pilier</span>
+                    </Link>
+                  </div>
+
+                  <Link 
+                    to="#" 
+                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Budget
+                  </Link>
+                  <Link 
+                    to="/account/documents" 
+                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Mes documents
+                  </Link>
+                  <Link 
+                    to="/contact" 
+                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Contact
+                  </Link>
+
+                  {/* Auth Section */}
+                  <div className="pt-4 border-t border-border mt-4">
+                    {loading ? (
+                      <Button disabled className="w-full bg-gradient-to-r from-bronze to-bronze-light">
+                        Chargement...
+                      </Button>
+                    ) : user ? (
+                      <div className="space-y-2">
+                        <Link 
+                          to="/account/settings" 
+                          className="flex items-center gap-2 py-2 px-3 hover:bg-accent rounded-md transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Settings className="h-4 w-4" />
+                          <span>Paramètres du compte</span>
+                        </Link>
+                        <Link 
+                          to="/account/documents" 
+                          className="flex items-center gap-2 py-2 px-3 hover:bg-accent rounded-md transition-colors"
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <FileText className="h-4 w-4" />
+                          <span>Mes documents</span>
+                        </Link>
+                        <button 
+                          onClick={() => {
+                            handleLogout();
+                            setMobileMenuOpen(false);
+                          }} 
+                          className="w-full flex items-center gap-2 py-2 px-3 hover:bg-accent rounded-md transition-colors text-destructive"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          <span>Se déconnecter</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                        <Button className="w-full bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
+                          Connexion / Inscription
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
