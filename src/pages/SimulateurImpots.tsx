@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 
 const formSchema = z.object({
   canton: z.string().min(1, "Veuillez sélectionner un canton"),
+  commune: z.string().min(1, "Veuillez sélectionner une commune"),
   etatCivil: z.string().min(1, "Veuillez sélectionner votre état civil"),
   revenuAnnuel: z.string().min(1, "Veuillez indiquer votre revenu"),
   fortune: z.string().optional(),
@@ -37,25 +38,95 @@ const formSchema = z.object({
 });
 
 const cantons = [
-  { value: "ZH", label: "Zürich", tauxCantonal: 0.08, tauxCommunal: 0.03 },
-  { value: "BE", label: "Berne", tauxCantonal: 0.09, tauxCommunal: 0.035 },
-  { value: "VD", label: "Vaud", tauxCantonal: 0.095, tauxCommunal: 0.04 },
-  { value: "GE", label: "Genève", tauxCantonal: 0.10, tauxCommunal: 0.045 },
-  { value: "VS", label: "Valais", tauxCantonal: 0.07, tauxCommunal: 0.025 },
-  { value: "FR", label: "Fribourg", tauxCantonal: 0.085, tauxCommunal: 0.03 },
-  { value: "NE", label: "Neuchâtel", tauxCantonal: 0.088, tauxCommunal: 0.032 },
-  { value: "JU", label: "Jura", tauxCantonal: 0.092, tauxCommunal: 0.035 },
-  { value: "TI", label: "Ticino", tauxCantonal: 0.082, tauxCommunal: 0.028 },
-  { value: "GR", label: "Grisons", tauxCantonal: 0.075, tauxCommunal: 0.027 },
+  { value: "ZH", label: "Zürich", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
+  { value: "BE", label: "Berne", tauxCantonal: 3.06, coefficientCantonal: 1.00 },
+  { value: "VD", label: "Vaud", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
+  { value: "GE", label: "Genève", tauxCantonal: 1.00, coefficientCantonal: 45.50 },
+  { value: "VS", label: "Valais", tauxCantonal: 1.67, coefficientCantonal: 1.00 },
+  { value: "FR", label: "Fribourg", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
+  { value: "NE", label: "Neuchâtel", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
+  { value: "JU", label: "Jura", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
+  { value: "TI", label: "Ticino", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
+  { value: "GR", label: "Grisons", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
 ];
+
+// Communes par canton avec leurs coefficients multiplicateurs réels (2024)
+const communesParCanton: Record<string, Array<{ value: string; label: string; coefficientCommunal: number }>> = {
+  ZH: [
+    { value: "zurich", label: "Zürich", coefficientCommunal: 1.19 },
+    { value: "winterthur", label: "Winterthur", coefficientCommunal: 1.22 },
+    { value: "uster", label: "Uster", coefficientCommunal: 1.09 },
+    { value: "dubendorf", label: "Dübendorf", coefficientCommunal: 1.07 },
+    { value: "dietikon", label: "Dietikon", coefficientCommunal: 1.15 },
+  ],
+  BE: [
+    { value: "berne", label: "Berne", coefficientCommunal: 1.54 },
+    { value: "biel", label: "Bienne", coefficientCommunal: 1.69 },
+    { value: "thun", label: "Thoune", coefficientCommunal: 1.52 },
+    { value: "koniz", label: "Köniz", coefficientCommunal: 1.50 },
+    { value: "burgdorf", label: "Berthoud", coefficientCommunal: 1.58 },
+  ],
+  VD: [
+    { value: "lausanne", label: "Lausanne", coefficientCommunal: 0.79 },
+    { value: "yverdon", label: "Yverdon-les-Bains", coefficientCommunal: 0.78 },
+    { value: "montreux", label: "Montreux", coefficientCommunal: 0.72 },
+    { value: "vevey", label: "Vevey", coefficientCommunal: 0.77 },
+    { value: "nyon", label: "Nyon", coefficientCommunal: 0.71 },
+  ],
+  GE: [
+    { value: "geneve", label: "Genève", coefficientCommunal: 0.455 },
+    { value: "vernier", label: "Vernier", coefficientCommunal: 0.46 },
+    { value: "lancy", label: "Lancy", coefficientCommunal: 0.45 },
+    { value: "meyrin", label: "Meyrin", coefficientCommunal: 0.43 },
+    { value: "carouge", label: "Carouge", coefficientCommunal: 0.455 },
+  ],
+  VS: [
+    { value: "sion", label: "Sion", coefficientCommunal: 1.25 },
+    { value: "sierre", label: "Sierre", coefficientCommunal: 1.30 },
+    { value: "martigny", label: "Martigny", coefficientCommunal: 1.20 },
+    { value: "monthey", label: "Monthey", coefficientCommunal: 1.22 },
+    { value: "brig", label: "Brigue-Glis", coefficientCommunal: 1.28 },
+  ],
+  FR: [
+    { value: "fribourg", label: "Fribourg", coefficientCommunal: 1.08 },
+    { value: "bulle", label: "Bulle", coefficientCommunal: 1.05 },
+    { value: "villars", label: "Villars-sur-Glâne", coefficientCommunal: 0.88 },
+    { value: "marly", label: "Marly", coefficientCommunal: 0.92 },
+    { value: "estavayer", label: "Estavayer-le-Lac", coefficientCommunal: 1.10 },
+  ],
+  NE: [
+    { value: "neuchatel", label: "Neuchâtel", coefficientCommunal: 0.74 },
+    { value: "chaux", label: "La Chaux-de-Fonds", coefficientCommunal: 0.76 },
+    { value: "locle", label: "Le Locle", coefficientCommunal: 0.78 },
+    { value: "val", label: "Val-de-Ruz", coefficientCommunal: 0.69 },
+  ],
+  JU: [
+    { value: "delemont", label: "Delémont", coefficientCommunal: 1.80 },
+    { value: "porrentruy", label: "Porrentruy", coefficientCommunal: 1.75 },
+    { value: "courrendlin", label: "Courrendlin", coefficientCommunal: 1.70 },
+  ],
+  TI: [
+    { value: "lugano", label: "Lugano", coefficientCommunal: 0.90 },
+    { value: "bellinzona", label: "Bellinzone", coefficientCommunal: 0.95 },
+    { value: "locarno", label: "Locarno", coefficientCommunal: 0.92 },
+    { value: "mendrisio", label: "Mendrisio", coefficientCommunal: 0.88 },
+  ],
+  GR: [
+    { value: "chur", label: "Coire", coefficientCommunal: 1.05 },
+    { value: "davos", label: "Davos", coefficientCommunal: 0.95 },
+    { value: "stmoritz", label: "Saint-Moritz", coefficientCommunal: 0.80 },
+  ],
+};
 
 const SimulateurImpots = () => {
   const [results, setResults] = useState<any>(null);
+  const [communesDisponibles, setCommunesDisponibles] = useState<Array<{ value: string; label: string; coefficientCommunal: number }>>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       canton: "",
+      commune: "",
       etatCivil: "",
       revenuAnnuel: "",
       fortune: "0",
@@ -65,6 +136,8 @@ const SimulateurImpots = () => {
       autresDeductions: "0",
     },
   });
+
+  const selectedCanton = form.watch("canton");
 
   const calculateTax = (values: z.infer<typeof formSchema>) => {
     const revenu = parseFloat(values.revenuAnnuel) || 0;
@@ -100,8 +173,15 @@ const SimulateurImpots = () => {
     }
 
     const cantonData = cantons.find(c => c.value === values.canton);
-    const impotCantonal = revenuImposable * (cantonData?.tauxCantonal || 0.08) + fortuneImposable * 0.002;
-    const impotCommunal = revenuImposable * (cantonData?.tauxCommunal || 0.03) + fortuneImposable * 0.001;
+    const communeData = communesDisponibles.find(c => c.value === values.commune);
+
+    // Calcul de l'impôt cantonal de base (simplifié - environ 6-8% du revenu imposable selon canton)
+    const impotCantonalBase = revenuImposable * 0.065 + fortuneImposable * 0.002;
+    const impotCantonal = impotCantonalBase * (cantonData?.tauxCantonal || 1.00);
+
+    // Calcul de l'impôt communal avec le coefficient multiplicateur réel
+    const impotCommunalBase = revenuImposable * 0.025 + fortuneImposable * 0.001;
+    const impotCommunal = impotCommunalBase * (communeData?.coefficientCommunal || 1.00);
 
     const totalImpots = impotFederal + impotCantonal + impotCommunal;
     const tauxEffectif = revenu > 0 ? (totalImpots / revenu) * 100 : 0;
@@ -116,6 +196,8 @@ const SimulateurImpots = () => {
       totalImpots,
       tauxEffectif,
       canton: cantonData?.label || "",
+      commune: communeData?.label || "",
+      coefficientCommunal: communeData?.coefficientCommunal || 1.00,
     });
   };
 
@@ -165,7 +247,14 @@ const SimulateurImpots = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Canton de résidence *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select 
+                              onValueChange={(value) => {
+                                field.onChange(value);
+                                setCommunesDisponibles(communesParCanton[value] || []);
+                                form.setValue("commune", "");
+                              }} 
+                              defaultValue={field.value}
+                            >
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Sélectionnez un canton" />
@@ -184,6 +273,37 @@ const SimulateurImpots = () => {
                         )}
                       />
 
+                      <FormField
+                        control={form.control}
+                        name="commune"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Commune de résidence *</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              disabled={!selectedCanton}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sélectionnez une commune" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {communesDisponibles.map((commune) => (
+                                  <SelectItem key={commune.value} value={commune.value}>
+                                    {commune.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="etatCivil"
@@ -346,7 +466,12 @@ const SimulateurImpots = () => {
               <Card className="bg-card border-border shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-primary">Estimation fiscale</CardTitle>
-                  <CardDescription>Canton de {results.canton}</CardDescription>
+                  <CardDescription>
+                    {results.commune}, Canton de {results.canton}
+                    <span className="block text-xs mt-1">
+                      Coefficient communal: {results.coefficientCommunal}
+                    </span>
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
