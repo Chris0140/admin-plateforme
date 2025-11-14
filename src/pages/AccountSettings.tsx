@@ -148,11 +148,11 @@ const AccountSettings = () => {
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-3xl mx-auto">
           <Link
-            to="/account"
+            to="/"
             className="inline-flex items-center gap-2 text-foreground hover:text-primary transition-colors mb-6"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span className="font-medium">Retour</span>
+            <span className="font-medium">Retour à l'accueil</span>
           </Link>
 
           <h1 className="text-4xl font-bold text-foreground mb-8">
