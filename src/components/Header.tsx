@@ -1,5 +1,6 @@
-import { Shield, Phone, Mail } from "lucide-react";
+import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   return (
@@ -41,9 +42,11 @@ const Header = () => {
 
           {/* Account Button */}
           <div className="hidden md:flex items-center">
-            <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
-              Créer un compte
-            </Button>
+            <Link to="/signup">
+              <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
+                Créer un compte
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
