@@ -401,18 +401,20 @@ const AccountDocuments = () => {
                 )}
 
                 <div className="space-y-2 sm:col-span-2 lg:col-span-1 flex items-end">
-                  <label htmlFor="file-upload" className="w-full">
-                    <Button disabled={uploading} className="cursor-pointer w-full">
-                      {uploading ? "Téléchargement..." : "Choisir un fichier"}
-                    </Button>
-                    <input
-                      id="file-upload"
-                      type="file"
-                      accept=".pdf"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                  </label>
+                  <Button 
+                    disabled={uploading} 
+                    className="w-full"
+                    onClick={() => document.getElementById('file-upload')?.click()}
+                  >
+                    {uploading ? "Téléchargement..." : "Choisir un fichier"}
+                  </Button>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
                 </div>
               </div>
             </CardContent>
