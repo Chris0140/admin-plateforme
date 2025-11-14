@@ -28,10 +28,13 @@ const categories: Record<Category, { label: string; subcategories: { value: stri
   assurance: {
     label: "Assurance",
     subcategories: [
-      { value: "rc", label: "RC (Responsabilité Civile)" },
-      { value: "protection_juridique", label: "Protection Juridique" },
-      { value: "inventaire_menage", label: "Inventaire Ménage" },
-      { value: "autre_assurance", label: "Autre Assurance" },
+      { value: "assurance_maladie", label: "Assurance maladie" },
+      { value: "assurance_vehicule", label: "Assurance véhicule" },
+      { value: "assurance_moto", label: "Assurance moto" },
+      { value: "protection_juridique", label: "Protection juridique" },
+      { value: "inventaire_menage_rc", label: "Inventaire ménage & RC" },
+      { value: "assurance_voyage", label: "Assurance voyage" },
+      { value: "assurance_animal", label: "Assurance animal" },
     ],
   },
   prevoyance_retraite: {
