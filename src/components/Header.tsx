@@ -112,11 +112,18 @@ const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link to="/signup">
-                <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
-                  Créer un compte
-                </Button>
-              </Link>
+              <div className="flex flex-col gap-2">
+                <Link to="/signup">
+                  <Button className="w-full bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
+                    Créer un compte
+                  </Button>
+                </Link>
+                <Link to="/login">
+                  <Button variant="outline" className="w-full">
+                    Se connecter
+                  </Button>
+                </Link>
+              </div>
             )}
           </div>
         </div>
