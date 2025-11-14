@@ -9,6 +9,7 @@ const Services = () => {
       description: "Comparez les assurances et trouvez les meilleures offres",
       savings: "Économisez jusqu'à 2'400 CHF/an",
       iconBg: "bg-primary",
+      link: "/comparateur",
     },
     {
       icon: Wallet,

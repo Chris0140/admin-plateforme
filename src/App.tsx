@@ -12,6 +12,7 @@ import AccountSecurity from "./pages/AccountSecurity";
 import AccountDocuments from "./pages/AccountDocuments";
 import NotFound from "./pages/NotFound";
 import SimulateurImpots from "./pages/SimulateurImpots";
+import Comparateur from "./pages/Comparateur";
 import AssuranceMaladie from "./pages/comparateur/AssuranceMaladie";
 import AssuranceVehicule from "./pages/comparateur/AssuranceVehicule";
 import TroisiemePilier from "./pages/comparateur/TroisiemePilier";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/account/settings" element={<AccountSettings />} />
             <Route path="/account/security" element={<AccountSecurity />} />
             <Route path="/account/documents" element={<AccountDocuments />} />
+            <Route path="/comparateur" element={<Comparateur />} />
             <Route path="/comparateur/assurance-maladie" element={<AssuranceMaladie />} />
             <Route path="/comparateur/assurance-vehicule" element={<AssuranceVehicule />} />
             <Route path="/comparateur/troisieme-pilier" element={<TroisiemePilier />} />
