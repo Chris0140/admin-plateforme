@@ -192,8 +192,9 @@ const AccountDocuments = () => {
       return;
     }
 
-    // Créer une URL locale à partir du blob
-    const url = URL.createObjectURL(data);
+    // Forcer le type MIME en PDF pour une meilleure compatibilité d'affichage
+    const pdfBlob = data.type === "application/pdf" ? data : new Blob([data], { type: "application/pdf" });
+    const url = URL.createObjectURL(pdfBlob);
     setDocumentUrl(url);
     setViewingDocument(doc);
   };
@@ -516,11 +517,19 @@ const AccountDocuments = () => {
           </DialogHeader>
           <div className="flex-1 w-full h-full">
             {documentUrl && (
-              <iframe
-                src={documentUrl}
+              <object
+                data={`${documentUrl}#toolbar=1&navpanes=0&scrollbar=1`}
+                type="application/pdf"
                 className="w-full h-full rounded-md border-0"
-                title={viewingDocument?.file_name}
-              />
+              >
+                <div className="h-full w-full flex flex-col items-center justify-center gap-4 text-center text-muted-foreground">
+                  <p>Impossible d'afficher l'aperçu PDF ici.</p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => window.open(documentUrl, '_blank')}>Ouvrir dans un nouvel onglet</Button>
+                    <Button variant="outline" onClick={() => viewingDocument && handleDownload(viewingDocument)}>Télécharger</Button>
+                  </div>
+                </div>
+              </object>
             )}
           </div>
         </DialogContent>
