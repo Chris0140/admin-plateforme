@@ -52,7 +52,7 @@ const AccountSettings = () => {
         .from("profiles")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         toast({
@@ -107,14 +107,15 @@ const AccountSettings = () => {
             title: "Erreur",
             description: "Impossible de mettre à jour l'email: " + authError.message,
           });
-          return;
+          // Continuer la sauvegarde du profil même si l'email n'a pas pu être mis à jour
         }
       }
 
-      // Update profile in database
+      // Upsert du profil en base (crée si inexistant, met à jour sinon)
       const { error } = await supabase
         .from("profiles")
-        .update({
+        .upsert({
+          user_id: user.id,
           appellation: validatedData.appellation,
           nom: validatedData.nom,
           prenom: validatedData.prenom,
@@ -123,8 +124,7 @@ const AccountSettings = () => {
           localite: validatedData.localite,
           adresse: validatedData.adresse || "",
           telephone: validatedData.telephone || "",
-        })
-        .eq("user_id", user.id);
+        }, { onConflict: 'user_id' });
 
       if (error) {
         toast({
