@@ -1,6 +1,7 @@
 import { ArrowRight, LucideIcon } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface ServiceCardProps {
   icon: LucideIcon;
@@ -8,11 +9,23 @@ interface ServiceCardProps {
   description: string;
   savings: string;
   iconBg: string;
+  link?: string;
 }
 
-const ServiceCard = ({ icon: Icon, title, description, savings, iconBg }: ServiceCardProps) => {
+const ServiceCard = ({ icon: Icon, title, description, savings, iconBg, link }: ServiceCardProps) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    if (link) {
+      navigate(link);
+    }
+  };
+
   return (
-    <Card className="bg-[image:var(--gradient-card)] border-border hover:border-primary transition-all duration-300 p-8 group cursor-pointer shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-bronze)]">
+    <Card 
+      className="bg-[image:var(--gradient-card)] border-border hover:border-primary transition-all duration-300 p-8 group cursor-pointer shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-bronze)]"
+      onClick={handleClick}
+    >
       {/* Icon */}
       <div className={`inline-flex items-center justify-center w-16 h-16 ${iconBg} rounded-2xl mb-6 group-hover:scale-110 transition-transform`}>
         <Icon className="h-8 w-8 text-white" />
