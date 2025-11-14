@@ -95,27 +95,20 @@ const AccountSettings = () => {
 
       if (!user) return;
 
-      // Update user in auth (email and metadata)
-      const { error: authError } = await supabase.auth.updateUser({
-        email: validatedData.email,
-        data: {
-          appellation: validatedData.appellation,
-          nom: validatedData.nom,
-          prenom: validatedData.prenom,
-          date_naissance: validatedData.date_naissance,
-          localite: validatedData.localite,
-          adresse: validatedData.adresse,
-          telephone: validatedData.telephone,
-        },
-      });
-
-      if (authError) {
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de mettre à jour les informations: " + authError.message,
+      // Mettre à jour l'email dans auth uniquement s'il a changé
+      if (validatedData.email !== user.email) {
+        const { error: authError } = await supabase.auth.updateUser({
+          email: validatedData.email,
         });
-        return;
+
+        if (authError) {
+          toast({
+            variant: "destructive",
+            title: "Erreur",
+            description: "Impossible de mettre à jour l'email: " + authError.message,
+          });
+          return;
+        }
       }
 
       // Update profile in database
