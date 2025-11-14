@@ -22,6 +22,19 @@ const profileSchema = z.object({
   telephone: z.string().trim().max(20).optional(),
 });
 
+const passwordSchema = z.object({
+  newPassword: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères").optional().or(z.literal("")),
+  confirmPassword: z.string().optional().or(z.literal("")),
+}).refine((data) => {
+  if (data.newPassword && data.newPassword.length > 0) {
+    return data.newPassword === data.confirmPassword;
+  }
+  return true;
+}, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
+
 const AccountSettings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -37,7 +50,12 @@ const AccountSettings = () => {
     adresse: "",
     telephone: "",
   });
+  const [passwordData, setPasswordData] = useState({
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -83,6 +101,66 @@ const AccountSettings = () => {
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const handlePasswordChange = (field: string, value: string) => {
+    setPasswordData((prev) => ({ ...prev, [field]: value }));
+    setPasswordErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordErrors({});
+
+    try {
+      const validatedData = passwordSchema.parse(passwordData);
+      
+      if (!validatedData.newPassword || validatedData.newPassword.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Veuillez entrer un nouveau mot de passe",
+        });
+        return;
+      }
+
+      setLoading(true);
+
+      const { error } = await supabase.auth.updateUser({
+        password: validatedData.newPassword,
+      });
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de mettre à jour le mot de passe: " + error.message,
+        });
+        return;
+      }
+
+      toast({
+        title: "Mot de passe mis à jour !",
+        description: "Votre mot de passe a été modifié avec succès.",
+      });
+
+      setPasswordData({
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const fieldErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            fieldErrors[err.path[0].toString()] = err.message;
+          }
+        });
+        setPasswordErrors(fieldErrors);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -176,7 +254,12 @@ const AccountSettings = () => {
             Paramètres du compte
           </h1>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Section Informations personnelles */}
+          <div className="bg-card border border-border rounded-lg p-6 mb-6">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
+              Informations personnelles
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-6">
             {/* Appellation Buttons */}
             <div className="space-y-2">
               <Label>
@@ -316,14 +399,72 @@ const AccountSettings = () => {
               </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze"
-            >
-              {loading ? "Enregistrement..." : "Enregistrer les modifications"}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze"
+              >
+                {loading ? "Enregistrement..." : "Enregistrer les modifications"}
+              </Button>
+            </form>
+          </div>
+
+          {/* Section Sécurité */}
+          <div className="bg-card border border-border rounded-lg p-6">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
+              Sécurité du compte
+            </h2>
+            
+            <form onSubmit={handlePasswordUpdate} className="space-y-6">
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Pour modifier votre email de connexion, modifiez-le dans la section "Informations personnelles" ci-dessus.
+                </p>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">
+                    Nouveau mot de passe
+                  </Label>
+                  <Input
+                    id="newPassword"
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => handlePasswordChange("newPassword", e.target.value)}
+                    className="bg-background"
+                    placeholder="Entrez votre nouveau mot de passe"
+                  />
+                  {passwordErrors.newPassword && (
+                    <p className="text-sm text-destructive">{passwordErrors.newPassword}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">
+                    Confirmer le nouveau mot de passe
+                  </Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => handlePasswordChange("confirmPassword", e.target.value)}
+                    className="bg-background"
+                    placeholder="Confirmez votre nouveau mot de passe"
+                  />
+                  {passwordErrors.confirmPassword && (
+                    <p className="text-sm text-destructive">{passwordErrors.confirmPassword}</p>
+                  )}
+                </div>
+              </div>
+
+              <Button
+                type="submit"
+                disabled={loading || !passwordData.newPassword}
+                className="w-full bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze"
+              >
+                {loading ? "Mise à jour..." : "Mettre à jour le mot de passe"}
+              </Button>
+            </form>
+          </div>
         </div>
       </main>
 
