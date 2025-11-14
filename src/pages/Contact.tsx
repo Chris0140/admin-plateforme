@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { z } from "zod";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const contactSchema = z.object({
   nom: z.string().trim().min(1, "Le nom est obligatoire").max(100),
@@ -18,6 +20,7 @@ const contactSchema = z.object({
 
 const Contact = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nom: "",
@@ -26,6 +29,35 @@ const Contact = () => {
     message: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Load user profile data if logged in
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("nom, prenom, email, telephone")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error loading profile:", error);
+        return;
+      }
+
+      if (data) {
+        setFormData((prev) => ({
+          ...prev,
+          nom: `${data.prenom} ${data.nom}`,
+          email: data.email || "",
+          telephone: data.telephone || "",
+        }));
+      }
+    };
+
+    loadUserProfile();
+  }, [user]);
 
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
