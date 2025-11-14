@@ -38,6 +38,20 @@ const formSchema = z.object({
   autresDeductions: z.string().optional(),
 });
 
+// Taux d'impôt ecclésiastique par canton (en % de centimes additionnels sur l'impôt de base)
+const tauxEcclesiastiqueParCanton: Record<string, Record<string, number>> = {
+  ZH: { catholique: 0.10, protestant: 0.10, "catholique-chretien": 0.10 },
+  BE: { catholique: 0.12, protestant: 0.12, "catholique-chretien": 0.12 },
+  VD: { catholique: 0.08, protestant: 0.08 },
+  GE: { catholique: 0.07, protestant: 0.07 },
+  VS: { catholique: 0.09, protestant: 0.09 },
+  FR: { catholique: 0.11, protestant: 0.11, "catholique-chretien": 0.11 },
+  NE: { catholique: 0.10, protestant: 0.10, "catholique-chretien": 0.10 },
+  JU: { catholique: 0.12, protestant: 0.12 },
+  TI: { catholique: 0.08, protestant: 0.08 },
+  GR: { catholique: 0.09, protestant: 0.09, "catholique-chretien": 0.09 },
+};
+
 const cantons = [
   { value: "ZH", label: "Zürich", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
   { value: "BE", label: "Berne", tauxCantonal: 3.06, coefficientCantonal: 1.00 },
@@ -326,8 +340,9 @@ const SimulateurImpots = () => {
     // Calcul de l'impôt ecclésiastique (culte) pour Genève
     // Taux: 7 centimes additionnels sur l'impôt de base pour les confessions reconnues
     let impotEcclesiastique = 0;
-    if (confession && confession !== "aucune" && (confession === "catholique" || confession === "protestant")) {
-      impotEcclesiastique = impotBase * 0.07; // 7 centimes additionnels
+    const tauxEcclesiastique = confession && tauxEcclesiastiqueParCanton.GE?.[confession];
+    if (tauxEcclesiastique) {
+      impotEcclesiastique = impotBase * tauxEcclesiastique;
     }
 
     return {
@@ -336,6 +351,25 @@ const SimulateurImpots = () => {
       impotCommunal: Math.round(impotCommunal * 100) / 100,
       impotEcclesiastique: Math.round(impotEcclesiastique * 100) / 100,
     };
+  };
+
+  // Calcul de l'impôt ecclésiastique pour les autres cantons (basé sur l'impôt cantonal)
+  const calculateEcclesiasticalTax = (
+    impotCantonal: number,
+    canton: string,
+    confession?: string
+  ): number => {
+    if (!confession || confession === "aucune" || !tauxEcclesiastiqueParCanton[canton]) {
+      return 0;
+    }
+    
+    const tauxEcclesiastique = tauxEcclesiastiqueParCanton[canton][confession];
+    if (!tauxEcclesiastique) {
+      return 0;
+    }
+    
+    // Pour les autres cantons, l'impôt ecclésiastique est généralement calculé comme un pourcentage de l'impôt cantonal
+    return Math.round(impotCantonal * tauxEcclesiastique * 100) / 100;
   };
 
   // Barème officiel de l'impôt fédéral direct 2025 (personne seule)
@@ -452,6 +486,9 @@ const SimulateurImpots = () => {
       // Calcul de l'impôt communal avec le coefficient multiplicateur réel
       const impotCommunalBase = revenuImposable * 0.025 + fortuneImposable * 0.001;
       impotCommunal = impotCommunalBase * (communeData?.coefficientCommunal || 1.00);
+      
+      // Calcul de l'impôt ecclésiastique pour les autres cantons
+      impotEcclesiastique = calculateEcclesiasticalTax(impotCantonal, values.canton, values.confession);
     }
 
     const totalImpots = impotFederal + impotCantonal + impotCommunal + impotEcclesiastique;
@@ -606,7 +643,7 @@ const SimulateurImpots = () => {
                         name="confession"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Confession (Genève)</FormLabel>
+                            <FormLabel>Confession</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                 <SelectTrigger>
@@ -615,8 +652,9 @@ const SimulateurImpots = () => {
                               </FormControl>
                               <SelectContent>
                                 <SelectItem value="aucune">Aucune</SelectItem>
-                                <SelectItem value="catholique">Catholique</SelectItem>
-                                <SelectItem value="protestant">Protestant</SelectItem>
+                                <SelectItem value="catholique">Catholique romaine</SelectItem>
+                                <SelectItem value="protestant">Protestante / Réformée évangélique</SelectItem>
+                                <SelectItem value="catholique-chretien">Catholique-chrétienne</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
