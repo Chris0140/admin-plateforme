@@ -3,40 +3,37 @@ import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import adminLogo from "@/assets/admin-logo.png";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-
 const Header = () => {
-  const { user, loading } = useAuth();
+  const {
+    user,
+    loading
+  } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
+    const {
+      error
+    } = await supabase.auth.signOut();
     if (error) {
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error.message,
+        description: error.message
       });
     } else {
       toast({
         title: "Déconnexion réussie",
-        description: "À bientôt !",
+        description: "À bientôt !"
       });
       navigate("/");
     }
   };
-
-  return (
-    <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+  return <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
@@ -50,9 +47,7 @@ const Header = () => {
 
           {/* Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
-            <Link to="/" className="text-primary font-medium hover:text-bronze-light transition-colors">
-              Accueil
-            </Link>
+            
             <Link to="/simulateur-impots" className="text-foreground hover:text-primary transition-colors font-medium">
               Simulateur d'impôts
             </Link>
@@ -128,21 +123,15 @@ const Header = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <a href="#" className="text-foreground hover:text-primary transition-colors">
-              Simulation d'impôts
-            </a>
+            
             <a href="#" className="text-foreground hover:text-primary transition-colors">
               Budget
             </a>
-            {user ? (
-              <Link to="/account/documents" className="text-foreground hover:text-primary transition-colors">
+            {user ? <Link to="/account/documents" className="text-foreground hover:text-primary transition-colors">
                 Mes documents
-              </Link>
-            ) : (
-              <a href="#" className="text-foreground hover:text-primary transition-colors">
+              </Link> : <a href="#" className="text-foreground hover:text-primary transition-colors">
                 Mes documents
-              </a>
-            )}
+              </a>}
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
               Contact
             </Link>
@@ -150,12 +139,9 @@ const Header = () => {
 
           {/* Account Button/Menu */}
           <div className="hidden md:flex items-center">
-            {loading ? (
-              <Button disabled className="bg-gradient-to-r from-bronze to-bronze-light">
+            {loading ? <Button disabled className="bg-gradient-to-r from-bronze to-bronze-light">
                 Chargement...
-              </Button>
-            ) : user ? (
-              <DropdownMenu>
+              </Button> : user ? <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
                     Mon compte
@@ -181,19 +167,14 @@ const Header = () => {
                     <span>Se déconnecter</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Link to="/auth">
+              </DropdownMenu> : <Link to="/auth">
                 <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
                   Connexion / Inscription
                 </Button>
-              </Link>
-            )}
+              </Link>}
           </div>
         </div>
       </div>
-    </header>
-  );
+    </header>;
 };
-
 export default Header;
