@@ -1,4 +1,4 @@
-import { Settings, FileText, LogOut, ChevronDown } from "lucide-react";
+import { Settings, FileText, LogOut, ChevronDown, Heart, Car, Bike, Shield, Plane, Home, PawPrint, PiggyBank } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,34 +54,74 @@ const Header = () => {
               Accueil
             </Link>
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 text-foreground hover:text-primary transition-colors">
+              <DropdownMenuTrigger className="flex items-center gap-1 text-foreground hover:text-primary transition-colors font-medium">
                 Comparateur
                 <ChevronDown className="h-4 w-4" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64 bg-card border-border z-50">
+              <DropdownMenuContent align="start" className="w-72 bg-card/95 backdrop-blur-md border-border shadow-lg z-50 p-2">
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer">Assurance maladie</a>
+                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10">
+                      <Heart className="h-4 w-4 text-red-500" />
+                    </div>
+                    <span className="font-medium">Assurance maladie</span>
+                  </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer">Assurance Véhicule</a>
+                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10">
+                      <Car className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <span className="font-medium">Assurance Véhicule</span>
+                  </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer">Assurance Moto</a>
+                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-500/10">
+                      <Bike className="h-4 w-4 text-orange-500" />
+                    </div>
+                    <span className="font-medium">Assurance Moto</span>
+                  </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer">Protection juridique</a>
+                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-500/10">
+                      <Shield className="h-4 w-4 text-purple-500" />
+                    </div>
+                    <span className="font-medium">Protection juridique</span>
+                  </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer">Assurance voyage</a>
+                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-sky-500/10">
+                      <Plane className="h-4 w-4 text-sky-500" />
+                    </div>
+                    <span className="font-medium">Assurance voyage</span>
+                  </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer">Inventaire du ménage et RC privée</a>
+                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500/10">
+                      <Home className="h-4 w-4 text-green-500" />
+                    </div>
+                    <span className="font-medium">Inventaire du ménage et RC privée</span>
+                  </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer">Assurance animaux</a>
+                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/10">
+                      <PawPrint className="h-4 w-4 text-amber-500" />
+                    </div>
+                    <span className="font-medium">Assurance animaux</span>
+                  </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer">3ème pilier</a>
+                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10">
+                      <PiggyBank className="h-4 w-4 text-emerald-500" />
+                    </div>
+                    <span className="font-medium">3ème pilier</span>
+                  </a>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
