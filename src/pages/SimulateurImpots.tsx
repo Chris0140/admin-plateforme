@@ -29,6 +29,7 @@ const formSchema = z.object({
   canton: z.string().min(1, "Veuillez sélectionner un canton"),
   commune: z.string().min(1, "Veuillez sélectionner une commune"),
   etatCivil: z.string().min(1, "Veuillez sélectionner votre état civil"),
+  confession: z.string().optional(),
   revenuAnnuel: z.string().min(1, "Veuillez indiquer votre revenu"),
   fortune: z.string().optional(),
   nombreEnfants: z.string().optional(),
@@ -229,6 +230,7 @@ const SimulateurImpots = () => {
       canton: "",
       commune: "",
       etatCivil: "",
+      confession: "",
       revenuAnnuel: "",
       fortune: "0",
       nombreEnfants: "0",
@@ -266,8 +268,9 @@ const SimulateurImpots = () => {
   const calculateGenevaTax = (
     revenuNet: number, 
     etatCivil: string,
-    coefficientCommunal: number
-  ): { impotCantonal: number; impotCommunal: number; impotBase: number } => {
+    coefficientCommunal: number,
+    confession?: string
+  ): { impotCantonal: number; impotCommunal: number; impotBase: number; impotEcclesiastique: number } => {
     // Déterminer le coefficient de splitting selon la situation
     let splittingCoeff = 1.0;
     if (etatCivil === "marie") {
@@ -320,10 +323,18 @@ const SimulateurImpots = () => {
     const centimesCommunal = impotBase * coefficientCommunal;
     const impotCommunal = centimesCommunal;
 
+    // Calcul de l'impôt ecclésiastique (culte) pour Genève
+    // Taux: 7 centimes additionnels sur l'impôt de base pour les confessions reconnues
+    let impotEcclesiastique = 0;
+    if (confession && (confession === "catholique" || confession === "protestant")) {
+      impotEcclesiastique = impotBase * 0.07; // 7 centimes additionnels
+    }
+
     return {
       impotBase,
       impotCantonal: Math.round(impotCantonal * 100) / 100,
       impotCommunal: Math.round(impotCommunal * 100) / 100,
+      impotEcclesiastique: Math.round(impotEcclesiastique * 100) / 100,
     };
   };
 
@@ -422,14 +433,17 @@ const SimulateurImpots = () => {
     let impotCommunal = 0;
 
     // Calcul spécifique pour le canton de Genève avec barème officiel 2024
+    let impotEcclesiastique = 0;
     if (values.canton === "GE") {
       const genevaResult = calculateGenevaTax(
         revenuImposable,
         values.etatCivil,
-        communeData?.coefficientCommunal || 0.455
+        communeData?.coefficientCommunal || 0.455,
+        values.confession
       );
       impotCantonal = genevaResult.impotCantonal;
       impotCommunal = genevaResult.impotCommunal;
+      impotEcclesiastique = genevaResult.impotEcclesiastique;
     } else {
       // Calcul simplifié pour les autres cantons
       const impotCantonalBase = revenuImposable * 0.065 + fortuneImposable * 0.002;
@@ -440,7 +454,7 @@ const SimulateurImpots = () => {
       impotCommunal = impotCommunalBase * (communeData?.coefficientCommunal || 1.00);
     }
 
-    const totalImpots = impotFederal + impotCantonal + impotCommunal;
+    const totalImpots = impotFederal + impotCantonal + impotCommunal + impotEcclesiastique;
     const tauxEffectif = revenu > 0 ? (totalImpots / revenu) * 100 : 0;
 
     setResults({
@@ -450,6 +464,7 @@ const SimulateurImpots = () => {
       impotFederal,
       impotCantonal,
       impotCommunal,
+      impotEcclesiastique,
       totalImpots,
       tauxEffectif,
       canton: cantonData?.label || "",
@@ -579,6 +594,29 @@ const SimulateurImpots = () => {
                                 <SelectItem value="parent">Parent seul avec enfants</SelectItem>
                                 <SelectItem value="divorce">Divorcé(e)</SelectItem>
                                 <SelectItem value="veuf">Veuf/Veuve</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="confession"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Confession (Genève)</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Aucune" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Aucune</SelectItem>
+                                <SelectItem value="catholique">Catholique</SelectItem>
+                                <SelectItem value="protestant">Protestant</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -766,6 +804,13 @@ const SimulateurImpots = () => {
                       <span className="text-sm text-muted-foreground">Impôt communal</span>
                       <span className="font-medium">CHF {results.impotCommunal.toLocaleString()}</span>
                     </div>
+
+                    {results.impotEcclesiastique > 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Impôt ecclésiastique (culte)</span>
+                        <span className="font-medium">CHF {results.impotEcclesiastique.toLocaleString()}</span>
+                      </div>
+                    )}
                   </div>
 
                   <Separator />
