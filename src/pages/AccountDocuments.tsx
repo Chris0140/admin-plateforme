@@ -181,7 +181,7 @@ const AccountDocuments = () => {
   const handleView = async (doc: Document) => {
     const { data, error } = await supabase.storage
       .from("documents")
-      .createSignedUrl(doc.file_path, 3600); // URL valide 1 heure
+      .download(doc.file_path);
 
     if (error || !data) {
       toast({
@@ -192,7 +192,9 @@ const AccountDocuments = () => {
       return;
     }
 
-    setDocumentUrl(data.signedUrl);
+    // Créer une URL locale à partir du blob
+    const url = URL.createObjectURL(data);
+    setDocumentUrl(url);
     setViewingDocument(doc);
   };
 
@@ -501,7 +503,13 @@ const AccountDocuments = () => {
         </div>
       </div>
 
-      <Dialog open={!!viewingDocument} onOpenChange={() => setViewingDocument(null)}>
+      <Dialog open={!!viewingDocument} onOpenChange={() => {
+        if (documentUrl) {
+          URL.revokeObjectURL(documentUrl);
+        }
+        setViewingDocument(null);
+        setDocumentUrl('');
+      }}>
         <DialogContent className="max-w-6xl h-[90vh]">
           <DialogHeader>
             <DialogTitle>{viewingDocument?.file_name}</DialogTitle>
@@ -510,7 +518,7 @@ const AccountDocuments = () => {
             {documentUrl && (
               <iframe
                 src={documentUrl}
-                className="w-full h-full rounded-md"
+                className="w-full h-full rounded-md border-0"
                 title={viewingDocument?.file_name}
               />
             )}
