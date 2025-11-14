@@ -16,26 +16,32 @@ export type Database = {
     Tables: {
       documents: {
         Row: {
+          category: string
           file_name: string
           file_path: string
           file_size: number
           id: string
+          subcategory: string | null
           uploaded_at: string
           user_id: string
         }
         Insert: {
+          category?: string
           file_name: string
           file_path: string
           file_size: number
           id?: string
+          subcategory?: string | null
           uploaded_at?: string
           user_id: string
         }
         Update: {
+          category?: string
           file_name?: string
           file_path?: string
           file_size?: number
           id?: string
+          subcategory?: string | null
           uploaded_at?: string
           user_id?: string
         }
