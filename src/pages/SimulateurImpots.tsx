@@ -230,7 +230,7 @@ const SimulateurImpots = () => {
       canton: "",
       commune: "",
       etatCivil: "",
-      confession: "",
+      confession: "aucune",
       revenuAnnuel: "",
       fortune: "0",
       nombreEnfants: "0",
@@ -326,7 +326,7 @@ const SimulateurImpots = () => {
     // Calcul de l'impôt ecclésiastique (culte) pour Genève
     // Taux: 7 centimes additionnels sur l'impôt de base pour les confessions reconnues
     let impotEcclesiastique = 0;
-    if (confession && (confession === "catholique" || confession === "protestant")) {
+    if (confession && confession !== "aucune" && (confession === "catholique" || confession === "protestant")) {
       impotEcclesiastique = impotBase * 0.07; // 7 centimes additionnels
     }
 
@@ -614,7 +614,7 @@ const SimulateurImpots = () => {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Aucune</SelectItem>
+                                <SelectItem value="aucune">Aucune</SelectItem>
                                 <SelectItem value="catholique">Catholique</SelectItem>
                                 <SelectItem value="protestant">Protestant</SelectItem>
                               </SelectContent>
