@@ -16,7 +16,7 @@ const Hero = () => {
           {/* Main heading */}
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             Comparez et économisez sur vos{" "}
-            <span className="text-primary">                        assurances</span>
+            <span className="text-primary">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    assurances</span>
           </h1>
 
           {/* Subtitle */}
