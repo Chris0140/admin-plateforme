@@ -517,19 +517,11 @@ const AccountDocuments = () => {
           </DialogHeader>
           <div className="flex-1 w-full h-full">
             {documentUrl && (
-              <object
-                data={`${documentUrl}#toolbar=1&navpanes=0&scrollbar=1`}
-                type="application/pdf"
+              <iframe
+                src={documentUrl}
                 className="w-full h-full rounded-md border-0"
-              >
-                <div className="h-full w-full flex flex-col items-center justify-center gap-4 text-center text-muted-foreground">
-                  <p>Impossible d'afficher l'aperçu PDF ici.</p>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => window.open(documentUrl, '_blank')}>Ouvrir dans un nouvel onglet</Button>
-                    <Button variant="outline" onClick={() => viewingDocument && handleDownload(viewingDocument)}>Télécharger</Button>
-                  </div>
-                </div>
-              </object>
+                title={viewingDocument?.file_name}
+              />
             )}
           </div>
         </DialogContent>
