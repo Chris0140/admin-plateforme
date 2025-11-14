@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 interface Document {
   id: string;
@@ -72,6 +74,7 @@ const AccountDocuments = () => {
   const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
   const [documentUrl, setDocumentUrl] = useState<string>('');
   const [activeTab, setActiveTab] = useState<Category>('assurance');
+  const [uploadSectionOpen, setUploadSectionOpen] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -389,75 +392,6 @@ const AccountDocuments = () => {
             </p>
           </div>
 
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Ajouter un document
-              </CardTitle>
-              <CardDescription>
-                Sélectionnez une catégorie et téléchargez votre document (PDF, max 10 MB)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
-                <div className="space-y-2">
-                  <Label htmlFor="category">Catégorie</Label>
-                  <Select value={selectedCategory} onValueChange={(value) => {
-                    setSelectedCategory(value as Category);
-                    setSelectedSubcategory('');
-                  }}>
-                    <SelectTrigger id="category">
-                      <SelectValue placeholder="Sélectionner une catégorie" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(categories).map(([key, { label }]) => (
-                        <SelectItem key={key} value={key}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {categories[selectedCategory]?.subcategories.length > 0 && (
-                  <div className="space-y-2">
-                    <Label htmlFor="subcategory">Sous-catégorie</Label>
-                    <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
-                      <SelectTrigger id="subcategory">
-                        <SelectValue placeholder="Sélectionner (optionnel)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories[selectedCategory].subcategories.map((sub) => (
-                          <SelectItem key={sub.value} value={sub.value}>
-                            {sub.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className="space-y-2 sm:col-span-2 lg:col-span-1 flex items-end">
-                  <Button 
-                    disabled={uploading} 
-                    className="w-full"
-                    onClick={() => document.getElementById('file-upload')?.click()}
-                  >
-                    {uploading ? "Téléchargement..." : "Choisir un fichier"}
-                  </Button>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Category)} className="space-y-6">
             {/* Menu déroulant pour mobile/tablette */}
             <div className="lg:hidden">
@@ -526,6 +460,84 @@ const AccountDocuments = () => {
               {renderDocumentsList(getDocumentsByCategory('autres'))}
             </TabsContent>
           </Tabs>
+
+          <Collapsible open={uploadSectionOpen} onOpenChange={setUploadSectionOpen} className="mt-6">
+            <Card>
+              <CollapsibleTrigger asChild>
+                <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors rounded-t-lg">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Upload className="h-5 w-5" />
+                      Ajouter un document
+                    </CardTitle>
+                    <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${uploadSectionOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                  <CardDescription>
+                    Sélectionnez une catégorie et téléchargez votre document (PDF, max 10 MB)
+                  </CardDescription>
+                </CardHeader>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="pt-4">
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Catégorie</Label>
+                      <Select value={selectedCategory} onValueChange={(value) => {
+                        setSelectedCategory(value as Category);
+                        setSelectedSubcategory('');
+                      }}>
+                        <SelectTrigger id="category">
+                          <SelectValue placeholder="Sélectionner une catégorie" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(categories).map(([key, { label }]) => (
+                            <SelectItem key={key} value={key}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {categories[selectedCategory]?.subcategories.length > 0 && (
+                      <div className="space-y-2">
+                        <Label htmlFor="subcategory">Sous-catégorie</Label>
+                        <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
+                          <SelectTrigger id="subcategory">
+                            <SelectValue placeholder="Sélectionner (optionnel)" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories[selectedCategory].subcategories.map((sub) => (
+                              <SelectItem key={sub.value} value={sub.value}>
+                                {sub.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div className="space-y-2 sm:col-span-2 lg:col-span-1 flex items-end">
+                      <Button 
+                        disabled={uploading} 
+                        className="w-full"
+                        onClick={() => document.getElementById('file-upload')?.click()}
+                      >
+                        {uploading ? "Téléchargement..." : "Choisir un fichier"}
+                      </Button>
+                      <input
+                        id="file-upload"
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         </div>
       </div>
 
