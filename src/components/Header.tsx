@@ -60,20 +60,20 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-72 bg-card/95 backdrop-blur-md border-border shadow-lg z-50 p-2">
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                  <Link to="/comparateur/assurance-maladie" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10">
                       <Heart className="h-4 w-4 text-red-500" />
                     </div>
                     <span className="font-medium">Assurance maladie</span>
-                  </a>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                  <Link to="/comparateur/assurance-vehicule" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10">
                       <Car className="h-4 w-4 text-blue-500" />
                     </div>
                     <span className="font-medium">Assurance Véhicule</span>
-                  </a>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
@@ -108,20 +108,20 @@ const Header = () => {
                   </a>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                  <Link to="/comparateur/assurance-animaux" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/10">
                       <PawPrint className="h-4 w-4 text-amber-500" />
                     </div>
                     <span className="font-medium">Assurance animaux</span>
-                  </a>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <a href="#" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                  <Link to="/comparateur/troisieme-pilier" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10">
                       <PiggyBank className="h-4 w-4 text-emerald-500" />
                     </div>
                     <span className="font-medium">3ème pilier</span>
-                  </a>
+                  </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
