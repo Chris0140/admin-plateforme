@@ -191,11 +191,11 @@ const AccountDocuments = () => {
       <main className="container mx-auto px-4 py-16">
         <div className="max-w-4xl mx-auto">
           <Link
-            to="/account"
+            to="/"
             className="inline-flex items-center gap-2 text-foreground hover:text-primary transition-colors mb-6"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span className="font-medium">Retour</span>
+            <span className="font-medium">Retour à l'accueil</span>
           </Link>
 
           <div className="flex justify-between items-center mb-8">
