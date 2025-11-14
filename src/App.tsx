@@ -11,6 +11,7 @@ import AccountSettings from "./pages/AccountSettings";
 import AccountSecurity from "./pages/AccountSecurity";
 import AccountDocuments from "./pages/AccountDocuments";
 import NotFound from "./pages/NotFound";
+import SimulateurImpots from "./pages/SimulateurImpots";
 import AssuranceMaladie from "./pages/comparateur/AssuranceMaladie";
 import AssuranceVehicule from "./pages/comparateur/AssuranceVehicule";
 import TroisiemePilier from "./pages/comparateur/TroisiemePilier";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/comparateur/assurance-vehicule" element={<AssuranceVehicule />} />
             <Route path="/comparateur/troisieme-pilier" element={<TroisiemePilier />} />
             <Route path="/comparateur/assurance-animaux" element={<AssuranceAnimaux />} />
+            <Route path="/simulateur-impots" element={<SimulateurImpots />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
