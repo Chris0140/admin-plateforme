@@ -511,15 +511,15 @@ const AccountDocuments = () => {
         setViewingDocument(null);
         setDocumentUrl('');
       }}>
-        <DialogContent className="max-w-6xl h-[90vh]">
-          <DialogHeader>
+        <DialogContent className="max-w-[100vw] w-[100vw] h-[100vh] p-0">
+          <DialogHeader className="px-4 py-2">
             <DialogTitle>{viewingDocument?.file_name}</DialogTitle>
           </DialogHeader>
-          <div className="flex-1 w-full h-full">
+          <div className="flex-1 w-full h-[calc(100vh-56px)]">
             {documentUrl && (
               <iframe
                 src={documentUrl}
-                className="w-full h-full rounded-md border-0"
+                className="w-full h-full rounded-none border-0"
                 title={viewingDocument?.file_name}
               />
             )}
