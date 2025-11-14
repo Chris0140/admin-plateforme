@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield } from "lucide-react";
@@ -115,29 +114,43 @@ const Signup = () => {
 
         <div className="bg-card border border-border rounded-2xl p-8 shadow-card">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Appellation */}
-              <div className="space-y-2">
-                <Label htmlFor="appellation">
-                  Appellation <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.appellation}
-                  onValueChange={(value) => handleChange("appellation", value)}
+            {/* Appellation Buttons */}
+            <div className="space-y-2">
+              <Label>
+                Civilité <span className="text-destructive">*</span>
+              </Label>
+              <div className="flex gap-4">
+                <Button
+                  type="button"
+                  onClick={() => handleChange("appellation", "M.")}
+                  variant={formData.appellation === "M." ? "default" : "outline"}
+                  className={
+                    formData.appellation === "M."
+                      ? "flex-1 bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze"
+                      : "flex-1"
+                  }
                 >
-                  <SelectTrigger className="bg-background">
-                    <SelectValue placeholder="Sélectionnez" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="M.">Monsieur</SelectItem>
-                    <SelectItem value="Mme">Madame</SelectItem>
-                    <SelectItem value="Autre">Autre</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.appellation && (
-                  <p className="text-sm text-destructive">{errors.appellation}</p>
-                )}
+                  Monsieur
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => handleChange("appellation", "Mme")}
+                  variant={formData.appellation === "Mme" ? "default" : "outline"}
+                  className={
+                    formData.appellation === "Mme"
+                      ? "flex-1 bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze"
+                      : "flex-1"
+                  }
+                >
+                  Madame
+                </Button>
               </div>
+              {errors.appellation && (
+                <p className="text-sm text-destructive">{errors.appellation}</p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               {/* Nom */}
               <div className="space-y-2">
