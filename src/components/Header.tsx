@@ -1,8 +1,11 @@
 import { Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
+  const { user, loading } = useAuth();
+
   return (
     <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4">
@@ -32,9 +35,15 @@ const Header = () => {
             <a href="#" className="text-foreground hover:text-primary transition-colors">
               Budget
             </a>
-            <a href="#" className="text-foreground hover:text-primary transition-colors">
-              Mes documents
-            </a>
+            {user ? (
+              <Link to="/account/documents" className="text-foreground hover:text-primary transition-colors">
+                Mes documents
+              </Link>
+            ) : (
+              <a href="#" className="text-foreground hover:text-primary transition-colors">
+                Mes documents
+              </a>
+            )}
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
               Contact
             </Link>
@@ -42,11 +51,23 @@ const Header = () => {
 
           {/* Account Button */}
           <div className="hidden md:flex items-center">
-            <Link to="/signup">
-              <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
-                Créer un compte
+            {loading ? (
+              <Button disabled className="bg-gradient-to-r from-bronze to-bronze-light">
+                Chargement...
               </Button>
-            </Link>
+            ) : user ? (
+              <Link to="/account">
+                <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
+                  Mon compte
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/signup">
+                <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
+                  Créer un compte
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
