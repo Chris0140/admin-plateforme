@@ -71,6 +71,7 @@ const AccountDocuments = () => {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
   const [documentUrl, setDocumentUrl] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<Category>('assurance');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -457,8 +458,32 @@ const AccountDocuments = () => {
             </CardContent>
           </Card>
 
-          <Tabs defaultValue="assurance" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Category)} className="space-y-6">
+            {/* Menu déroulant pour mobile/tablette */}
+            <div className="lg:hidden">
+              <Select value={activeTab} onValueChange={(value) => setActiveTab(value as Category)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="assurance">
+                    Assurance ({getDocumentsByCategory('assurance').length})
+                  </SelectItem>
+                  <SelectItem value="prevoyance_retraite">
+                    Prévoyance ({getDocumentsByCategory('prevoyance_retraite').length})
+                  </SelectItem>
+                  <SelectItem value="impots">
+                    Impôts ({getDocumentsByCategory('impots').length})
+                  </SelectItem>
+                  <SelectItem value="autres">
+                    Autres ({getDocumentsByCategory('autres').length})
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Onglets pour desktop */}
+            <TabsList className="hidden lg:grid w-full grid-cols-4">
               <TabsTrigger value="assurance">
                 Assurance
                 <span className="ml-2 text-xs bg-primary/20 px-2 py-0.5 rounded-full">
