@@ -4,6 +4,13 @@ import ServiceCard from "./ServiceCard";
 const Services = () => {
   const services = [
     {
+      icon: Scale,
+      title: "Comparateur",
+      description: "Comparez les assurances et trouvez les meilleures offres",
+      savings: "Économisez jusqu'à 2'400 CHF/an",
+      iconBg: "bg-purple-600",
+    },
+    {
       icon: Calculator,
       title: "Simulateur d'impôts",
       description: "Calculez vos impôts et découvrez comment optimiser votre fiscalité",
@@ -16,13 +23,6 @@ const Services = () => {
       description: "Gérez votre budget personnel et planifiez vos finances",
       savings: "Contrôlez vos dépenses efficacement",
       iconBg: "bg-emerald-600",
-    },
-    {
-      icon: Scale,
-      title: "Comparateur",
-      description: "Comparez les assurances et trouvez les meilleures offres",
-      savings: "Économisez jusqu'à 2'400 CHF/an",
-      iconBg: "bg-purple-600",
     },
   ];
 
