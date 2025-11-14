@@ -139,6 +139,76 @@ const SimulateurImpots = () => {
 
   const selectedCanton = form.watch("canton");
 
+  // Barème officiel de l'impôt fédéral direct 2025 (personne seule)
+  const calculateFederalTax = (revenuImposable: number): number => {
+    if (revenuImposable < 18500) return 0;
+    
+    // Barème complet IFD 2025 basé sur le document officiel
+    const bareme = [
+      { seuil: 18500, impot: 25.41, tauxPar100: 0 },
+      { seuil: 19000, impot: 29.26, tauxPar100: 0.77 },
+      { seuil: 26000, impot: 83.16, tauxPar100: 0.77 },
+      { seuil: 38000, impot: 180.84, tauxPar100: 0.88 },
+      { seuil: 50000, impot: 400.80, tauxPar100: 2.64 },
+      { seuil: 56000, impot: 559.20, tauxPar100: 2.64 },
+      { seuil: 57000, impot: 585.60, tauxPar100: 2.64 },
+      { seuil: 58000, impot: 612.00, tauxPar100: 2.64 },
+      { seuil: 59000, impot: 638.40, tauxPar100: 2.64 },
+      { seuil: 60000, impot: 664.80, tauxPar100: 2.64 },
+      { seuil: 61000, impot: 691.20, tauxPar100: 2.64 },
+      { seuil: 62000, impot: 717.60, tauxPar100: 2.64 },
+      { seuil: 63000, impot: 744.00, tauxPar100: 2.64 },
+      { seuil: 64000, impot: 770.40, tauxPar100: 2.64 },
+      { seuil: 65000, impot: 796.80, tauxPar100: 2.64 },
+      { seuil: 70000, impot: 928.80, tauxPar100: 2.64 },
+      { seuil: 75000, impot: 1060.80, tauxPar100: 2.64 },
+      { seuil: 80000, impot: 1192.80, tauxPar100: 2.64 },
+      { seuil: 85000, impot: 1698.00, tauxPar100: 6.60 },
+      { seuil: 90000, impot: 2028.00, tauxPar100: 6.60 },
+      { seuil: 95000, impot: 2358.00, tauxPar100: 6.60 },
+      { seuil: 100000, impot: 2688.00, tauxPar100: 6.60 },
+      { seuil: 105000, impot: 3018.00, tauxPar100: 6.60 },
+      { seuil: 108600, impot: 3255.60, tauxPar100: 8.80 },
+      { seuil: 110000, impot: 3374.40, tauxPar100: 8.80 },
+      { seuil: 115000, impot: 3814.40, tauxPar100: 8.80 },
+      { seuil: 120000, impot: 4254.40, tauxPar100: 8.80 },
+      { seuil: 125000, impot: 4694.40, tauxPar100: 8.80 },
+      { seuil: 130000, impot: 5134.40, tauxPar100: 8.80 },
+      { seuil: 135000, impot: 5574.40, tauxPar100: 8.80 },
+      { seuil: 138300, impot: 5864.80, tauxPar100: 11.00 },
+      { seuil: 141500, impot: 6146.40, tauxPar100: 11.00 },
+      { seuil: 144200, impot: 6443.40, tauxPar100: 11.00 },
+      { seuil: 148200, impot: 6883.40, tauxPar100: 11.00 },
+      { seuil: 150000, impot: 7081.40, tauxPar100: 11.00 },
+      { seuil: 155000, impot: 7631.40, tauxPar100: 11.00 },
+      { seuil: 160000, impot: 8181.40, tauxPar100: 11.00 },
+      { seuil: 170000, impot: 9281.40, tauxPar100: 11.00 },
+      { seuil: 184900, impot: 10920.40, tauxPar100: 13.20 },
+      { seuil: 200000, impot: 12913.60, tauxPar100: 13.20 },
+      { seuil: 250000, impot: 19513.60, tauxPar100: 13.20 },
+      { seuil: 300000, impot: 26113.60, tauxPar100: 13.20 },
+      { seuil: 400000, impot: 39313.60, tauxPar100: 13.20 },
+      { seuil: 500000, impot: 52513.60, tauxPar100: 13.20 },
+      { seuil: 600000, impot: 65713.60, tauxPar100: 13.20 },
+      { seuil: 700000, impot: 78913.60, tauxPar100: 13.20 },
+    ];
+
+    // Trouver la tranche applicable
+    let trancheApplicable = bareme[0];
+    for (let i = bareme.length - 1; i >= 0; i--) {
+      if (revenuImposable >= bareme[i].seuil) {
+        trancheApplicable = bareme[i];
+        break;
+      }
+    }
+
+    // Calculer l'impôt: impôt de base + (revenu excédentaire / 100) * taux par 100
+    const revenuExcedentaire = revenuImposable - trancheApplicable.seuil;
+    const impotSurExcedent = (revenuExcedentaire / 100) * trancheApplicable.tauxPar100;
+    
+    return trancheApplicable.impot + impotSurExcedent;
+  };
+
   const calculateTax = (values: z.infer<typeof formSchema>) => {
     const revenu = parseFloat(values.revenuAnnuel) || 0;
     const fortune = parseFloat(values.fortune || "0") || 0;
@@ -154,23 +224,8 @@ const SimulateurImpots = () => {
     const revenuImposable = Math.max(0, revenu - deductionsTotal - deductionEnfants - deductionCouple);
     const fortuneImposable = Math.max(0, fortune - 100000);
 
-    // Impôt fédéral direct (IFD) - barème progressif simplifié
-    let impotFederal = 0;
-    if (revenuImposable > 0) {
-      if (revenuImposable <= 31600) {
-        impotFederal = 0;
-      } else if (revenuImposable <= 72500) {
-        impotFederal = (revenuImposable - 31600) * 0.01;
-      } else if (revenuImposable <= 103600) {
-        impotFederal = 409 + (revenuImposable - 72500) * 0.02;
-      } else if (revenuImposable <= 134600) {
-        impotFederal = 1031 + (revenuImposable - 103600) * 0.03;
-      } else if (revenuImposable <= 176000) {
-        impotFederal = 1961 + (revenuImposable - 134600) * 0.04;
-      } else {
-        impotFederal = 3617 + (revenuImposable - 176000) * 0.055 + (revenuImposable - 176000) * 0.065;
-      }
-    }
+    // Impôt fédéral direct (IFD) avec barème officiel 2025
+    const impotFederal = calculateFederalTax(revenuImposable);
 
     const cantonData = cantons.find(c => c.value === values.canton);
     const communeData = communesDisponibles.find(c => c.value === values.commune);
