@@ -5,12 +5,13 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { ArrowLeft, Upload, FileText, Trash2, Download } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Trash2, Download, Eye } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface Document {
   id: string;
@@ -68,6 +69,8 @@ const AccountDocuments = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category>('assurance');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
+  const [documentUrl, setDocumentUrl] = useState<string>('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -175,6 +178,24 @@ const AccountDocuments = () => {
     }
   };
 
+  const handleView = async (doc: Document) => {
+    const { data, error } = await supabase.storage
+      .from("documents")
+      .createSignedUrl(doc.file_path, 3600); // URL valide 1 heure
+
+    if (error || !data) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'ouvrir le document",
+      });
+      return;
+    }
+
+    setDocumentUrl(data.signedUrl);
+    setViewingDocument(doc);
+  };
+
   const handleDownload = async (doc: Document) => {
     const { data, error } = await supabase.storage
       .from("documents")
@@ -278,10 +299,13 @@ const AccountDocuments = () => {
                   key={doc.id}
                   className="bg-card rounded-lg border p-4 flex items-center justify-between hover:bg-accent/50 transition-colors"
                 >
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div 
+                    className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                    onClick={() => handleView(doc)}
+                  >
                     <FileText className="h-5 w-5 text-primary flex-shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground truncate">
+                      <p className="font-medium text-foreground truncate hover:underline">
                         {doc.file_name}
                       </p>
                       <p className="text-sm text-muted-foreground">
@@ -294,7 +318,16 @@ const AccountDocuments = () => {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => handleView(doc)}
+                      title="Visualiser"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleDownload(doc)}
+                      title="Télécharger"
                     >
                       <Download className="h-4 w-4" />
                     </Button>
@@ -303,6 +336,7 @@ const AccountDocuments = () => {
                       size="sm"
                       onClick={() => handleDelete(doc.id)}
                       className="text-destructive hover:text-destructive"
+                      title="Supprimer"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -466,6 +500,24 @@ const AccountDocuments = () => {
           </Tabs>
         </div>
       </div>
+
+      <Dialog open={!!viewingDocument} onOpenChange={() => setViewingDocument(null)}>
+        <DialogContent className="max-w-6xl h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>{viewingDocument?.file_name}</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 w-full h-full">
+            {documentUrl && (
+              <iframe
+                src={documentUrl}
+                className="w-full h-full rounded-md"
+                title={viewingDocument?.file_name}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </>
   );
