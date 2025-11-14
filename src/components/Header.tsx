@@ -39,16 +39,11 @@ const Header = () => {
             </a>
           </nav>
 
-          {/* Contact Info */}
-          <div className="hidden md:flex items-center gap-6">
-            <div className="flex items-center gap-2 text-sm">
-              <Phone className="h-4 w-4 text-primary" />
-              <span className="text-foreground">0800 123 456</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Mail className="h-4 w-4 text-primary" />
-              <span className="text-foreground">info@admin.ch</span>
-            </div>
+          {/* Account Button */}
+          <div className="hidden md:flex items-center">
+            <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
+              Créer un compte
+            </Button>
           </div>
         </div>
       </div>
