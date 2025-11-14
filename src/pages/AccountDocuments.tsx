@@ -7,6 +7,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ArrowLeft, Upload, FileText, Trash2, Download } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface Document {
   id: string;
@@ -14,7 +18,43 @@ interface Document {
   file_path: string;
   file_size: number;
   uploaded_at: string;
+  category: string;
+  subcategory: string | null;
 }
+
+type Category = 'assurance' | 'prevoyance_retraite' | 'impots' | 'autres';
+
+const categories: Record<Category, { label: string; subcategories: { value: string; label: string }[] }> = {
+  assurance: {
+    label: "Assurance",
+    subcategories: [
+      { value: "rc", label: "RC (Responsabilité Civile)" },
+      { value: "protection_juridique", label: "Protection Juridique" },
+      { value: "inventaire_menage", label: "Inventaire Ménage" },
+      { value: "autre_assurance", label: "Autre Assurance" },
+    ],
+  },
+  prevoyance_retraite: {
+    label: "Prévoyance Retraite",
+    subcategories: [
+      { value: "1er_pilier", label: "1er Pilier (AVS)" },
+      { value: "2eme_pilier", label: "2ème Pilier (LPP)" },
+      { value: "3eme_pilier", label: "3ème Pilier (3a/3b)" },
+    ],
+  },
+  impots: {
+    label: "Impôts",
+    subcategories: [
+      { value: "declaration", label: "Déclaration d'impôts" },
+      { value: "attestation", label: "Attestations fiscales" },
+      { value: "autre_impot", label: "Autre document fiscal" },
+    ],
+  },
+  autres: {
+    label: "Autres",
+    subcategories: [],
+  },
+};
 
 const AccountDocuments = () => {
   const navigate = useNavigate();
@@ -23,6 +63,8 @@ const AccountDocuments = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<Category>('assurance');
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -58,6 +100,15 @@ const AccountDocuments = () => {
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
+
+    if (!selectedCategory) {
+      toast({
+        variant: "destructive",
+        title: "Catégorie requise",
+        description: "Veuillez sélectionner une catégorie pour le document",
+      });
+      return;
+    }
 
     // Verify file type
     if (file.type !== "application/pdf") {
@@ -96,6 +147,8 @@ const AccountDocuments = () => {
         file_name: file.name,
         file_path: filePath,
         file_size: file.size,
+        category: selectedCategory,
+        subcategory: selectedSubcategory || null,
       });
 
       if (dbError) throw dbError;
@@ -106,6 +159,7 @@ const AccountDocuments = () => {
       });
 
       fetchDocuments();
+      setSelectedSubcategory('');
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -140,8 +194,11 @@ const AccountDocuments = () => {
     URL.revokeObjectURL(url);
   };
 
-  const handleDelete = async (doc: Document) => {
+  const handleDelete = async (id: string) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce document ?")) return;
+
+    const doc = documents.find(d => d.id === id);
+    if (!doc) return;
 
     try {
       // Delete from storage
@@ -155,7 +212,7 @@ const AccountDocuments = () => {
       const { error: dbError } = await supabase
         .from("documents")
         .delete()
-        .eq("id", doc.id);
+        .eq("id", id);
 
       if (dbError) throw dbError;
 
@@ -180,94 +237,69 @@ const AccountDocuments = () => {
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
-  if (authLoading) {
-    return <div>Chargement...</div>;
-  }
+  const getDocumentsByCategory = (category: Category) => {
+    return documents.filter(doc => doc.category === category);
+  };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Header />
+  const renderDocumentsList = (categoryDocs: Document[]) => {
+    if (categoryDocs.length === 0) {
+      return (
+        <div className="bg-card rounded-lg border p-12 text-center">
+          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <p className="text-muted-foreground">
+            Aucun document dans cette catégorie
+          </p>
+        </div>
+      );
+    }
 
-      <main className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-foreground hover:text-primary transition-colors mb-6"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            <span className="font-medium">Retour à l'accueil</span>
-          </Link>
+    const groupedBySubcategory = categoryDocs.reduce((acc, doc) => {
+      const sub = doc.subcategory || 'non_classé';
+      if (!acc[sub]) acc[sub] = [];
+      acc[sub].push(doc);
+      return acc;
+    }, {} as Record<string, Document[]>);
 
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-4xl font-bold text-foreground">Mes documents</h1>
-            <div>
-              <input
-                type="file"
-                id="file-upload"
-                className="hidden"
-                accept=".pdf"
-                onChange={handleFileUpload}
-                disabled={uploading}
-              />
-              <label htmlFor="file-upload">
-                <Button
-                  asChild
-                  disabled={uploading}
-                  className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze cursor-pointer"
-                >
-                  <span>
-                    <Upload className="h-4 w-4 mr-2" />
-                    {uploading ? "Téléchargement..." : "Ajouter un PDF"}
-                  </span>
-                </Button>
-              </label>
-            </div>
-          </div>
-
-          {loading ? (
-            <p className="text-muted-foreground">Chargement...</p>
-          ) : documents.length === 0 ? (
-            <div className="text-center py-12 bg-card border border-border rounded-2xl">
-              <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-lg text-muted-foreground">
-                Aucun document pour le moment
-              </p>
-              <p className="text-sm text-muted-foreground mt-2">
-                Cliquez sur "Ajouter un PDF" pour commencer
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {documents.map((doc) => (
+    return (
+      <div className="space-y-6">
+        {Object.entries(groupedBySubcategory).map(([subcategory, docs]) => (
+          <div key={subcategory}>
+            {subcategory !== 'non_classé' && (
+              <h3 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
+                {categories[docs[0].category as Category]?.subcategories.find(s => s.value === subcategory)?.label || subcategory}
+              </h3>
+            )}
+            <div className="space-y-2">
+              {docs.map((doc) => (
                 <div
                   key={doc.id}
-                  className="bg-card border border-border rounded-xl p-6 flex items-center justify-between hover:shadow-card transition-shadow"
+                  className="bg-card rounded-lg border p-4 flex items-center justify-between hover:bg-accent/50 transition-colors"
                 >
-                  <div className="flex items-center gap-4 flex-1">
-                    <div className="bg-gradient-to-br from-bronze to-bronze-light rounded-lg p-3">
-                      <FileText className="h-6 w-6 text-primary-foreground" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground truncate">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground truncate">
                         {doc.file_name}
-                      </h3>
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        {formatFileSize(doc.file_size)} • {new Date(doc.uploaded_at).toLocaleDateString("fr-FR")}
+                        {formatFileSize(doc.file_size)} •{" "}
+                        {new Date(doc.uploaded_at).toLocaleDateString("fr-FR")}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex gap-2 flex-shrink-0">
                     <Button
                       variant="outline"
-                      size="icon"
+                      size="sm"
                       onClick={() => handleDownload(doc)}
                     >
                       <Download className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
-                      size="icon"
-                      onClick={() => handleDelete(doc)}
+                      size="sm"
+                      onClick={() => handleDelete(doc.id)}
+                      className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -275,12 +307,162 @@ const AccountDocuments = () => {
                 </div>
               ))}
             </div>
-          )}
-        </div>
-      </main>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
+  if (authLoading || loading) {
+    return (
+      <>
+        <Header />
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Header />
+      <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-6">
+            <Link to="/account/settings">
+              <Button variant="ghost" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Retour au compte
+              </Button>
+            </Link>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Mes Documents
+            </h1>
+            <p className="text-muted-foreground">
+              Organisez vos documents par catégorie
+            </p>
+          </div>
+
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Upload className="h-5 w-5" />
+                Ajouter un document
+              </CardTitle>
+              <CardDescription>
+                Sélectionnez une catégorie et téléchargez votre document (PDF, max 10 MB)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Catégorie</Label>
+                  <Select value={selectedCategory} onValueChange={(value) => {
+                    setSelectedCategory(value as Category);
+                    setSelectedSubcategory('');
+                  }}>
+                    <SelectTrigger id="category">
+                      <SelectValue placeholder="Sélectionner une catégorie" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(categories).map(([key, { label }]) => (
+                        <SelectItem key={key} value={key}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {categories[selectedCategory]?.subcategories.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="subcategory">Sous-catégorie</Label>
+                    <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
+                      <SelectTrigger id="subcategory">
+                        <SelectValue placeholder="Sélectionner (optionnel)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories[selectedCategory].subcategories.map((sub) => (
+                          <SelectItem key={sub.value} value={sub.value}>
+                            {sub.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <div className="space-y-2 sm:col-span-2 lg:col-span-1 flex items-end">
+                  <label htmlFor="file-upload" className="w-full">
+                    <Button disabled={uploading} className="cursor-pointer w-full">
+                      {uploading ? "Téléchargement..." : "Choisir un fichier"}
+                    </Button>
+                    <input
+                      id="file-upload"
+                      type="file"
+                      accept=".pdf"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Tabs defaultValue="assurance" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="assurance">
+                Assurance
+                <span className="ml-2 text-xs bg-primary/20 px-2 py-0.5 rounded-full">
+                  {getDocumentsByCategory('assurance').length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="prevoyance_retraite">
+                Prévoyance
+                <span className="ml-2 text-xs bg-primary/20 px-2 py-0.5 rounded-full">
+                  {getDocumentsByCategory('prevoyance_retraite').length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="impots">
+                Impôts
+                <span className="ml-2 text-xs bg-primary/20 px-2 py-0.5 rounded-full">
+                  {getDocumentsByCategory('impots').length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="autres">
+                Autres
+                <span className="ml-2 text-xs bg-primary/20 px-2 py-0.5 rounded-full">
+                  {getDocumentsByCategory('autres').length}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="assurance">
+              {renderDocumentsList(getDocumentsByCategory('assurance'))}
+            </TabsContent>
+
+            <TabsContent value="prevoyance_retraite">
+              {renderDocumentsList(getDocumentsByCategory('prevoyance_retraite'))}
+            </TabsContent>
+
+            <TabsContent value="impots">
+              {renderDocumentsList(getDocumentsByCategory('impots'))}
+            </TabsContent>
+
+            <TabsContent value="autres">
+              {renderDocumentsList(getDocumentsByCategory('autres'))}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
       <Footer />
-    </div>
+    </>
   );
 };
 
