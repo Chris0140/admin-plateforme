@@ -1,7 +1,8 @@
-import { Shield, Settings, FileText, LogOut, ChevronDown } from "lucide-react";
+import { Settings, FileText, LogOut, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import adminLogo from "@/assets/admin-logo.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,9 +41,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div className="bg-primary rounded-xl p-2.5">
-              <Shield className="h-6 w-6 text-primary-foreground" />
-            </div>
+            <img src={adminLogo} alt="Admin Logo" className="h-12 w-12 object-contain" />
             <div>
               <h1 className="text-xl font-bold text-foreground">admin.</h1>
               <p className="text-xs text-muted-foreground">Plateforme d'administration</p>
