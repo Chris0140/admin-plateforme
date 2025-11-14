@@ -1,28 +1,28 @@
-import { Heart, PiggyBank, Car } from "lucide-react";
+import { Calculator, Wallet, Scale } from "lucide-react";
 import ServiceCard from "./ServiceCard";
 
 const Services = () => {
   const services = [
     {
-      icon: Heart,
-      title: "Assurance Maladie",
-      description: "Comparez les primes et trouvez la meilleure couverture santé",
-      savings: "Économisez jusqu'à 2'400 CHF/an",
-      iconBg: "bg-red-600",
+      icon: Calculator,
+      title: "Simulateur d'impôts",
+      description: "Calculez vos impôts et découvrez comment optimiser votre fiscalité",
+      savings: "Économisez jusqu'à 3'000 CHF/an",
+      iconBg: "bg-blue-600",
     },
     {
-      icon: PiggyBank,
-      title: "3ème Pilier",
-      description: "Comparez les solutions 3A et optimisez vos économies fiscales",
-      savings: "Économisez jusqu'à 2'000 CHF d'impôts/an",
+      icon: Wallet,
+      title: "Budget",
+      description: "Gérez votre budget personnel et planifiez vos finances",
+      savings: "Contrôlez vos dépenses efficacement",
       iconBg: "bg-emerald-600",
     },
     {
-      icon: Car,
-      title: "Assurance Véhicule",
-      description: "Trouvez la meilleure assurance auto, moto ou vélo",
-      savings: "Économisez jusqu'à 1'200 CHF/an",
-      iconBg: "bg-blue-600",
+      icon: Scale,
+      title: "Comparateur",
+      description: "Comparez les assurances et trouvez les meilleures offres",
+      savings: "Économisez jusqu'à 2'400 CHF/an",
+      iconBg: "bg-purple-600",
     },
   ];
 
