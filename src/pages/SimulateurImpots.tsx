@@ -777,6 +777,30 @@ const SimulateurImpots = () => {
                       
                       <FormField
                         control={form.control}
+                        name="chargesSociales"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Charges sociales (CHF)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="text" 
+                                placeholder="0" 
+                                value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/'/g, '');
+                                  if (value === '' || /^\d+$/.test(value)) {
+                                    field.onChange(value);
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
                         name="deduction3emePilier"
                         render={({ field }) => (
                           <FormItem>
@@ -829,30 +853,6 @@ const SimulateurImpots = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Autres déductions (CHF)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="text" 
-                                placeholder="0" 
-                                value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""}
-                                onChange={(e) => {
-                                  const value = e.target.value.replace(/'/g, '');
-                                  if (value === '' || /^\d+$/.test(value)) {
-                                    field.onChange(value);
-                                  }
-                                }}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="chargesSociales"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Charges sociales (CHF)</FormLabel>
                             <FormControl>
                               <Input 
                                 type="text" 
