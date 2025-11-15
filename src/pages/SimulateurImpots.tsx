@@ -705,9 +705,15 @@ const SimulateurImpots = () => {
                             <FormLabel>Revenu annuel brut (CHF) *</FormLabel>
                             <FormControl>
                               <Input 
-                                type="number" 
-                                placeholder="80000" 
-                                {...field} 
+                                type="text" 
+                                placeholder="80'000" 
+                                value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/'/g, '');
+                                  if (value === '' || /^\d+$/.test(value)) {
+                                    field.onChange(value);
+                                  }
+                                }}
                               />
                             </FormControl>
                             <FormMessage />
@@ -723,9 +729,15 @@ const SimulateurImpots = () => {
                             <FormLabel>Fortune totale (CHF)</FormLabel>
                             <FormControl>
                               <Input 
-                                type="number" 
+                                type="text" 
                                 placeholder="0" 
-                                {...field} 
+                                value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/'/g, '');
+                                  if (value === '' || /^\d+$/.test(value)) {
+                                    field.onChange(value);
+                                  }
+                                }}
                               />
                             </FormControl>
                             <FormMessage />
@@ -765,9 +777,15 @@ const SimulateurImpots = () => {
                             <FormLabel>3ème pilier A (CHF)</FormLabel>
                             <FormControl>
                               <Input 
-                                type="number" 
-                                placeholder="0" 
-                                {...field} 
+                                type="text" 
+                                placeholder="7'056" 
+                                value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/'/g, '');
+                                  if (value === '' || /^\d+$/.test(value)) {
+                                    field.onChange(value);
+                                  }
+                                }}
                               />
                             </FormControl>
                             <FormMessage />
@@ -783,9 +801,15 @@ const SimulateurImpots = () => {
                             <FormLabel>Intérêts hypothécaires (CHF)</FormLabel>
                             <FormControl>
                               <Input 
-                                type="number" 
+                                type="text" 
                                 placeholder="0" 
-                                {...field} 
+                                value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/'/g, '');
+                                  if (value === '' || /^\d+$/.test(value)) {
+                                    field.onChange(value);
+                                  }
+                                }}
                               />
                             </FormControl>
                             <FormMessage />
@@ -801,9 +825,15 @@ const SimulateurImpots = () => {
                             <FormLabel>Autres déductions (CHF)</FormLabel>
                             <FormControl>
                               <Input 
-                                type="number" 
+                                type="text" 
                                 placeholder="0" 
-                                {...field} 
+                                value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/'/g, '');
+                                  if (value === '' || /^\d+$/.test(value)) {
+                                    field.onChange(value);
+                                  }
+                                }}
                               />
                             </FormControl>
                             <FormMessage />
