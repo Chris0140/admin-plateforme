@@ -1404,7 +1404,7 @@ const SimulateurImpots = () => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 mb-4">
             <Calculator className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Simulateur d'impôts Suisse</span>
+            <span className="text-sm font-medium text-primary">Simulateur d'impôts </span>
           </div>
           <h1 className="text-4xl font-bold mb-4 text-foreground">
             Calculez vos impôts 2024
