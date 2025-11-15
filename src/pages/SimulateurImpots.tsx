@@ -37,6 +37,7 @@ const formSchema = z.object({
   deduction3emePilier: z.string().optional(),
   interetsHypothecaires: z.string().optional(),
   autresDeductions: z.string().optional(),
+  chargesSociales: z.string().optional(),
 });
 
 // Taux d'impôt ecclésiastique par canton (en % de centimes additionnels sur l'impôt de base)
@@ -275,6 +276,7 @@ const SimulateurImpots = () => {
       deduction3emePilier: "0",
       interetsHypothecaires: "0",
       autresDeductions: "0",
+      chargesSociales: "0",
     },
   });
 
@@ -473,12 +475,16 @@ const SimulateurImpots = () => {
     const pilier3 = parseFloat(values.deduction3emePilier || "0") || 0;
     const interets = parseFloat(values.interetsHypothecaires || "0") || 0;
     const autresDeductions = parseFloat(values.autresDeductions || "0") || 0;
+    const chargesSociales = parseFloat(values.chargesSociales || "0") || 0;
 
+    // Soustraire les charges sociales du revenu brut
+    const revenuNetAvantDeductions = Math.max(0, revenu - chargesSociales);
+    
     const deductionsTotal = pilier3 + interets + autresDeductions;
     const deductionEnfants = enfants * 6500;
     const deductionCouple = values.etatCivil === "marie" ? 2600 : 0;
 
-    const revenuImposable = Math.max(0, revenu - deductionsTotal - deductionEnfants - deductionCouple);
+    const revenuImposable = Math.max(0, revenuNetAvantDeductions - deductionsTotal - deductionEnfants - deductionCouple);
     const fortuneImposable = Math.max(0, fortune - 100000);
 
     // Impôt fédéral direct (IFD) avec barème officiel 2025
@@ -823,6 +829,30 @@ const SimulateurImpots = () => {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Autres déductions (CHF)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="text" 
+                                placeholder="0" 
+                                value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(/'/g, '');
+                                  if (value === '' || /^\d+$/.test(value)) {
+                                    field.onChange(value);
+                                  }
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="chargesSociales"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Charges sociales (CHF)</FormLabel>
                             <FormControl>
                               <Input 
                                 type="text" 
