@@ -3,7 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Car, PawPrint, Wallet } from "lucide-react";
+import { Shield, Car, PawPrint, Wallet, Home, Bike, Plane } from "lucide-react";
 
 const Comparateur = () => {
   const navigate = useNavigate();
@@ -22,16 +22,34 @@ const Comparateur = () => {
       path: "/comparateur/assurance-vehicule",
     },
     {
-      icon: PawPrint,
-      title: "Assurance Animaux",
-      description: "Protégez vos compagnons avec la meilleure assurance",
-      path: "/comparateur/assurance-animaux",
-    },
-    {
       icon: Wallet,
       title: "3ème Pilier",
       description: "Comparez les solutions de prévoyance",
       path: "/comparateur/troisieme-pilier",
+    },
+    {
+      icon: Home,
+      title: "Assurance Inventaire Ménage",
+      description: "Protégez vos biens avec la meilleure assurance",
+      path: "/comparateur/assurance-inventaire-menage",
+    },
+    {
+      icon: Bike,
+      title: "Assurance Moto",
+      description: "Trouvez la meilleure assurance pour votre moto",
+      path: "/comparateur/assurance-moto",
+    },
+    {
+      icon: Plane,
+      title: "Assurance Voyage",
+      description: "Voyagez l'esprit tranquille avec la meilleure couverture",
+      path: "/comparateur/assurance-voyage",
+    },
+    {
+      icon: PawPrint,
+      title: "Assurance Animaux",
+      description: "Protégez vos compagnons avec la meilleure assurance",
+      path: "/comparateur/assurance-animaux",
     },
   ];
 
@@ -49,7 +67,7 @@ const Comparateur = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             {comparateurs.map((item, index) => {
               const Icon = item.icon;
               return (
