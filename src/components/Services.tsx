@@ -24,6 +24,7 @@ const Services = () => {
       description: "Calculez vos impôts et optimisez votre fiscalité efficacement",
       savings: "Jusqu'à 3'000 CHF/an d'économies",
       iconBg: "bg-accent",
+      link: "/simulateur-impots",
     },
   ];
 
