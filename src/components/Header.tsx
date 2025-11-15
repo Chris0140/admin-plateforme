@@ -52,7 +52,9 @@ const Header = () => {
 
           {/* Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
-            
+            <Link to="/budget" className="text-foreground hover:text-primary transition-colors font-medium">
+              Budget
+            </Link>
             <Link to="/simulateur-impots" className="text-foreground hover:text-primary transition-colors font-medium">
               Simulateur d'impôts
             </Link>
@@ -192,6 +194,14 @@ const Header = () => {
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col gap-4 mt-8">
+                  <Link 
+                    to="/budget" 
+                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Budget
+                  </Link>
+                  
                   <Link 
                     to="/simulateur-impots" 
                     className="text-foreground hover:text-primary transition-colors font-medium py-2"
