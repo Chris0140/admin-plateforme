@@ -532,7 +532,7 @@ const SimulateurImpots = () => {
     setResults({
       revenuImposable,
       fortuneImposable,
-      deductionsTotal: deductionsTotal + deductionEnfants + deductionCouple,
+      deductionsTotal: chargesSociales + deductionsTotal + deductionEnfants + deductionCouple,
       impotFederal,
       impotCantonal,
       impotCommunal,
