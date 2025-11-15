@@ -17,6 +17,7 @@ const Services = () => {
       description: "Gérez votre budget et planifiez vos finances en toute simplicité",
       savings: "Maîtrisez vos dépenses au quotidien",
       iconBg: "bg-secondary",
+      link: "/budget",
     },
     {
       icon: Calculator,
