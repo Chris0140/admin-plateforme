@@ -529,6 +529,48 @@ const SimulateurImpots = () => {
     const totalImpots = impotFederal + impotCantonal + impotCommunal + impotEcclesiastique;
     const tauxEffectif = revenu > 0 ? (totalImpots / revenu) * 100 : 0;
 
+    // Calcul des impôts sans déduction 3ème pilier pour voir l'économie
+    let totalImpotsSansPilier3 = totalImpots;
+    let economiePilier3 = 0;
+    
+    if (pilier3 > 0) {
+      const revenuImposableSansPilier3 = Math.max(0, revenuNetAvantDeductions - (deductionsTotal - pilier3) - deductionEnfants - deductionCouple);
+      const impotFederalSansPilier3 = calculateFederalTax(revenuImposableSansPilier3);
+      
+      let impotCantonalSansPilier3 = 0;
+      let impotCommunalSansPilier3 = 0;
+      let impotEcclesiastiqueSansPilier3 = 0;
+      
+      if (values.canton === "GE") {
+        const genevaResult = calculateGenevaTax(
+          revenuImposableSansPilier3,
+          values.etatCivil,
+          communeData?.coefficientCommunal || 0.455,
+          values.confession
+        );
+        impotCantonalSansPilier3 = genevaResult.impotCantonal;
+        impotCommunalSansPilier3 = genevaResult.impotCommunal;
+        impotEcclesiastiqueSansPilier3 = genevaResult.impotEcclesiastique;
+      } else if (values.canton === "VD") {
+        const impotRevenuBase = calculateVaudIncomeTax(revenuImposableSansPilier3);
+        const impotFortuneBase = calculateVaudWealthTax(fortuneImposable);
+        const impotBase = impotRevenuBase + impotFortuneBase;
+        
+        impotCantonalSansPilier3 = impotBase;
+        impotCommunalSansPilier3 = impotBase * (communeData?.coefficientCommunal || 0.70);
+        impotEcclesiastiqueSansPilier3 = calculateEcclesiasticalTax(impotCantonalSansPilier3, values.canton, values.confession);
+      } else {
+        const impotCantonalBase = revenuImposableSansPilier3 * 0.065 + fortuneImposable * 0.002;
+        impotCantonalSansPilier3 = impotCantonalBase * (cantonData?.tauxCantonal || 1.00);
+        const impotCommunalBase = revenuImposableSansPilier3 * 0.025 + fortuneImposable * 0.001;
+        impotCommunalSansPilier3 = impotCommunalBase * (communeData?.coefficientCommunal || 1.00);
+        impotEcclesiastiqueSansPilier3 = calculateEcclesiasticalTax(impotCantonalSansPilier3, values.canton, values.confession);
+      }
+      
+      totalImpotsSansPilier3 = impotFederalSansPilier3 + impotCantonalSansPilier3 + impotCommunalSansPilier3 + impotEcclesiastiqueSansPilier3;
+      economiePilier3 = totalImpotsSansPilier3 - totalImpots;
+    }
+
     setResults({
       revenuImposable,
       fortuneImposable,
@@ -539,6 +581,7 @@ const SimulateurImpots = () => {
       impotEcclesiastique,
       totalImpots,
       tauxEffectif,
+      economiePilier3,
       canton: cantonData?.label || "",
       commune: communeData?.label || "",
       coefficientCommunal: communeData?.coefficientCommunal || 1.00,
@@ -951,6 +994,12 @@ const SimulateurImpots = () => {
                       <span className="text-muted-foreground">Taux effectif</span>
                       <span className="font-semibold text-accent">{results.tauxEffectif.toFixed(2)}%</span>
                     </div>
+                    {results.economiePilier3 > 0 && (
+                      <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-primary/20">
+                        <span className="text-muted-foreground">Économie grâce au 3ème pilier</span>
+                        <span className="font-semibold text-green-500">- CHF {results.economiePilier3.toLocaleString()}</span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
