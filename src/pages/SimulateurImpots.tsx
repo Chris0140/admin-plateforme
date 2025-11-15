@@ -54,16 +54,8 @@ const tauxEcclesiastiqueParCanton: Record<string, Record<string, number>> = {
 };
 
 const cantons = [
-  { value: "VD", label: "Vaud", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
   { value: "GE", label: "Genève", tauxCantonal: 1.00, coefficientCantonal: 45.50 },
-  { value: "ZH", label: "Zürich", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
-  { value: "BE", label: "Berne", tauxCantonal: 3.06, coefficientCantonal: 1.00 },
-  { value: "VS", label: "Valais", tauxCantonal: 1.67, coefficientCantonal: 1.00 },
-  { value: "FR", label: "Fribourg", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
-  { value: "NE", label: "Neuchâtel", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
-  { value: "JU", label: "Jura", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
-  { value: "TI", label: "Ticino", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
-  { value: "GR", label: "Grisons", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
+  { value: "VD", label: "Vaud", tauxCantonal: 1.00, coefficientCantonal: 1.00 },
 ];
 
 // Barème officiel de l'impôt sur le revenu 2025 pour Vaud (coefficient 100%)
