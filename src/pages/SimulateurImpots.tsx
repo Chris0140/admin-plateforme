@@ -1528,8 +1528,9 @@ const SimulateurImpots = () => {
                             <FormLabel>Revenu annuel brut (CHF) *</FormLabel>
                             <FormControl>
                               <Input type="text" placeholder="80'000" value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""} onChange={e => {
-                          const value = e.target.value.replace(/'/g, '');
+                          let value = e.target.value.replace(/'/g, '');
                           if (value === '' || /^\d+$/.test(value)) {
+                            value = value.replace(/^0+(?=\d)/, '');
                             field.onChange(value);
                           }
                         }} />
@@ -1543,8 +1544,9 @@ const SimulateurImpots = () => {
                             <FormLabel>Fortune totale (CHF)</FormLabel>
                             <FormControl>
                               <Input type="text" placeholder="0" value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""} onChange={e => {
-                          const value = e.target.value.replace(/'/g, '');
+                          let value = e.target.value.replace(/'/g, '');
                           if (value === '' || /^\d+$/.test(value)) {
+                            value = value.replace(/^0+(?=\d)/, '');
                             field.onChange(value);
                           }
                         }} />
@@ -1574,8 +1576,9 @@ const SimulateurImpots = () => {
                             <FormLabel>Charges sociales (CHF)</FormLabel>
                             <FormControl>
                               <Input type="text" placeholder="0" value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""} onChange={e => {
-                          const value = e.target.value.replace(/'/g, '');
+                          let value = e.target.value.replace(/'/g, '');
                           if (value === '' || /^\d+$/.test(value)) {
+                            value = value.replace(/^0+(?=\d)/, '');
                             field.onChange(value);
                           }
                         }} />
@@ -1588,9 +1591,10 @@ const SimulateurImpots = () => {
                     }) => <FormItem>
                             <FormLabel>3ème pilier A (CHF)</FormLabel>
                             <FormControl>
-                              <Input type="text" placeholder="7'056" value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""} onChange={e => {
-                          const value = e.target.value.replace(/'/g, '');
+                              <Input type="text" placeholder="7'258" value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""} onChange={e => {
+                          let value = e.target.value.replace(/'/g, '');
                           if (value === '' || /^\d+$/.test(value)) {
+                            value = value.replace(/^0+(?=\d)/, '');
                             field.onChange(value);
                           }
                         }} />
@@ -1604,8 +1608,9 @@ const SimulateurImpots = () => {
                             <FormLabel>Intérêts hypothécaires (CHF)</FormLabel>
                             <FormControl>
                               <Input type="text" placeholder="0" value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""} onChange={e => {
-                          const value = e.target.value.replace(/'/g, '');
+                          let value = e.target.value.replace(/'/g, '');
                           if (value === '' || /^\d+$/.test(value)) {
+                            value = value.replace(/^0+(?=\d)/, '');
                             field.onChange(value);
                           }
                         }} />
@@ -1619,8 +1624,9 @@ const SimulateurImpots = () => {
                             <FormLabel>Autres déductions (CHF)</FormLabel>
                             <FormControl>
                               <Input type="text" placeholder="0" value={field.value ? field.value.replace(/\B(?=(\d{3})+(?!\d))/g, "'") : ""} onChange={e => {
-                          const value = e.target.value.replace(/'/g, '');
+                          let value = e.target.value.replace(/'/g, '');
                           if (value === '' || /^\d+$/.test(value)) {
+                            value = value.replace(/^0+(?=\d)/, '');
                             field.onChange(value);
                           }
                         }} />
