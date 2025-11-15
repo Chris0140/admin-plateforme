@@ -17,6 +17,7 @@ import AssuranceMaladie from "./pages/comparateur/AssuranceMaladie";
 import AssuranceVehicule from "./pages/comparateur/AssuranceVehicule";
 import TroisiemePilier from "./pages/comparateur/TroisiemePilier";
 import AssuranceAnimaux from "./pages/comparateur/AssuranceAnimaux";
+import Budget from "./pages/Budget";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/comparateur/troisieme-pilier" element={<TroisiemePilier />} />
             <Route path="/comparateur/assurance-animaux" element={<AssuranceAnimaux />} />
             <Route path="/simulateur-impots" element={<SimulateurImpots />} />
+            <Route path="/budget" element={<Budget />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
