@@ -15,13 +15,13 @@ const Hero = () => {
 
           {/* Main heading */}
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
-            La nouvelle façon de gérer votre{" "}
-            <span className="text-primary">admin.</span>
+            Gérez votre admin{" "}
+            <span className="text-primary">autrement</span>
           </h1>
 
           {/* Subtitle */}
           <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto">
-            La plateforme pour comparer et optimiser les assurances, vos finances personnelles, sans oublier prévoir ses impôts
+            Comparez et optimisez vos assurances, gérez vos finances personnelles et anticipez vos impôts
           </p>
 
           {/* Stats */}

@@ -28,7 +28,7 @@ const ServiceCard = ({ icon: Icon, title, description, savings, iconBg, link }: 
     >
       {/* Icon */}
       <div className={`inline-flex items-center justify-center w-16 h-16 ${iconBg} rounded-2xl mb-6 group-hover:scale-110 transition-transform`}>
-        <Icon className="h-8 w-8 text-white" />
+        <Icon className="h-8 w-8 text-primary-foreground" />
       </div>
 
       {/* Title */}
