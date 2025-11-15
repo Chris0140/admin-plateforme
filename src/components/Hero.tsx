@@ -1,8 +1,6 @@
 import { Users, Building2, Clock } from "lucide-react";
-
 const Hero = () => {
-  return (
-    <section className="relative py-24 overflow-hidden">
+  return <section className="relative py-24 overflow-hidden">
       {/* Background gradient */}
       <div className="absolute inset-0 bg-[image:var(--gradient-hero)] opacity-50"></div>
       
@@ -18,7 +16,7 @@ const Hero = () => {
           {/* Main heading */}
           <h1 className="text-5xl md:text-6xl font-bold mb-6">
             La nouvelle façon de gérer votre{" "}
-            <span className="text-primary">admin</span>
+            <span className="text-primary">admin.</span>
           </h1>
 
           {/* Subtitle */}
@@ -54,8 +52,6 @@ const Hero = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default Hero;
