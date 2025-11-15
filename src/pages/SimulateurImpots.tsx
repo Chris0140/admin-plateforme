@@ -1407,7 +1407,7 @@ const SimulateurImpots = () => {
             <span className="text-sm font-medium text-primary">Simulateur d'impôts </span>
           </div>
           <h1 className="text-4xl font-bold mb-4 text-foreground">
-            Calculez vos impôts 2024
+            Calculez vos impôts 2025
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Estimez précisément vos impôts fédéraux, cantonaux et communaux selon votre situation personnelle
