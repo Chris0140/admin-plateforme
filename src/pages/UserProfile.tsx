@@ -2,12 +2,20 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Wallet, Calculator, FileText, Loader2 } from "lucide-react";
+import { User, Wallet, Calculator, FileText, Loader2, Edit, Save, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Profile {
   nom: string;
@@ -29,26 +37,85 @@ interface Document {
   uploaded_at: string;
 }
 
+interface BudgetData {
+  period_type: "mensuel" | "annuel";
+  revenu_brut: number;
+  charges_sociales: number;
+  depenses_logement: number;
+  depenses_transport: number;
+  depenses_alimentation: number;
+  autres_depenses: number;
+  avs_1er_pilier: number;
+  lpp_2eme_pilier: number;
+  pilier_3a: number;
+  pilier_3b: number;
+}
+
+const profileSchema = z.object({
+  appellation: z.string().min(1, "L'appellation est requise"),
+  nom: z.string().trim().min(1, "Le nom est requis").max(100, "Le nom doit faire moins de 100 caractères"),
+  prenom: z.string().trim().min(1, "Le prénom est requis").max(100, "Le prénom doit faire moins de 100 caractères"),
+  email: z.string().trim().email("Email invalide").max(255, "L'email doit faire moins de 255 caractères"),
+  date_naissance: z.string().min(1, "La date de naissance est requise"),
+  localite: z.string().trim().min(1, "La localité est requise").max(100, "La localité doit faire moins de 100 caractères"),
+  adresse: z.string().trim().max(255, "L'adresse doit faire moins de 255 caractères").optional(),
+  telephone: z.string().trim().max(20, "Le téléphone doit faire moins de 20 caractères").optional(),
+});
+
+const budgetSchema = z.object({
+  period_type: z.enum(["mensuel", "annuel"]),
+  revenu_brut: z.number().min(0, "Le montant doit être positif"),
+  charges_sociales: z.number().min(0, "Le montant doit être positif"),
+  depenses_logement: z.number().min(0, "Le montant doit être positif"),
+  depenses_transport: z.number().min(0, "Le montant doit être positif"),
+  depenses_alimentation: z.number().min(0, "Le montant doit être positif"),
+  autres_depenses: z.number().min(0, "Le montant doit être positif"),
+  avs_1er_pilier: z.number().min(0, "Le montant doit être positif"),
+  lpp_2eme_pilier: z.number().min(0, "Le montant doit être positif"),
+  pilier_3a: z.number().min(0, "Le montant doit être positif"),
+  pilier_3b: z.number().min(0, "Le montant doit être positif"),
+});
+
 const UserProfile = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [editingBudget, setEditingBudget] = useState(false);
+  const [budgetData, setBudgetData] = useState<BudgetData>({
+    period_type: "mensuel",
+    revenu_brut: 0,
+    charges_sociales: 0,
+    depenses_logement: 0,
+    depenses_transport: 0,
+    depenses_alimentation: 0,
+    autres_depenses: 0,
+    avs_1er_pilier: 0,
+    lpp_2eme_pilier: 0,
+    pilier_3a: 0,
+    pilier_3b: 0,
+  });
 
-  // Budget data from localStorage
-  const [budgetData, setBudgetData] = useState({
-    periodType: "",
-    revenuBrut: "",
-    chargesSociales: "",
-    depensesLogement: "",
-    depensesTransport: "",
-    depensesAlimentation: "",
-    autresDepenses: "",
-    avs1erPilier: "",
-    lpp2emePilier: "",
-    pilier3a: "",
-    pilier3b: "",
+  const profileForm = useForm<z.infer<typeof profileSchema>>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      appellation: "",
+      nom: "",
+      prenom: "",
+      email: "",
+      date_naissance: "",
+      localite: "",
+      adresse: "",
+      telephone: "",
+    },
+  });
+
+  const budgetForm = useForm<z.infer<typeof budgetSchema>>({
+    resolver: zodResolver(budgetSchema),
+    defaultValues: budgetData,
   });
 
   useEffect(() => {
@@ -60,7 +127,6 @@ const UserProfile = () => {
   useEffect(() => {
     if (user) {
       fetchUserData();
-      loadBudgetData();
     }
   }, [user]);
 
@@ -68,17 +134,54 @@ const UserProfile = () => {
     try {
       setLoadingData(true);
 
-      // Fetch profile
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
         .select("*")
         .eq("user_id", user?.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
-      setProfile(profileData);
+      
+      if (profileData) {
+        setProfile(profileData);
+        profileForm.reset({
+          appellation: profileData.appellation,
+          nom: profileData.nom,
+          prenom: profileData.prenom,
+          email: profileData.email,
+          date_naissance: profileData.date_naissance,
+          localite: profileData.localite,
+          adresse: profileData.adresse || "",
+          telephone: profileData.telephone || "",
+        });
+      }
 
-      // Fetch documents
+      const { data: budgetDataResult, error: budgetError } = await supabase
+        .from("budget_data")
+        .select("*")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (budgetError && budgetError.code !== 'PGRST116') throw budgetError;
+
+      if (budgetDataResult) {
+        const budget: BudgetData = {
+          period_type: (budgetDataResult.period_type as "mensuel" | "annuel"),
+          revenu_brut: Number(budgetDataResult.revenu_brut),
+          charges_sociales: Number(budgetDataResult.charges_sociales),
+          depenses_logement: Number(budgetDataResult.depenses_logement),
+          depenses_transport: Number(budgetDataResult.depenses_transport),
+          depenses_alimentation: Number(budgetDataResult.depenses_alimentation),
+          autres_depenses: Number(budgetDataResult.autres_depenses),
+          avs_1er_pilier: Number(budgetDataResult.avs_1er_pilier),
+          lpp_2eme_pilier: Number(budgetDataResult.lpp_2eme_pilier),
+          pilier_3a: Number(budgetDataResult.pilier_3a),
+          pilier_3b: Number(budgetDataResult.pilier_3b),
+        };
+        setBudgetData(budget);
+        budgetForm.reset(budget);
+      }
+
       const { data: documentsData, error: documentsError } = await supabase
         .from("documents")
         .select("*")
@@ -88,48 +191,121 @@ const UserProfile = () => {
       if (documentsError) throw documentsError;
       setDocuments(documentsData || []);
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger vos données",
+      });
     } finally {
       setLoadingData(false);
     }
   };
 
-  const loadBudgetData = () => {
-    const budgetPeriodType = localStorage.getItem("budgetPeriodType") || "mensuel";
-    const budgetRevenuBrut = localStorage.getItem("budgetRevenuBrut") || "";
-    const budgetChargesSociales = localStorage.getItem("budgetChargesSociales") || "";
-    const budgetDepensesLogement = localStorage.getItem("budgetDepensesLogement") || "";
-    const budgetDepensesTransport = localStorage.getItem("budgetDepensesTransport") || "";
-    const budgetDepensesAlimentation = localStorage.getItem("budgetDepensesAlimentation") || "";
-    const budgetAutresDepenses = localStorage.getItem("budgetAutresDepenses") || "";
-    const budgetAvs1erPilier = localStorage.getItem("budgetAvs1erPilier") || "";
-    const budgetLpp2emePilier = localStorage.getItem("budgetLpp2emePilier") || "";
-    const budgetPilier3a = localStorage.getItem("budgetPilier3a") || "";
-    const budgetPilier3b = localStorage.getItem("budgetPilier3b") || "";
+  const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          appellation: values.appellation,
+          nom: values.nom,
+          prenom: values.prenom,
+          email: values.email,
+          date_naissance: values.date_naissance,
+          localite: values.localite,
+          adresse: values.adresse || null,
+          telephone: values.telephone || null,
+        })
+        .eq("user_id", user?.id);
 
-    setBudgetData({
-      periodType: budgetPeriodType,
-      revenuBrut: budgetRevenuBrut,
-      chargesSociales: budgetChargesSociales,
-      depensesLogement: budgetDepensesLogement,
-      depensesTransport: budgetDepensesTransport,
-      depensesAlimentation: budgetDepensesAlimentation,
-      autresDepenses: budgetAutresDepenses,
-      avs1erPilier: budgetAvs1erPilier,
-      lpp2emePilier: budgetLpp2emePilier,
-      pilier3a: budgetPilier3a,
-      pilier3b: budgetPilier3b,
-    });
+      if (error) throw error;
+
+      toast({
+        title: "Profil mis à jour",
+        description: "Vos informations ont été enregistrées avec succès",
+      });
+
+      setEditingProfile(false);
+      fetchUserData();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de mettre à jour le profil",
+      });
+    }
   };
 
-  const formatCurrency = (value: string) => {
-    if (!value || value === "") return "Non renseigné";
+  const onSubmitBudget = async (values: z.infer<typeof budgetSchema>) => {
+    try {
+      const { data: existingBudget } = await supabase
+        .from("budget_data")
+        .select("id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (existingBudget) {
+        const { error } = await supabase
+          .from("budget_data")
+          .update({
+            period_type: values.period_type,
+            revenu_brut: values.revenu_brut,
+            charges_sociales: values.charges_sociales,
+            depenses_logement: values.depenses_logement,
+            depenses_transport: values.depenses_transport,
+            depenses_alimentation: values.depenses_alimentation,
+            autres_depenses: values.autres_depenses,
+            avs_1er_pilier: values.avs_1er_pilier,
+            lpp_2eme_pilier: values.lpp_2eme_pilier,
+            pilier_3a: values.pilier_3a,
+            pilier_3b: values.pilier_3b,
+          })
+          .eq("user_id", user?.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("budget_data")
+          .insert({
+            user_id: user?.id,
+            period_type: values.period_type,
+            revenu_brut: values.revenu_brut,
+            charges_sociales: values.charges_sociales,
+            depenses_logement: values.depenses_logement,
+            depenses_transport: values.depenses_transport,
+            depenses_alimentation: values.depenses_alimentation,
+            autres_depenses: values.autres_depenses,
+            avs_1er_pilier: values.avs_1er_pilier,
+            lpp_2eme_pilier: values.lpp_2eme_pilier,
+            pilier_3a: values.pilier_3a,
+            pilier_3b: values.pilier_3b,
+          });
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Budget mis à jour",
+        description: "Vos données budgétaires ont été enregistrées",
+      });
+
+      setEditingBudget(false);
+      fetchUserData();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de mettre à jour le budget",
+      });
+    }
+  };
+
+  const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("fr-CH", {
       style: "currency",
       currency: "CHF",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(parseFloat(value));
+    }).format(value);
   };
 
   const formatFileSize = (bytes: number) => {
@@ -164,19 +340,19 @@ const UserProfile = () => {
     return null;
   }
 
-  const revenuNet = parseFloat(budgetData.revenuBrut || "0") - parseFloat(budgetData.chargesSociales || "0");
+  const revenuNet = budgetData.revenu_brut - budgetData.charges_sociales;
   const totalDepenses =
-    parseFloat(budgetData.depensesLogement || "0") +
-    parseFloat(budgetData.depensesTransport || "0") +
-    parseFloat(budgetData.depensesAlimentation || "0") +
-    parseFloat(budgetData.autresDepenses || "0");
+    budgetData.depenses_logement +
+    budgetData.depenses_transport +
+    budgetData.depenses_alimentation +
+    budgetData.autres_depenses;
   const soldeBudget = revenuNet - totalDepenses;
 
   const totalPrevoyance =
-    parseFloat(budgetData.avs1erPilier || "0") +
-    parseFloat(budgetData.lpp2emePilier || "0") +
-    parseFloat(budgetData.pilier3a || "0") +
-    parseFloat(budgetData.pilier3b || "0");
+    budgetData.avs_1er_pilier +
+    budgetData.lpp_2eme_pilier +
+    budgetData.pilier_3a +
+    budgetData.pilier_3b;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -186,7 +362,7 @@ const UserProfile = () => {
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-foreground mb-2">Profil utilisateur</h1>
             <p className="text-muted-foreground">
-              Retrouvez toutes vos informations personnelles et données enregistrées
+              Retrouvez et modifiez toutes vos informations personnelles
             </p>
           </div>
 
@@ -213,50 +389,189 @@ const UserProfile = () => {
             {/* Informations personnelles */}
             <TabsContent value="informations">
               <Card>
-                <CardHeader>
-                  <CardTitle>Informations personnelles</CardTitle>
-                  <CardDescription>
-                    Vos données d'identification et coordonnées
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {profile ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Appellation</h3>
-                        <p className="text-foreground">{profile.appellation}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Nom</h3>
-                        <p className="text-foreground">{profile.nom}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Prénom</h3>
-                        <p className="text-foreground">{profile.prenom}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Email</h3>
-                        <p className="text-foreground">{profile.email}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Date de naissance</h3>
-                        <p className="text-foreground">{formatDate(profile.date_naissance)}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Localité</h3>
-                        <p className="text-foreground">{profile.localite}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Adresse</h3>
-                        <p className="text-foreground">{profile.adresse || "Non renseignée"}</p>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-1">Téléphone</h3>
-                        <p className="text-foreground">{profile.telephone || "Non renseigné"}</p>
-                      </div>
-                    </div>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Informations personnelles</CardTitle>
+                    <CardDescription>
+                      Vos données d'identification et coordonnées
+                    </CardDescription>
+                  </div>
+                  {!editingProfile ? (
+                    <Button onClick={() => setEditingProfile(true)} variant="outline">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Modifier
+                    </Button>
                   ) : (
-                    <p className="text-muted-foreground">Aucune information disponible</p>
+                    <Button onClick={() => setEditingProfile(false)} variant="outline">
+                      <X className="h-4 w-4 mr-2" />
+                      Annuler
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  {editingProfile ? (
+                    <Form {...profileForm}>
+                      <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={profileForm.control}
+                            name="appellation"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Appellation</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Sélectionnez" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Monsieur">Monsieur</SelectItem>
+                                    <SelectItem value="Madame">Madame</SelectItem>
+                                    <SelectItem value="Autre">Autre</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="nom"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nom</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="prenom"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Prénom</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                  <Input type="email" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="date_naissance"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Date de naissance</FormLabel>
+                                <FormControl>
+                                  <Input type="date" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="localite"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Localité</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="adresse"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Adresse</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="telephone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Téléphone</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <Button type="submit" className="w-full md:w-auto">
+                          <Save className="h-4 w-4 mr-2" />
+                          Enregistrer
+                        </Button>
+                      </form>
+                    </Form>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {profile && (
+                        <>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Appellation</h3>
+                            <p className="text-foreground">{profile.appellation}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Nom</h3>
+                            <p className="text-foreground">{profile.nom}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Prénom</h3>
+                            <p className="text-foreground">{profile.prenom}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Email</h3>
+                            <p className="text-foreground">{profile.email}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Date de naissance</h3>
+                            <p className="text-foreground">{formatDate(profile.date_naissance)}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Localité</h3>
+                            <p className="text-foreground">{profile.localite}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Adresse</h3>
+                            <p className="text-foreground">{profile.adresse || "Non renseignée"}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Téléphone</h3>
+                            <p className="text-foreground">{profile.telephone || "Non renseigné"}</p>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                 </CardContent>
               </Card>
@@ -265,100 +580,345 @@ const UserProfile = () => {
             {/* Budget */}
             <TabsContent value="budget" className="space-y-6">
               <Card>
-                <CardHeader>
-                  <CardTitle>Budget personnel</CardTitle>
-                  <CardDescription>
-                    Vue {budgetData.periodType === "mensuel" ? "mensuelle" : "annuelle"} de votre budget
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+                <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold mb-4">Revenus</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Revenu brut</p>
-                        <p className="text-xl font-semibold">{formatCurrency(budgetData.revenuBrut)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Charges sociales</p>
-                        <p className="text-xl font-semibold">{formatCurrency(budgetData.chargesSociales)}</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <p className="text-sm text-muted-foreground">Revenu net</p>
-                        <p className="text-2xl font-bold text-primary">{formatCurrency(revenuNet.toString())}</p>
-                      </div>
-                    </div>
+                    <CardTitle>Budget personnel</CardTitle>
+                    <CardDescription>
+                      Vue {budgetData.period_type === "mensuel" ? "mensuelle" : "annuelle"}
+                    </CardDescription>
                   </div>
-
-                  <Separator />
-
-                  <div>
-                    <h3 className="text-lg font-semibold mb-4">Dépenses</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-muted-foreground">Logement</p>
-                        <p className="text-xl font-semibold">{formatCurrency(budgetData.depensesLogement)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Transport</p>
-                        <p className="text-xl font-semibold">{formatCurrency(budgetData.depensesTransport)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Alimentation</p>
-                        <p className="text-xl font-semibold">{formatCurrency(budgetData.depensesAlimentation)}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Autres dépenses</p>
-                        <p className="text-xl font-semibold">{formatCurrency(budgetData.autresDepenses)}</p>
-                      </div>
-                      <div className="md:col-span-2">
-                        <p className="text-sm text-muted-foreground">Total des dépenses</p>
-                        <p className="text-2xl font-bold">{formatCurrency(totalDepenses.toString())}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Solde</p>
-                    <p className={`text-3xl font-bold ${soldeBudget >= 0 ? "text-green-600" : "text-red-600"}`}>
-                      {formatCurrency(soldeBudget.toString())}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Prévoyance retraite</CardTitle>
-                  <CardDescription>
-                    Votre épargne retraite par pilier
-                  </CardDescription>
+                  {!editingBudget ? (
+                    <Button onClick={() => setEditingBudget(true)} variant="outline">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Modifier
+                    </Button>
+                  ) : (
+                    <Button onClick={() => setEditingBudget(false)} variant="outline">
+                      <X className="h-4 w-4 mr-2" />
+                      Annuler
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">1er Pilier (AVS)</p>
-                      <p className="text-xl font-semibold">{formatCurrency(budgetData.avs1erPilier)}</p>
+                  {editingBudget ? (
+                    <Form {...budgetForm}>
+                      <form onSubmit={budgetForm.handleSubmit(onSubmitBudget)} className="space-y-6">
+                        <FormField
+                          control={budgetForm.control}
+                          name="period_type"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Période</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="mensuel">Mensuel</SelectItem>
+                                  <SelectItem value="annuel">Annuel</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Revenus</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={budgetForm.control}
+                              name="revenu_brut"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Revenu brut</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={budgetForm.control}
+                              name="charges_sociales"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Charges sociales</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
+
+                        <Separator />
+
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Dépenses</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={budgetForm.control}
+                              name="depenses_logement"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Logement</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={budgetForm.control}
+                              name="depenses_transport"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Transport</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={budgetForm.control}
+                              name="depenses_alimentation"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Alimentation</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={budgetForm.control}
+                              name="autres_depenses"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Autres</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
+
+                        <Separator />
+
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Prévoyance</h3>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={budgetForm.control}
+                              name="avs_1er_pilier"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>1er Pilier</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={budgetForm.control}
+                              name="lpp_2eme_pilier"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>2ème Pilier</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={budgetForm.control}
+                              name="pilier_3a"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>3ème Pilier A</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={budgetForm.control}
+                              name="pilier_3b"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>3ème Pilier B</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                        </div>
+
+                        <Button type="submit" className="w-full md:w-auto">
+                          <Save className="h-4 w-4 mr-2" />
+                          Enregistrer
+                        </Button>
+                      </form>
+                    </Form>
+                  ) : (
+                    <div className="space-y-6">
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Revenus</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Revenu brut</p>
+                            <p className="text-xl font-semibold">{formatCurrency(budgetData.revenu_brut)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Charges sociales</p>
+                            <p className="text-xl font-semibold">{formatCurrency(budgetData.charges_sociales)}</p>
+                          </div>
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-muted-foreground">Revenu net</p>
+                            <p className="text-2xl font-bold text-primary">{formatCurrency(revenuNet)}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Dépenses</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">Logement</p>
+                            <p className="text-xl font-semibold">{formatCurrency(budgetData.depenses_logement)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Transport</p>
+                            <p className="text-xl font-semibold">{formatCurrency(budgetData.depenses_transport)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Alimentation</p>
+                            <p className="text-xl font-semibold">{formatCurrency(budgetData.depenses_alimentation)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">Autres</p>
+                            <p className="text-xl font-semibold">{formatCurrency(budgetData.autres_depenses)}</p>
+                          </div>
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-muted-foreground">Total</p>
+                            <p className="text-2xl font-bold">{formatCurrency(totalDepenses)}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-2">Solde</p>
+                        <p className={`text-3xl font-bold ${soldeBudget >= 0 ? "text-green-600" : "text-red-600"}`}>
+                          {formatCurrency(soldeBudget)}
+                        </p>
+                      </div>
+
+                      <Separator />
+
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Prévoyance</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground">1er Pilier</p>
+                            <p className="text-xl font-semibold">{formatCurrency(budgetData.avs_1er_pilier)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">2ème Pilier</p>
+                            <p className="text-xl font-semibold">{formatCurrency(budgetData.lpp_2eme_pilier)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">3ème Pilier A</p>
+                            <p className="text-xl font-semibold">{formatCurrency(budgetData.pilier_3a)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground">3ème Pilier B</p>
+                            <p className="text-xl font-semibold">{formatCurrency(budgetData.pilier_3b)}</p>
+                          </div>
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-muted-foreground">Total</p>
+                            <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">2ème Pilier (LPP)</p>
-                      <p className="text-xl font-semibold">{formatCurrency(budgetData.lpp2emePilier)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">3ème Pilier A</p>
-                      <p className="text-xl font-semibold">{formatCurrency(budgetData.pilier3a)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">3ème Pilier B</p>
-                      <p className="text-xl font-semibold">{formatCurrency(budgetData.pilier3b)}</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-muted-foreground">Total prévoyance</p>
-                      <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrevoyance.toString())}</p>
-                    </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -369,13 +929,13 @@ const UserProfile = () => {
                 <CardHeader>
                   <CardTitle>Données fiscales</CardTitle>
                   <CardDescription>
-                    Informations utilisées pour la simulation d'impôts
+                    Simulation d'impôts
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">
-                    Les données du simulateur d'impôts ne sont pas actuellement sauvegardées.
-                    Effectuez une nouvelle simulation dans la page dédiée pour calculer vos impôts.
+                    Les données du simulateur ne sont pas sauvegardées.
+                    Effectuez une simulation dans la page dédiée.
                   </p>
                 </CardContent>
               </Card>
@@ -387,7 +947,7 @@ const UserProfile = () => {
                 <CardHeader>
                   <CardTitle>Mes documents</CardTitle>
                   <CardDescription>
-                    {documents.length} document{documents.length !== 1 ? "s" : ""} enregistré{documents.length !== 1 ? "s" : ""}
+                    {documents.length} document{documents.length !== 1 ? "s" : ""}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -396,7 +956,7 @@ const UserProfile = () => {
                       {documents.map((doc) => (
                         <div
                           key={doc.id}
-                          className="flex items-center justify-between p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
+                          className="flex items-center justify-between p-4 rounded-lg border"
                         >
                           <div className="flex items-center space-x-4">
                             <FileText className="h-8 w-8 text-primary" />
@@ -421,7 +981,7 @@ const UserProfile = () => {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-muted-foreground">Aucun document enregistré</p>
+                    <p className="text-muted-foreground">Aucun document</p>
                   )}
                 </CardContent>
               </Card>
