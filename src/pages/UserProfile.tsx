@@ -248,18 +248,26 @@ const UserProfile = () => {
 
       // Convertir les valeurs si la période a changé
       const needsConversion = budgetData.period_type !== values.period_type;
-      const conversionFactor = needsConversion 
-        ? (budgetData.period_type === "mensuel" ? 12 : 1/12)
-        : 1;
+      
+      const convertForSave = (value: number) => {
+        if (!needsConversion) return value;
+        if (budgetData.period_type === "mensuel" && values.period_type === "annuel") {
+          return value * 12;
+        }
+        if (budgetData.period_type === "annuel" && values.period_type === "mensuel") {
+          return Math.round(value / 12);
+        }
+        return value;
+      };
 
       const dataToSave = {
         period_type: values.period_type,
-        revenu_brut: values.revenu_brut * conversionFactor,
-        charges_sociales: values.charges_sociales * conversionFactor,
-        depenses_logement: values.depenses_logement * conversionFactor,
-        depenses_transport: values.depenses_transport * conversionFactor,
-        depenses_alimentation: values.depenses_alimentation * conversionFactor,
-        autres_depenses: values.autres_depenses * conversionFactor,
+        revenu_brut: convertForSave(values.revenu_brut),
+        charges_sociales: convertForSave(values.charges_sociales),
+        depenses_logement: convertForSave(values.depenses_logement),
+        depenses_transport: convertForSave(values.depenses_transport),
+        depenses_alimentation: convertForSave(values.depenses_alimentation),
+        autres_depenses: convertForSave(values.autres_depenses),
         avs_1er_pilier: values.avs_1er_pilier,
         lpp_2eme_pilier: values.lpp_2eme_pilier,
         pilier_3a: values.pilier_3a,
@@ -335,7 +343,7 @@ const UserProfile = () => {
     }
     
     if (budgetData.period_type === "annuel" && displayPeriodType === "mensuel") {
-      return value / 12;
+      return Math.round(value / 12);
     }
     
     return value;
@@ -663,13 +671,22 @@ const UserProfile = () => {
                                   
                                   // Convertir les valeurs si la période change
                                   if (oldPeriodType !== newPeriodType) {
-                                    const factor = oldPeriodType === "mensuel" ? 12 : 1/12;
-                                    budgetForm.setValue("revenu_brut", currentValues.revenu_brut * factor);
-                                    budgetForm.setValue("charges_sociales", currentValues.charges_sociales * factor);
-                                    budgetForm.setValue("depenses_logement", currentValues.depenses_logement * factor);
-                                    budgetForm.setValue("depenses_transport", currentValues.depenses_transport * factor);
-                                    budgetForm.setValue("depenses_alimentation", currentValues.depenses_alimentation * factor);
-                                    budgetForm.setValue("autres_depenses", currentValues.autres_depenses * factor);
+                                    const convertFormValue = (val: number) => {
+                                      if (oldPeriodType === "mensuel" && newPeriodType === "annuel") {
+                                        return val * 12;
+                                      }
+                                      if (oldPeriodType === "annuel" && newPeriodType === "mensuel") {
+                                        return Math.round(val / 12);
+                                      }
+                                      return val;
+                                    };
+                                    
+                                    budgetForm.setValue("revenu_brut", convertFormValue(currentValues.revenu_brut));
+                                    budgetForm.setValue("charges_sociales", convertFormValue(currentValues.charges_sociales));
+                                    budgetForm.setValue("depenses_logement", convertFormValue(currentValues.depenses_logement));
+                                    budgetForm.setValue("depenses_transport", convertFormValue(currentValues.depenses_transport));
+                                    budgetForm.setValue("depenses_alimentation", convertFormValue(currentValues.depenses_alimentation));
+                                    budgetForm.setValue("autres_depenses", convertFormValue(currentValues.autres_depenses));
                                   }
                                   
                                   field.onChange(value);
