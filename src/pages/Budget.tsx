@@ -104,7 +104,7 @@ const Budget = () => {
     }
   };
 
-  const saveBudgetData = async () => {
+  const saveRevenusData = async () => {
     if (!user) {
       toast({
         variant: "destructive",
@@ -122,15 +122,121 @@ const Budget = () => {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      const budgetData = {
+      const revenusData = {
         user_id: user.id,
         period_type: periodType,
         revenu_brut: parseFloat(revenuBrut) || 0,
         charges_sociales: parseFloat(chargesSociales) || 0,
+      };
+
+      if (existingData) {
+        const { error } = await supabase
+          .from("budget_data")
+          .update(revenusData)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("budget_data")
+          .insert(revenusData);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Succès",
+        description: "Revenus sauvegardés dans votre profil",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de sauvegarder vos données",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveDepensesData = async () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour sauvegarder vos données",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data: existingData } = await supabase
+        .from("budget_data")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const depensesData = {
+        user_id: user.id,
         depenses_logement: parseFloat(depensesLogement) || 0,
         depenses_transport: parseFloat(depensesTransport) || 0,
         depenses_alimentation: parseFloat(depensesAlimentation) || 0,
         autres_depenses: parseFloat(autresDepenses) || 0,
+      };
+
+      if (existingData) {
+        const { error } = await supabase
+          .from("budget_data")
+          .update(depensesData)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("budget_data")
+          .insert(depensesData);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Succès",
+        description: "Dépenses sauvegardées dans votre profil",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de sauvegarder vos données",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const savePrevoyanceData = async () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour sauvegarder vos données",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data: existingData } = await supabase
+        .from("budget_data")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const prevoyanceData = {
+        user_id: user.id,
         avs_1er_pilier: parseFloat(avs1erPilier) || 0,
         lpp_2eme_pilier: parseFloat(lpp2emePilier) || 0,
         pilier_3a: parseFloat(pilier3a) || 0,
@@ -140,21 +246,21 @@ const Budget = () => {
       if (existingData) {
         const { error } = await supabase
           .from("budget_data")
-          .update(budgetData)
+          .update(prevoyanceData)
           .eq("user_id", user.id);
 
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("budget_data")
-          .insert(budgetData);
+          .insert(prevoyanceData);
 
         if (error) throw error;
       }
 
       toast({
         title: "Succès",
-        description: "Vos données ont été sauvegardées dans votre profil",
+        description: "Prévoyance sauvegardée dans votre profil",
       });
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
@@ -280,12 +386,6 @@ const Budget = () => {
                     Annuel
                   </ToggleGroupItem>
                 </ToggleGroup>
-                {user && (
-                  <Button onClick={saveBudgetData} disabled={isLoading}>
-                    <Save className="h-4 w-4 mr-2" />
-                    {isLoading ? "Enregistrement..." : "Enregistrer dans mon profil"}
-                  </Button>
-                )}
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
@@ -331,6 +431,20 @@ const Budget = () => {
                       <p className="text-sm text-muted-foreground">Revenu net</p>
                       <p className="text-2xl font-bold text-primary">{formatCurrency(revenuNet)}</p>
                     </div>
+                    {user && (
+                      <div className="flex justify-end mt-4">
+                        <Button 
+                          onClick={saveRevenusData} 
+                          disabled={isLoading}
+                          size="sm"
+                          variant="outline"
+                          className="gap-2"
+                        >
+                          <Save className="h-3 w-3" />
+                          Sauvegarder
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -400,6 +514,20 @@ const Budget = () => {
                         }}
                       />
                     </div>
+                    {user && (
+                      <div className="flex justify-end mt-4">
+                        <Button 
+                          onClick={saveDepensesData} 
+                          disabled={isLoading}
+                          size="sm"
+                          variant="outline"
+                          className="gap-2"
+                        >
+                          <Save className="h-3 w-3" />
+                          Sauvegarder
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -431,14 +559,6 @@ const Budget = () => {
 
             {/* Prévoyance Retraite */}
             <TabsContent value="prevoyance">
-              {user && (
-                <div className="mb-6 flex justify-center">
-                  <Button onClick={saveBudgetData} disabled={isLoading}>
-                    <Save className="h-4 w-4 mr-2" />
-                    {isLoading ? "Enregistrement..." : "Enregistrer dans mon profil"}
-                  </Button>
-                </div>
-              )}
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
@@ -520,6 +640,20 @@ const Budget = () => {
                       <p className="text-sm text-muted-foreground mb-1">Total Prévoyance</p>
                       <p className="text-3xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
                     </div>
+                    {user && (
+                      <div className="flex justify-end mt-4">
+                        <Button 
+                          onClick={savePrevoyanceData} 
+                          disabled={isLoading}
+                          size="sm"
+                          variant="outline"
+                          className="gap-2"
+                        >
+                          <Save className="h-3 w-3" />
+                          Sauvegarder
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
