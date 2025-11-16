@@ -170,14 +170,14 @@ const Budget = () => {
 
   // Calcul automatique des charges sociales à 6,8% du salaire brut
   useEffect(() => {
-    if (revenuBrut && !chargesSocialesManuallyEdited) {
+    if (revenuBrut && (!chargesSocialesManuallyEdited || !chargesSociales)) {
       const brut = parseFloat(revenuBrut);
       if (!isNaN(brut)) {
         const chargesAuto = (brut * 0.068).toFixed(0);
         setChargesSociales(chargesAuto);
       }
     }
-  }, [revenuBrut, chargesSocialesManuallyEdited]);
+  }, [revenuBrut, chargesSocialesManuallyEdited, chargesSociales]);
 
   // Ajustement automatique des valeurs lors du changement de période
   useEffect(() => {
