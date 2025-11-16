@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 interface Profile {
   nom: string;
@@ -85,6 +86,7 @@ const UserProfile = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
   const [editingBudget, setEditingBudget] = useState(false);
+  const [displayPeriodType, setDisplayPeriodType] = useState<"mensuel" | "annuel">("mensuel");
   const [budgetData, setBudgetData] = useState<BudgetData>({
     period_type: "mensuel",
     revenu_brut: 0,
@@ -179,6 +181,7 @@ const UserProfile = () => {
           pilier_3b: Number(budgetDataResult.pilier_3b),
         };
         setBudgetData(budget);
+        setDisplayPeriodType(budget.period_type);
         budgetForm.reset(budget);
       }
 
@@ -324,6 +327,33 @@ const UserProfile = () => {
     });
   };
 
+  const convertValue = (value: number) => {
+    if (budgetData.period_type === displayPeriodType) {
+      return value;
+    }
+    
+    if (budgetData.period_type === "mensuel" && displayPeriodType === "annuel") {
+      return value * 12;
+    }
+    
+    if (budgetData.period_type === "annuel" && displayPeriodType === "mensuel") {
+      return value / 12;
+    }
+    
+    return value;
+  };
+
+  const getDisplayData = () => {
+    return {
+      revenu_brut: convertValue(budgetData.revenu_brut),
+      charges_sociales: convertValue(budgetData.charges_sociales),
+      depenses_logement: convertValue(budgetData.depenses_logement),
+      depenses_transport: convertValue(budgetData.depenses_transport),
+      depenses_alimentation: convertValue(budgetData.depenses_alimentation),
+      autres_depenses: convertValue(budgetData.autres_depenses),
+    };
+  };
+
   if (loading || loadingData) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -340,12 +370,13 @@ const UserProfile = () => {
     return null;
   }
 
-  const revenuNet = budgetData.revenu_brut - budgetData.charges_sociales;
+  const displayData = getDisplayData();
+  const revenuNet = displayData.revenu_brut - displayData.charges_sociales;
   const totalDepenses =
-    budgetData.depenses_logement +
-    budgetData.depenses_transport +
-    budgetData.depenses_alimentation +
-    budgetData.autres_depenses;
+    displayData.depenses_logement +
+    displayData.depenses_transport +
+    displayData.depenses_alimentation +
+    displayData.autres_depenses;
   const soldeBudget = revenuNet - totalDepenses;
 
   const totalPrevoyance =
@@ -584,7 +615,7 @@ const UserProfile = () => {
                   <div>
                     <CardTitle>Budget personnel</CardTitle>
                     <CardDescription>
-                      Vue {budgetData.period_type === "mensuel" ? "mensuelle" : "annuelle"}
+                      Données enregistrées en {budgetData.period_type}
                     </CardDescription>
                   </div>
                   {!editingBudget ? (
@@ -845,16 +876,27 @@ const UserProfile = () => {
                     </Form>
                   ) : (
                     <div className="space-y-6">
+                      <div className="flex justify-end mb-4">
+                        <ToggleGroup 
+                          type="single" 
+                          value={displayPeriodType}
+                          onValueChange={(value) => value && setDisplayPeriodType(value as "mensuel" | "annuel")}
+                        >
+                          <ToggleGroupItem value="mensuel">Mensuel</ToggleGroupItem>
+                          <ToggleGroupItem value="annuel">Annuel</ToggleGroupItem>
+                        </ToggleGroup>
+                      </div>
+                      
                       <div>
                         <h3 className="text-lg font-semibold mb-4">Revenus</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-muted-foreground">Revenu brut</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.revenu_brut)}</p>
+                            <p className="text-xl font-semibold">{formatCurrency(displayData.revenu_brut)}</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Charges sociales</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.charges_sociales)}</p>
+                            <p className="text-xl font-semibold">{formatCurrency(displayData.charges_sociales)}</p>
                           </div>
                           <div className="md:col-span-2">
                             <p className="text-sm text-muted-foreground">Revenu net</p>
@@ -870,19 +912,19 @@ const UserProfile = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-muted-foreground">Logement</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.depenses_logement)}</p>
+                            <p className="text-xl font-semibold">{formatCurrency(displayData.depenses_logement)}</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Transport</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.depenses_transport)}</p>
+                            <p className="text-xl font-semibold">{formatCurrency(displayData.depenses_transport)}</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Alimentation</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.depenses_alimentation)}</p>
+                            <p className="text-xl font-semibold">{formatCurrency(displayData.depenses_alimentation)}</p>
                           </div>
                           <div>
                             <p className="text-sm text-muted-foreground">Autres</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.autres_depenses)}</p>
+                            <p className="text-xl font-semibold">{formatCurrency(displayData.autres_depenses)}</p>
                           </div>
                           <div className="md:col-span-2">
                             <p className="text-sm text-muted-foreground">Total</p>
