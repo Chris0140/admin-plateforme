@@ -73,18 +73,18 @@ const Comparateur = () => {
               return (
                 <Card
                   key={index}
-                  className="p-6 hover:border-primary transition-all cursor-pointer group"
+                  className="p-4 md:p-6 hover:border-primary transition-all cursor-pointer group"
                   onClick={() => navigate(item.path)}
                 >
-                  <div className="flex flex-col items-center text-center space-y-4">
-                    <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <Icon className="w-8 h-8 text-primary" />
+                  <div className="flex flex-col items-center text-center space-y-3 md:space-y-4">
+                    <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <Icon className="w-6 h-6 md:w-8 md:h-8 text-primary" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-foreground mb-2">
+                      <h3 className="text-lg md:text-xl font-bold text-foreground mb-2">
                         {item.title}
                       </h3>
-                      <p className="text-muted-foreground">{item.description}</p>
+                      <p className="text-sm md:text-base text-muted-foreground">{item.description}</p>
                     </div>
                     <Button className="w-full">
                       Comparer
