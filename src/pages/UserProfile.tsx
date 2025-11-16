@@ -9,7 +9,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Wallet, Calculator, FileText, Loader2, Edit, Save, X, ChevronDown } from "lucide-react";
+import { User, Wallet, Calculator, FileText, Loader2, Edit, Save, X, ChevronDown, Shield } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -614,7 +614,7 @@ const UserProfile = () => {
           </div>
 
           <Tabs defaultValue="informations" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="informations">
                 <User className="h-4 w-4 mr-2" />
                 Informations
@@ -626,6 +626,10 @@ const UserProfile = () => {
               <TabsTrigger value="impots">
                 <Calculator className="h-4 w-4 mr-2" />
                 Impôts
+              </TabsTrigger>
+              <TabsTrigger value="assurances">
+                <Shield className="h-4 w-4 mr-2" />
+                Assurances
               </TabsTrigger>
               <TabsTrigger value="documents">
                 <FileText className="h-4 w-4 mr-2" />
@@ -1737,6 +1741,31 @@ const UserProfile = () => {
                       </Button>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Assurances */}
+            <TabsContent value="assurances">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Mes assurances</CardTitle>
+                  <CardDescription>
+                    Gérez vos contrats d'assurance et comparaisons
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    <div className="text-center py-8">
+                      <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-4">
+                        Aucune assurance enregistrée pour le moment
+                      </p>
+                      <Button onClick={() => navigate("/comparateur")}>
+                        Comparer les assurances
+                      </Button>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
