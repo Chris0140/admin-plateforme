@@ -441,7 +441,7 @@ const Budget = () => {
                           className="gap-2"
                         >
                           <Save className="h-3 w-3" />
-                          Sauvegarder
+                          Mettre à jour le profil
                         </Button>
                       </div>
                     )}
@@ -524,7 +524,7 @@ const Budget = () => {
                           className="gap-2"
                         >
                           <Save className="h-3 w-3" />
-                          Sauvegarder
+                          Mettre à jour le profil
                         </Button>
                       </div>
                     )}
@@ -650,7 +650,7 @@ const Budget = () => {
                           className="gap-2"
                         >
                           <Save className="h-3 w-3" />
-                          Sauvegarder
+                          Mettre à jour le profil
                         </Button>
                       </div>
                     )}
