@@ -17,61 +17,97 @@ export type Database = {
       budget_data: {
         Row: {
           autres_depenses: number | null
+          autres_depenses_annuel: number | null
+          autres_depenses_mensuel: number | null
           avs_1er_pilier: number | null
           charges_sociales: number | null
           charges_sociales_1er_pilier: number | null
           charges_sociales_2eme_pilier: number | null
+          charges_sociales_annuel: number | null
           charges_sociales_autres: number | null
+          charges_sociales_mensuel: number | null
           created_at: string
           depenses_alimentation: number | null
+          depenses_alimentation_annuel: number | null
+          depenses_alimentation_mensuel: number | null
           depenses_logement: number | null
+          depenses_logement_annuel: number | null
+          depenses_logement_mensuel: number | null
           depenses_transport: number | null
+          depenses_transport_annuel: number | null
+          depenses_transport_mensuel: number | null
           id: string
           lpp_2eme_pilier: number | null
           period_type: string
           pilier_3a: number | null
           pilier_3b: number | null
           revenu_brut: number | null
+          revenu_brut_annuel: number | null
+          revenu_brut_mensuel: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           autres_depenses?: number | null
+          autres_depenses_annuel?: number | null
+          autres_depenses_mensuel?: number | null
           avs_1er_pilier?: number | null
           charges_sociales?: number | null
           charges_sociales_1er_pilier?: number | null
           charges_sociales_2eme_pilier?: number | null
+          charges_sociales_annuel?: number | null
           charges_sociales_autres?: number | null
+          charges_sociales_mensuel?: number | null
           created_at?: string
           depenses_alimentation?: number | null
+          depenses_alimentation_annuel?: number | null
+          depenses_alimentation_mensuel?: number | null
           depenses_logement?: number | null
+          depenses_logement_annuel?: number | null
+          depenses_logement_mensuel?: number | null
           depenses_transport?: number | null
+          depenses_transport_annuel?: number | null
+          depenses_transport_mensuel?: number | null
           id?: string
           lpp_2eme_pilier?: number | null
           period_type?: string
           pilier_3a?: number | null
           pilier_3b?: number | null
           revenu_brut?: number | null
+          revenu_brut_annuel?: number | null
+          revenu_brut_mensuel?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           autres_depenses?: number | null
+          autres_depenses_annuel?: number | null
+          autres_depenses_mensuel?: number | null
           avs_1er_pilier?: number | null
           charges_sociales?: number | null
           charges_sociales_1er_pilier?: number | null
           charges_sociales_2eme_pilier?: number | null
+          charges_sociales_annuel?: number | null
           charges_sociales_autres?: number | null
+          charges_sociales_mensuel?: number | null
           created_at?: string
           depenses_alimentation?: number | null
+          depenses_alimentation_annuel?: number | null
+          depenses_alimentation_mensuel?: number | null
           depenses_logement?: number | null
+          depenses_logement_annuel?: number | null
+          depenses_logement_mensuel?: number | null
           depenses_transport?: number | null
+          depenses_transport_annuel?: number | null
+          depenses_transport_mensuel?: number | null
           id?: string
           lpp_2eme_pilier?: number | null
           period_type?: string
           pilier_3a?: number | null
           pilier_3b?: number | null
           revenu_brut?: number | null
+          revenu_brut_annuel?: number | null
+          revenu_brut_mensuel?: number | null
           updated_at?: string
           user_id?: string
         }

@@ -122,11 +122,24 @@ const Budget = () => {
         .eq("user_id", user.id)
         .maybeSingle();
 
+      const revenuBrutNum = parseFloat(revenuBrut) || 0;
+      const chargesSocialesNum = parseFloat(chargesSociales) || 0;
+
+      // Calculer les deux versions (mensuelle et annuelle)
+      const revenu_brut_mensuel = periodType === "mensuel" ? revenuBrutNum : Math.round(revenuBrutNum / 12);
+      const revenu_brut_annuel = periodType === "annuel" ? revenuBrutNum : revenuBrutNum * 12;
+      const charges_sociales_mensuel = periodType === "mensuel" ? chargesSocialesNum : Math.round(chargesSocialesNum / 12);
+      const charges_sociales_annuel = periodType === "annuel" ? chargesSocialesNum : chargesSocialesNum * 12;
+
       const revenusData = {
         user_id: user.id,
         period_type: periodType,
-        revenu_brut: parseFloat(revenuBrut) || 0,
-        charges_sociales: parseFloat(chargesSociales) || 0,
+        revenu_brut: revenuBrutNum,
+        charges_sociales: chargesSocialesNum,
+        revenu_brut_mensuel,
+        revenu_brut_annuel,
+        charges_sociales_mensuel,
+        charges_sociales_annuel,
       };
 
       if (existingData) {
@@ -178,13 +191,36 @@ const Budget = () => {
         .eq("user_id", user.id)
         .maybeSingle();
 
+      const depensesLogementNum = parseFloat(depensesLogement) || 0;
+      const depensesTransportNum = parseFloat(depensesTransport) || 0;
+      const depensesAlimentationNum = parseFloat(depensesAlimentation) || 0;
+      const autresDepensesNum = parseFloat(autresDepenses) || 0;
+
+      // Calculer les deux versions (mensuelle et annuelle)
+      const depenses_logement_mensuel = periodType === "mensuel" ? depensesLogementNum : Math.round(depensesLogementNum / 12);
+      const depenses_logement_annuel = periodType === "annuel" ? depensesLogementNum : depensesLogementNum * 12;
+      const depenses_transport_mensuel = periodType === "mensuel" ? depensesTransportNum : Math.round(depensesTransportNum / 12);
+      const depenses_transport_annuel = periodType === "annuel" ? depensesTransportNum : depensesTransportNum * 12;
+      const depenses_alimentation_mensuel = periodType === "mensuel" ? depensesAlimentationNum : Math.round(depensesAlimentationNum / 12);
+      const depenses_alimentation_annuel = periodType === "annuel" ? depensesAlimentationNum : depensesAlimentationNum * 12;
+      const autres_depenses_mensuel = periodType === "mensuel" ? autresDepensesNum : Math.round(autresDepensesNum / 12);
+      const autres_depenses_annuel = periodType === "annuel" ? autresDepensesNum : autresDepensesNum * 12;
+
       const depensesData = {
         user_id: user.id,
         period_type: periodType,
-        depenses_logement: parseFloat(depensesLogement) || 0,
-        depenses_transport: parseFloat(depensesTransport) || 0,
-        depenses_alimentation: parseFloat(depensesAlimentation) || 0,
-        autres_depenses: parseFloat(autresDepenses) || 0,
+        depenses_logement: depensesLogementNum,
+        depenses_transport: depensesTransportNum,
+        depenses_alimentation: depensesAlimentationNum,
+        autres_depenses: autresDepensesNum,
+        depenses_logement_mensuel,
+        depenses_logement_annuel,
+        depenses_transport_mensuel,
+        depenses_transport_annuel,
+        depenses_alimentation_mensuel,
+        depenses_alimentation_annuel,
+        autres_depenses_mensuel,
+        autres_depenses_annuel,
       };
 
       if (existingData) {
