@@ -2,7 +2,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Calculator, TrendingDown, Info, FileText } from "lucide-react";
+import { Calculator, TrendingDown, Info, FileText, Save } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,9 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 const formSchema = z.object({
   canton: z.string().min(1, "Veuillez sélectionner un canton"),
   commune: z.string().min(1, "Veuillez sélectionner une commune"),
@@ -887,7 +890,10 @@ const communesParCanton: Record<string, Array<{
   }]
 };
 const SimulateurImpots = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [results, setResults] = useState<any>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [communesDisponibles, setCommunesDisponibles] = useState<Array<{
     value: string;
     label: string;
@@ -910,6 +916,86 @@ const SimulateurImpots = () => {
     }
   });
   const selectedCanton = form.watch("canton");
+
+  const saveTaxData = async () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour sauvegarder vos données",
+      });
+      return;
+    }
+
+    if (!results) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Veuillez d'abord calculer vos impôts",
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const formValues = form.getValues();
+      const { data: existingData } = await supabase
+        .from("tax_data")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const taxData = {
+        user_id: user.id,
+        canton: formValues.canton,
+        commune: formValues.commune,
+        etat_civil: formValues.etatCivil,
+        confession: formValues.confession || null,
+        revenu_annuel: parseFloat(formValues.revenuAnnuel) || 0,
+        fortune: parseFloat(formValues.fortune || "0") || 0,
+        nombre_enfants: parseInt(formValues.nombreEnfants || "0") || 0,
+        deduction_3eme_pilier: parseFloat(formValues.deduction3emePilier || "0") || 0,
+        interets_hypothecaires: parseFloat(formValues.interetsHypothecaires || "0") || 0,
+        autres_deductions: parseFloat(formValues.autresDeductions || "0") || 0,
+        charges_sociales: parseFloat(formValues.chargesSociales || "0") || 0,
+        impot_federal: results.impotFederal || 0,
+        impot_cantonal: results.impotCantonal || 0,
+        impot_communal: results.impotCommunal || 0,
+        impot_ecclesiastique: results.impotEcclesiastique || 0,
+        impot_fortune: results.impotFortune || 0,
+        total_impots: results.totalImpots || 0,
+      };
+
+      if (existingData) {
+        const { error } = await supabase
+          .from("tax_data")
+          .update(taxData)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("tax_data")
+          .insert(taxData);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Succès",
+        description: "Données fiscales sauvegardées dans votre profil",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de sauvegarder vos données",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Barème Genève 2024 - Impôt de base sur le revenu (indice 108.7)
   const baremeGeneve2024 = [{
@@ -1716,6 +1802,18 @@ const SimulateurImpots = () => {
                         <span className="font-semibold text-green-500">- CHF {results.economiePilier3.toLocaleString()}</span>
                       </div>}
                   </div>
+                  
+                  {user && (
+                    <Button 
+                      onClick={saveTaxData} 
+                      disabled={isSaving}
+                      className="w-full mt-4"
+                      size="lg"
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      {isSaving ? "Enregistrement..." : "Sauvegarder dans mon profil"}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>}
 

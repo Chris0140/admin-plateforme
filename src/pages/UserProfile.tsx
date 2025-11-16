@@ -52,6 +52,29 @@ interface BudgetData {
   pilier_3b: number;
 }
 
+interface TaxData {
+  id: string;
+  canton: string;
+  commune: string;
+  etat_civil: string;
+  confession: string | null;
+  revenu_annuel: number;
+  fortune: number;
+  nombre_enfants: number;
+  deduction_3eme_pilier: number;
+  interets_hypothecaires: number;
+  autres_deductions: number;
+  charges_sociales: number;
+  impot_federal: number;
+  impot_cantonal: number;
+  impot_communal: number;
+  impot_ecclesiastique: number;
+  impot_fortune: number;
+  total_impots: number;
+  created_at: string;
+  updated_at: string;
+}
+
 const profileSchema = z.object({
   appellation: z.string().min(1, "L'appellation est requise"),
   nom: z.string().trim().min(1, "Le nom est requis").max(100, "Le nom doit faire moins de 100 caractères"),
@@ -83,6 +106,7 @@ const UserProfile = () => {
   const { toast } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [taxData, setTaxData] = useState<TaxData | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
   const [editingBudget, setEditingBudget] = useState(false);
@@ -193,6 +217,18 @@ const UserProfile = () => {
 
       if (documentsError) throw documentsError;
       setDocuments(documentsData || []);
+
+      const { data: taxDataResult, error: taxError } = await supabase
+        .from("tax_data")
+        .select("*")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (taxError && taxError.code !== 'PGRST116') throw taxError;
+
+      if (taxDataResult) {
+        setTaxData(taxDataResult as TaxData);
+      }
     } catch (error) {
       toast({
         variant: "destructive",
@@ -1046,14 +1082,155 @@ const UserProfile = () => {
                 <CardHeader>
                   <CardTitle>Données fiscales</CardTitle>
                   <CardDescription>
-                    Simulation d'impôts
+                    Résultat de votre dernière simulation d'impôts
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">
-                    Les données du simulateur ne sont pas sauvegardées.
-                    Effectuez une simulation dans la page dédiée.
-                  </p>
+                  {taxData ? (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Informations générales</h3>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Canton</span>
+                              <span className="font-medium">{taxData.canton}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Commune</span>
+                              <span className="font-medium">{taxData.commune}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">État civil</span>
+                              <span className="font-medium capitalize">{taxData.etat_civil}</span>
+                            </div>
+                            {taxData.confession && taxData.confession !== "aucune" && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Confession</span>
+                                <span className="font-medium capitalize">{taxData.confession}</span>
+                              </div>
+                            )}
+                            {taxData.nombre_enfants > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Nombre d'enfants</span>
+                                <span className="font-medium">{taxData.nombre_enfants}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h3 className="text-lg font-semibold mb-4">Revenus et déductions</h3>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Revenu annuel</span>
+                              <span className="font-medium">CHF {taxData.revenu_annuel.toLocaleString()}</span>
+                            </div>
+                            {taxData.fortune > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Fortune</span>
+                                <span className="font-medium">CHF {taxData.fortune.toLocaleString()}</span>
+                              </div>
+                            )}
+                            {taxData.charges_sociales > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Charges sociales</span>
+                                <span className="font-medium">CHF {taxData.charges_sociales.toLocaleString()}</span>
+                              </div>
+                            )}
+                            {taxData.deduction_3eme_pilier > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">3ème pilier A</span>
+                                <span className="font-medium">CHF {taxData.deduction_3eme_pilier.toLocaleString()}</span>
+                              </div>
+                            )}
+                            {taxData.interets_hypothecaires > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Intérêts hypothécaires</span>
+                                <span className="font-medium">CHF {taxData.interets_hypothecaires.toLocaleString()}</span>
+                              </div>
+                            )}
+                            {taxData.autres_deductions > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Autres déductions</span>
+                                <span className="font-medium">CHF {taxData.autres_deductions.toLocaleString()}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Calcul des impôts</h3>
+                        <div className="space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Impôt fédéral direct</span>
+                            <span className="font-medium">CHF {taxData.impot_federal.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Impôt cantonal</span>
+                            <span className="font-medium">CHF {taxData.impot_cantonal.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-muted-foreground">Impôt communal</span>
+                            <span className="font-medium">CHF {taxData.impot_communal.toLocaleString()}</span>
+                          </div>
+                          {taxData.impot_ecclesiastique > 0 && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground">Impôt ecclésiastique</span>
+                              <span className="font-medium">CHF {taxData.impot_ecclesiastique.toLocaleString()}</span>
+                            </div>
+                          )}
+                          {taxData.impot_fortune > 0 && (
+                            <div className="flex justify-between items-center">
+                              <span className="text-muted-foreground">Impôt sur la fortune</span>
+                              <span className="font-medium">CHF {taxData.impot_fortune.toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="bg-primary/10 p-4 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-lg">Total des impôts</span>
+                          <span className="font-bold text-2xl text-primary">
+                            CHF {taxData.total_impots.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm mt-2">
+                          <span className="text-muted-foreground">Taux effectif</span>
+                          <span className="font-semibold">
+                            {((taxData.total_impots / taxData.revenu_annuel) * 100).toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-between items-center text-xs text-muted-foreground pt-4 border-t">
+                        <span>Dernière mise à jour: {new Date(taxData.updated_at).toLocaleDateString("fr-CH")}</span>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => navigate("/simulateur-impots")}
+                        >
+                          Mettre à jour
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Calculator className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground mb-4">
+                        Aucune simulation d'impôts enregistrée
+                      </p>
+                      <Button onClick={() => navigate("/simulateur-impots")}>
+                        Effectuer une simulation
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
