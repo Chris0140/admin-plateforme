@@ -246,41 +246,39 @@ const UserProfile = () => {
         .eq("user_id", user?.id)
         .maybeSingle();
 
+      // Convertir les valeurs si la période a changé
+      const needsConversion = budgetData.period_type !== values.period_type;
+      const conversionFactor = needsConversion 
+        ? (budgetData.period_type === "mensuel" ? 12 : 1/12)
+        : 1;
+
+      const dataToSave = {
+        period_type: values.period_type,
+        revenu_brut: values.revenu_brut * conversionFactor,
+        charges_sociales: values.charges_sociales * conversionFactor,
+        depenses_logement: values.depenses_logement * conversionFactor,
+        depenses_transport: values.depenses_transport * conversionFactor,
+        depenses_alimentation: values.depenses_alimentation * conversionFactor,
+        autres_depenses: values.autres_depenses * conversionFactor,
+        avs_1er_pilier: values.avs_1er_pilier,
+        lpp_2eme_pilier: values.lpp_2eme_pilier,
+        pilier_3a: values.pilier_3a,
+        pilier_3b: values.pilier_3b,
+      };
+
       if (existingBudget) {
         const { error } = await supabase
           .from("budget_data")
-          .update({
-            period_type: values.period_type,
-            revenu_brut: values.revenu_brut,
-            charges_sociales: values.charges_sociales,
-            depenses_logement: values.depenses_logement,
-            depenses_transport: values.depenses_transport,
-            depenses_alimentation: values.depenses_alimentation,
-            autres_depenses: values.autres_depenses,
-            avs_1er_pilier: values.avs_1er_pilier,
-            lpp_2eme_pilier: values.lpp_2eme_pilier,
-            pilier_3a: values.pilier_3a,
-            pilier_3b: values.pilier_3b,
-          })
-          .eq("user_id", user?.id);
+          .update(dataToSave)
+          .eq("user_id", user.id);
 
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("budget_data")
           .insert({
-            user_id: user?.id,
-            period_type: values.period_type,
-            revenu_brut: values.revenu_brut,
-            charges_sociales: values.charges_sociales,
-            depenses_logement: values.depenses_logement,
-            depenses_transport: values.depenses_transport,
-            depenses_alimentation: values.depenses_alimentation,
-            autres_depenses: values.autres_depenses,
-            avs_1er_pilier: values.avs_1er_pilier,
-            lpp_2eme_pilier: values.lpp_2eme_pilier,
-            pilier_3a: values.pilier_3a,
-            pilier_3b: values.pilier_3b,
+            user_id: user.id,
+            ...dataToSave,
           });
 
         if (error) throw error;
@@ -619,12 +617,29 @@ const UserProfile = () => {
                     </CardDescription>
                   </div>
                   {!editingBudget ? (
-                    <Button onClick={() => setEditingBudget(true)} variant="outline">
+                    <Button onClick={() => {
+                      setEditingBudget(true);
+                      // Réinitialiser avec les valeurs converties selon displayPeriodType
+                      const formValues = {
+                        ...budgetData,
+                        period_type: displayPeriodType,
+                        revenu_brut: convertValue(budgetData.revenu_brut),
+                        charges_sociales: convertValue(budgetData.charges_sociales),
+                        depenses_logement: convertValue(budgetData.depenses_logement),
+                        depenses_transport: convertValue(budgetData.depenses_transport),
+                        depenses_alimentation: convertValue(budgetData.depenses_alimentation),
+                        autres_depenses: convertValue(budgetData.autres_depenses),
+                      };
+                      budgetForm.reset(formValues);
+                    }} variant="outline">
                       <Edit className="h-4 w-4 mr-2" />
                       Modifier
                     </Button>
                   ) : (
-                    <Button onClick={() => setEditingBudget(false)} variant="outline">
+                    <Button onClick={() => {
+                      setEditingBudget(false);
+                      budgetForm.reset(budgetData);
+                    }} variant="outline">
                       <X className="h-4 w-4 mr-2" />
                       Annuler
                     </Button>
@@ -640,7 +655,27 @@ const UserProfile = () => {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>Période</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <Select 
+                                onValueChange={(value) => {
+                                  const currentValues = budgetForm.getValues();
+                                  const oldPeriodType = field.value;
+                                  const newPeriodType = value as "mensuel" | "annuel";
+                                  
+                                  // Convertir les valeurs si la période change
+                                  if (oldPeriodType !== newPeriodType) {
+                                    const factor = oldPeriodType === "mensuel" ? 12 : 1/12;
+                                    budgetForm.setValue("revenu_brut", currentValues.revenu_brut * factor);
+                                    budgetForm.setValue("charges_sociales", currentValues.charges_sociales * factor);
+                                    budgetForm.setValue("depenses_logement", currentValues.depenses_logement * factor);
+                                    budgetForm.setValue("depenses_transport", currentValues.depenses_transport * factor);
+                                    budgetForm.setValue("depenses_alimentation", currentValues.depenses_alimentation * factor);
+                                    budgetForm.setValue("autres_depenses", currentValues.autres_depenses * factor);
+                                  }
+                                  
+                                  field.onChange(value);
+                                }} 
+                                defaultValue={field.value}
+                              >
                                 <FormControl>
                                   <SelectTrigger>
                                     <SelectValue />
