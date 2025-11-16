@@ -11,7 +11,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save } from "lucide-react";
+import { Save, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 const Budget = () => {
   const { user } = useAuth();
@@ -33,6 +34,10 @@ const Budget = () => {
   const [lpp2emePilier, setLpp2emePilier] = useState("");
   const [pilier3a, setPilier3a] = useState("");
   const [pilier3b, setPilier3b] = useState("");
+
+  // Collapsible states for mobile
+  const [revenusOpen, setRevenusOpen] = useState(true);
+  const [depensesOpen, setDepensesOpen] = useState(true);
 
   // Charger les données depuis Supabase
   useEffect(() => {
@@ -319,119 +324,147 @@ const Budget = () => {
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Revenus</CardTitle>
-                    <CardDescription>Vos revenus {periodType === "mensuel" ? "mensuels" : "annuels"}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="revenuBrut">Revenu brut (CHF)</Label>
-                      <Input
-                        id="revenuBrut"
-                        type="number"
-                        step="1"
-                        placeholder="8'000"
-                        value={revenuBrut}
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          value = value.replace(/^0+(?=\d)/, '');
-                          setRevenuBrut(value);
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="chargesSociales">Charges sociales (CHF)</Label>
-                      <Input
-                        id="chargesSociales"
-                        type="number"
-                        step="1"
-                        placeholder="1'200"
-                        value={chargesSociales}
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          value = value.replace(/^0+(?=\d)/, '');
-                          setChargesSociales(value);
-                          setChargesSocialesManuallyEdited(true);
-                        }}
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">Proposition: 6,8% du salaire brut</p>
-                    </div>
-                    <div className="pt-4 border-t">
-                      <p className="text-sm text-muted-foreground">Revenu net</p>
-                      <p className="text-2xl font-bold text-primary">{formatCurrency(revenuNet)}</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Section Revenus - Collapsible sur mobile */}
+                <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen} className="md:contents">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>Revenus</CardTitle>
+                          <CardDescription>Vos revenus {periodType === "mensuel" ? "mensuels" : "annuels"}</CardDescription>
+                        </div>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="md:hidden">
+                            <ChevronDown className={`h-4 w-4 transition-transform ${revenusOpen ? 'rotate-180' : ''}`} />
+                          </Button>
+                        </CollapsibleTrigger>
+                      </div>
+                    </CardHeader>
+                    <CollapsibleContent>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <Label htmlFor="revenuBrut">Revenu brut (CHF)</Label>
+                          <Input
+                            id="revenuBrut"
+                            type="number"
+                            step="1"
+                            placeholder="8'000"
+                            value={revenuBrut}
+                            onChange={(e) => {
+                              let value = e.target.value;
+                              value = value.replace(/^0+(?=\d)/, '');
+                              setRevenuBrut(value);
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="chargesSociales">Charges sociales (CHF)</Label>
+                          <Input
+                            id="chargesSociales"
+                            type="number"
+                            step="1"
+                            placeholder="1'200"
+                            value={chargesSociales}
+                            onChange={(e) => {
+                              let value = e.target.value;
+                              value = value.replace(/^0+(?=\d)/, '');
+                              setChargesSociales(value);
+                              setChargesSocialesManuallyEdited(true);
+                            }}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">Proposition: 6,8% du salaire brut</p>
+                        </div>
+                        <div className="pt-4 border-t">
+                          <p className="text-sm text-muted-foreground">Revenu net</p>
+                          <p className="text-2xl font-bold text-primary">{formatCurrency(revenuNet)}</p>
+                        </div>
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Dépenses Fixes</CardTitle>
-                    <CardDescription>Vos dépenses mensuelles</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="depensesLogement">Logement (CHF)</Label>
-                      <Input
-                        id="depensesLogement"
-                        type="number"
-                        step="1"
-                        placeholder="1'500"
-                        value={depensesLogement}
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          value = value.replace(/^0+(?=\d)/, '');
-                          setDepensesLogement(value);
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="depensesTransport">Assurances (CHF)</Label>
-                      <Input
-                        id="depensesTransport"
-                        type="number"
-                        step="1"
-                        placeholder="300"
-                        value={depensesTransport}
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          value = value.replace(/^0+(?=\d)/, '');
-                          setDepensesTransport(value);
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="depensesAlimentation">Alimentation (CHF)</Label>
-                      <Input
-                        id="depensesAlimentation"
-                        type="number"
-                        step="1"
-                        placeholder="600"
-                        value={depensesAlimentation}
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          value = value.replace(/^0+(?=\d)/, '');
-                          setDepensesAlimentation(value);
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="autresDepenses">Autres dépenses (CHF)</Label>
-                      <Input
-                        id="autresDepenses"
-                        type="number"
-                        step="1"
-                        placeholder="400"
-                        value={autresDepenses}
-                        onChange={(e) => {
-                          let value = e.target.value;
-                          value = value.replace(/^0+(?=\d)/, '');
-                          setAutresDepenses(value);
-                      }}
-                    />
-                  </div>
-                </CardContent>
-                </Card>
+                {/* Section Dépenses Fixes - Collapsible sur mobile */}
+                <Collapsible open={depensesOpen} onOpenChange={setDepensesOpen} className="md:contents">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>Dépenses Fixes</CardTitle>
+                          <CardDescription>Vos dépenses mensuelles</CardDescription>
+                        </div>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="md:hidden">
+                            <ChevronDown className={`h-4 w-4 transition-transform ${depensesOpen ? 'rotate-180' : ''}`} />
+                          </Button>
+                        </CollapsibleTrigger>
+                      </div>
+                    </CardHeader>
+                    <CollapsibleContent>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <Label htmlFor="depensesLogement">Logement (CHF)</Label>
+                          <Input
+                            id="depensesLogement"
+                            type="number"
+                            step="1"
+                            placeholder="1'500"
+                            value={depensesLogement}
+                            onChange={(e) => {
+                              let value = e.target.value;
+                              value = value.replace(/^0+(?=\d)/, '');
+                              setDepensesLogement(value);
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="depensesTransport">Assurances (CHF)</Label>
+                          <Input
+                            id="depensesTransport"
+                            type="number"
+                            step="1"
+                            placeholder="300"
+                            value={depensesTransport}
+                            onChange={(e) => {
+                              let value = e.target.value;
+                              value = value.replace(/^0+(?=\d)/, '');
+                              setDepensesTransport(value);
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="depensesAlimentation">Alimentation (CHF)</Label>
+                          <Input
+                            id="depensesAlimentation"
+                            type="number"
+                            step="1"
+                            placeholder="600"
+                            value={depensesAlimentation}
+                            onChange={(e) => {
+                              let value = e.target.value;
+                              value = value.replace(/^0+(?=\d)/, '');
+                              setDepensesAlimentation(value);
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="autresDepenses">Autres dépenses (CHF)</Label>
+                          <Input
+                            id="autresDepenses"
+                            type="number"
+                            step="1"
+                            placeholder="400"
+                            value={autresDepenses}
+                            onChange={(e) => {
+                              let value = e.target.value;
+                              value = value.replace(/^0+(?=\d)/, '');
+                              setAutresDepenses(value);
+                          }}
+                        />
+                      </div>
+                    </CardContent>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
 
                 <Card className="md:col-span-2">
                   <CardHeader>
