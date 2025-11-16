@@ -40,9 +40,7 @@ interface Document {
 interface BudgetData {
   period_type: "mensuel" | "annuel";
   revenu_brut: number;
-  charges_sociales_1er_pilier: number;
-  charges_sociales_2eme_pilier: number;
-  charges_sociales_autres: number;
+  charges_sociales: number;
   depenses_logement: number;
   depenses_transport: number;
   depenses_alimentation: number;
@@ -67,9 +65,7 @@ const profileSchema = z.object({
 const budgetSchema = z.object({
   period_type: z.enum(["mensuel", "annuel"]),
   revenu_brut: z.number().min(0, "Le montant doit être positif"),
-  charges_sociales_1er_pilier: z.number().min(0, "Le montant doit être positif"),
-  charges_sociales_2eme_pilier: z.number().min(0, "Le montant doit être positif"),
-  charges_sociales_autres: z.number().min(0, "Le montant doit être positif"),
+  charges_sociales: z.number().min(0, "Le montant doit être positif"),
   depenses_logement: z.number().min(0, "Le montant doit être positif"),
   depenses_transport: z.number().min(0, "Le montant doit être positif"),
   depenses_alimentation: z.number().min(0, "Le montant doit être positif"),
@@ -92,9 +88,7 @@ const UserProfile = () => {
   const [budgetData, setBudgetData] = useState<BudgetData>({
     period_type: "mensuel",
     revenu_brut: 0,
-    charges_sociales_1er_pilier: 0,
-    charges_sociales_2eme_pilier: 0,
-    charges_sociales_autres: 0,
+    charges_sociales: 0,
     depenses_logement: 0,
     depenses_transport: 0,
     depenses_alimentation: 0,
@@ -174,9 +168,7 @@ const UserProfile = () => {
         const budget: BudgetData = {
           period_type: (budgetDataResult.period_type as "mensuel" | "annuel"),
           revenu_brut: Number(budgetDataResult.revenu_brut),
-          charges_sociales_1er_pilier: Number(budgetDataResult.charges_sociales_1er_pilier),
-          charges_sociales_2eme_pilier: Number(budgetDataResult.charges_sociales_2eme_pilier),
-          charges_sociales_autres: Number(budgetDataResult.charges_sociales_autres),
+          charges_sociales: Number(budgetDataResult.charges_sociales),
           depenses_logement: Number(budgetDataResult.depenses_logement),
           depenses_transport: Number(budgetDataResult.depenses_transport),
           depenses_alimentation: Number(budgetDataResult.depenses_alimentation),
@@ -252,16 +244,12 @@ const UserProfile = () => {
         .maybeSingle();
 
       if (existingBudget) {
-        const totalChargesSociales = values.charges_sociales_1er_pilier + values.charges_sociales_2eme_pilier + values.charges_sociales_autres;
         const { error } = await supabase
           .from("budget_data")
           .update({
             period_type: values.period_type,
             revenu_brut: values.revenu_brut,
-            charges_sociales: totalChargesSociales,
-            charges_sociales_1er_pilier: values.charges_sociales_1er_pilier,
-            charges_sociales_2eme_pilier: values.charges_sociales_2eme_pilier,
-            charges_sociales_autres: values.charges_sociales_autres,
+            charges_sociales: values.charges_sociales,
             depenses_logement: values.depenses_logement,
             depenses_transport: values.depenses_transport,
             depenses_alimentation: values.depenses_alimentation,
@@ -275,17 +263,13 @@ const UserProfile = () => {
 
         if (error) throw error;
       } else {
-        const totalChargesSociales = values.charges_sociales_1er_pilier + values.charges_sociales_2eme_pilier + values.charges_sociales_autres;
         const { error } = await supabase
           .from("budget_data")
           .insert({
             user_id: user?.id,
             period_type: values.period_type,
             revenu_brut: values.revenu_brut,
-            charges_sociales: totalChargesSociales,
-            charges_sociales_1er_pilier: values.charges_sociales_1er_pilier,
-            charges_sociales_2eme_pilier: values.charges_sociales_2eme_pilier,
-            charges_sociales_autres: values.charges_sociales_autres,
+            charges_sociales: values.charges_sociales,
             depenses_logement: values.depenses_logement,
             depenses_transport: values.depenses_transport,
             depenses_alimentation: values.depenses_alimentation,
@@ -356,8 +340,7 @@ const UserProfile = () => {
     return null;
   }
 
-  const totalChargesSociales = budgetData.charges_sociales_1er_pilier + budgetData.charges_sociales_2eme_pilier + budgetData.charges_sociales_autres;
-  const revenuNet = budgetData.revenu_brut - totalChargesSociales;
+  const revenuNet = budgetData.revenu_brut - budgetData.charges_sociales;
   const totalDepenses =
     budgetData.depenses_logement +
     budgetData.depenses_transport +
@@ -664,58 +647,12 @@ const UserProfile = () => {
                                 </FormItem>
                               )}
                             />
-                          </div>
-                        </div>
-
-                        <Separator />
-
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Charges sociales</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                               control={budgetForm.control}
-                              name="charges_sociales_1er_pilier"
+                              name="charges_sociales"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>1er Pilier</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="charges_sociales_2eme_pilier"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>2ème Pilier</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="charges_sociales_autres"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Autres charges</FormLabel>
+                                  <FormLabel>Charges sociales</FormLabel>
                                   <FormControl>
                                     <Input
                                       type="number"
@@ -915,34 +852,14 @@ const UserProfile = () => {
                             <p className="text-sm text-muted-foreground">Revenu brut</p>
                             <p className="text-xl font-semibold">{formatCurrency(budgetData.revenu_brut)}</p>
                           </div>
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4">Charges sociales</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-sm text-muted-foreground">1er Pilier</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.charges_sociales_1er_pilier)}</p>
+                            <p className="text-sm text-muted-foreground">Charges sociales</p>
+                            <p className="text-xl font-semibold">{formatCurrency(budgetData.charges_sociales)}</p>
                           </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">2ème Pilier</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.charges_sociales_2eme_pilier)}</p>
+                          <div className="md:col-span-2">
+                            <p className="text-sm text-muted-foreground">Revenu net</p>
+                            <p className="text-2xl font-bold text-primary">{formatCurrency(revenuNet)}</p>
                           </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Autres charges</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.charges_sociales_autres)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Total charges sociales</p>
-                            <p className="text-xl font-semibold text-primary">{formatCurrency(totalChargesSociales)}</p>
-                          </div>
-                        </div>
-                        <div className="mt-4">
-                          <p className="text-sm text-muted-foreground">Revenu net</p>
-                          <p className="text-2xl font-bold text-primary">{formatCurrency(revenuNet)}</p>
                         </div>
                       </div>
 

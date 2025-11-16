@@ -19,9 +19,6 @@ export type Database = {
           autres_depenses: number | null
           avs_1er_pilier: number | null
           charges_sociales: number | null
-          charges_sociales_1er_pilier: number | null
-          charges_sociales_2eme_pilier: number | null
-          charges_sociales_autres: number | null
           created_at: string
           depenses_alimentation: number | null
           depenses_logement: number | null
@@ -39,9 +36,6 @@ export type Database = {
           autres_depenses?: number | null
           avs_1er_pilier?: number | null
           charges_sociales?: number | null
-          charges_sociales_1er_pilier?: number | null
-          charges_sociales_2eme_pilier?: number | null
-          charges_sociales_autres?: number | null
           created_at?: string
           depenses_alimentation?: number | null
           depenses_logement?: number | null
@@ -59,9 +53,6 @@ export type Database = {
           autres_depenses?: number | null
           avs_1er_pilier?: number | null
           charges_sociales?: number | null
-          charges_sociales_1er_pilier?: number | null
-          charges_sociales_2eme_pilier?: number | null
-          charges_sociales_autres?: number | null
           created_at?: string
           depenses_alimentation?: number | null
           depenses_logement?: number | null
