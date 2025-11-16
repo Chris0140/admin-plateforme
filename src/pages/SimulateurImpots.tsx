@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { Calculator, TrendingDown, Info, FileText, Save } from "lucide-react";
+import { Calculator, TrendingDown, Info, FileText, Save, ChevronDown } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 const formSchema = z.object({
   canton: z.string().min(1, "Veuillez sélectionner un canton"),
   commune: z.string().min(1, "Veuillez sélectionner une commune"),
@@ -894,6 +895,7 @@ const SimulateurImpots = () => {
   const { toast } = useToast();
   const [results, setResults] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [revenusOpen, setRevenusOpen] = useState(true);
   const [communesDisponibles, setCommunesDisponibles] = useState<Array<{
     value: string;
     label: string;
@@ -1683,8 +1685,17 @@ const SimulateurImpots = () => {
 
                     <Separator />
 
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-foreground">Revenus et fortune</h3>
+                    <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen}>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-foreground">Revenus et fortune</h3>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <ChevronDown className={`h-4 w-4 transition-transform ${revenusOpen ? 'rotate-180' : ''}`} />
+                          </Button>
+                        </CollapsibleTrigger>
+                      </div>
+                      
+                      <CollapsibleContent className="space-y-4">
                       
                       <FormField control={form.control} name="revenuAnnuel" render={({
                       field
@@ -1727,7 +1738,8 @@ const SimulateurImpots = () => {
                             </FormControl>
                             <FormMessage />
                           </FormItem>} />
-                    </div>
+                      </CollapsibleContent>
+                    </Collapsible>
 
                     <Separator />
 
