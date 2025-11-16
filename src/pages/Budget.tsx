@@ -77,23 +77,39 @@ const Budget = () => {
       if (error) throw error;
 
       if (data) {
-        setPeriodType(data.period_type as "mensuel" | "annuel");
-        setRevenuBrut(data.revenu_brut?.toString() || "");
+        // Charger les valeurs selon le periodType sélectionné
+        const loadValues = (currentPeriodType: "mensuel" | "annuel") => {
+          if (currentPeriodType === "mensuel") {
+            setRevenuBrut(data.revenu_brut_mensuel?.toString() || "");
+            if (data.charges_sociales_mensuel && data.charges_sociales_mensuel > 0) {
+              setChargesSociales(data.charges_sociales_mensuel.toString());
+              setChargesSocialesManuallyEdited(true);
+            } else {
+              setChargesSociales("");
+              setChargesSocialesManuallyEdited(false);
+            }
+            setDepensesLogement(data.depenses_logement_mensuel?.toString() || "");
+            setDepensesTransport(data.depenses_transport_mensuel?.toString() || "");
+            setDepensesAlimentation(data.depenses_alimentation_mensuel?.toString() || "");
+            setAutresDepenses(data.autres_depenses_mensuel?.toString() || "");
+          } else {
+            setRevenuBrut(data.revenu_brut_annuel?.toString() || "");
+            if (data.charges_sociales_annuel && data.charges_sociales_annuel > 0) {
+              setChargesSociales(data.charges_sociales_annuel.toString());
+              setChargesSocialesManuallyEdited(true);
+            } else {
+              setChargesSociales("");
+              setChargesSocialesManuallyEdited(false);
+            }
+            setDepensesLogement(data.depenses_logement_annuel?.toString() || "");
+            setDepensesTransport(data.depenses_transport_annuel?.toString() || "");
+            setDepensesAlimentation(data.depenses_alimentation_annuel?.toString() || "");
+            setAutresDepenses(data.autres_depenses_annuel?.toString() || "");
+          }
+        };
         
-        // Si charges_sociales > 0, on utilise la valeur du profil
-        // Sinon, on laisse le calcul automatique s'appliquer
-        if (data.charges_sociales && data.charges_sociales > 0) {
-          setChargesSociales(data.charges_sociales.toString());
-          setChargesSocialesManuallyEdited(true);
-        } else {
-          setChargesSociales("");
-          setChargesSocialesManuallyEdited(false);
-        }
+        loadValues(periodType);
         
-        setDepensesLogement(data.depenses_logement?.toString() || "");
-        setDepensesTransport(data.depenses_transport?.toString() || "");
-        setDepensesAlimentation(data.depenses_alimentation?.toString() || "");
-        setAutresDepenses(data.autres_depenses?.toString() || "");
         setAvs1erPilier(data.avs_1er_pilier?.toString() || "");
         setLpp2emePilier(data.lpp_2eme_pilier?.toString() || "");
         setPilier3a(data.pilier_3a?.toString() || "");
@@ -323,24 +339,10 @@ const Budget = () => {
     }
   }, [revenuBrut, chargesSocialesManuallyEdited, chargesSociales]);
 
-  // Ajustement automatique des valeurs lors du changement de période
+  // Recharger les données lors du changement de période
   useEffect(() => {
-    const prevPeriod = localStorage.getItem('budgetPeriodType') || 'mensuel';
-    
-    if (prevPeriod !== periodType) {
-      const multiplier = periodType === 'annuel' ? 12 : 1/12;
-      
-      if (revenuBrut) setRevenuBrut((parseFloat(revenuBrut) * multiplier).toFixed(0));
-      if (chargesSociales) {
-        setChargesSociales((parseFloat(chargesSociales) * multiplier).toFixed(0));
-        setChargesSocialesManuallyEdited(true);
-      }
-      if (depensesLogement) setDepensesLogement((parseFloat(depensesLogement) * multiplier).toFixed(0));
-      if (depensesTransport) setDepensesTransport((parseFloat(depensesTransport) * multiplier).toFixed(0));
-      if (depensesAlimentation) setDepensesAlimentation((parseFloat(depensesAlimentation) * multiplier).toFixed(0));
-      if (autresDepenses) setAutresDepenses((parseFloat(autresDepenses) * multiplier).toFixed(0));
-      
-      localStorage.setItem('budgetPeriodType', periodType);
+    if (user) {
+      fetchBudgetData();
     }
   }, [periodType]);
 
