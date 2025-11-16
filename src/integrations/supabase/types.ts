@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      budget_data: {
+        Row: {
+          autres_depenses: number | null
+          avs_1er_pilier: number | null
+          charges_sociales: number | null
+          created_at: string
+          depenses_alimentation: number | null
+          depenses_logement: number | null
+          depenses_transport: number | null
+          id: string
+          lpp_2eme_pilier: number | null
+          period_type: string
+          pilier_3a: number | null
+          pilier_3b: number | null
+          revenu_brut: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          autres_depenses?: number | null
+          avs_1er_pilier?: number | null
+          charges_sociales?: number | null
+          created_at?: string
+          depenses_alimentation?: number | null
+          depenses_logement?: number | null
+          depenses_transport?: number | null
+          id?: string
+          lpp_2eme_pilier?: number | null
+          period_type?: string
+          pilier_3a?: number | null
+          pilier_3b?: number | null
+          revenu_brut?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          autres_depenses?: number | null
+          avs_1er_pilier?: number | null
+          charges_sociales?: number | null
+          created_at?: string
+          depenses_alimentation?: number | null
+          depenses_logement?: number | null
+          depenses_transport?: number | null
+          id?: string
+          lpp_2eme_pilier?: number | null
+          period_type?: string
+          pilier_3a?: number | null
+          pilier_3b?: number | null
+          revenu_brut?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           category: string
