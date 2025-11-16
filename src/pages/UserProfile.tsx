@@ -246,49 +246,29 @@ const UserProfile = () => {
         .eq("user_id", user?.id)
         .maybeSingle();
 
-      // Convertir les valeurs si la période a changé
-      const needsConversion = budgetData.period_type !== values.period_type;
-      
-      const convertForSave = (value: number) => {
-        if (!needsConversion) return value;
-        if (budgetData.period_type === "mensuel" && values.period_type === "annuel") {
-          return value * 12;
-        }
-        if (budgetData.period_type === "annuel" && values.period_type === "mensuel") {
-          return Math.round(value / 12);
-        }
-        return value;
-      };
-
-      // Calculer les deux versions (mensuelle et annuelle) pour chaque valeur
-      const revenu_brut = convertForSave(values.revenu_brut);
-      const charges_sociales = convertForSave(values.charges_sociales);
-      const depenses_logement = convertForSave(values.depenses_logement);
-      const depenses_transport = convertForSave(values.depenses_transport);
-      const depenses_alimentation = convertForSave(values.depenses_alimentation);
-      const autres_depenses = convertForSave(values.autres_depenses);
-
-      const revenu_brut_mensuel = values.period_type === "mensuel" ? revenu_brut : Math.round(revenu_brut / 12);
-      const revenu_brut_annuel = values.period_type === "annuel" ? revenu_brut : revenu_brut * 12;
-      const charges_sociales_mensuel = values.period_type === "mensuel" ? charges_sociales : Math.round(charges_sociales / 12);
-      const charges_sociales_annuel = values.period_type === "annuel" ? charges_sociales : charges_sociales * 12;
-      const depenses_logement_mensuel = values.period_type === "mensuel" ? depenses_logement : Math.round(depenses_logement / 12);
-      const depenses_logement_annuel = values.period_type === "annuel" ? depenses_logement : depenses_logement * 12;
-      const depenses_transport_mensuel = values.period_type === "mensuel" ? depenses_transport : Math.round(depenses_transport / 12);
-      const depenses_transport_annuel = values.period_type === "annuel" ? depenses_transport : depenses_transport * 12;
-      const depenses_alimentation_mensuel = values.period_type === "mensuel" ? depenses_alimentation : Math.round(depenses_alimentation / 12);
-      const depenses_alimentation_annuel = values.period_type === "annuel" ? depenses_alimentation : depenses_alimentation * 12;
-      const autres_depenses_mensuel = values.period_type === "mensuel" ? autres_depenses : Math.round(autres_depenses / 12);
-      const autres_depenses_annuel = values.period_type === "annuel" ? autres_depenses : autres_depenses * 12;
+      // Les valeurs dans le formulaire sont dans la période sélectionnée
+      // On calcule directement les deux versions (mensuelle et annuelle)
+      const revenu_brut_mensuel = values.period_type === "mensuel" ? values.revenu_brut : Math.round(values.revenu_brut / 12);
+      const revenu_brut_annuel = values.period_type === "annuel" ? values.revenu_brut : values.revenu_brut * 12;
+      const charges_sociales_mensuel = values.period_type === "mensuel" ? values.charges_sociales : Math.round(values.charges_sociales / 12);
+      const charges_sociales_annuel = values.period_type === "annuel" ? values.charges_sociales : values.charges_sociales * 12;
+      const depenses_logement_mensuel = values.period_type === "mensuel" ? values.depenses_logement : Math.round(values.depenses_logement / 12);
+      const depenses_logement_annuel = values.period_type === "annuel" ? values.depenses_logement : values.depenses_logement * 12;
+      const depenses_transport_mensuel = values.period_type === "mensuel" ? values.depenses_transport : Math.round(values.depenses_transport / 12);
+      const depenses_transport_annuel = values.period_type === "annuel" ? values.depenses_transport : values.depenses_transport * 12;
+      const depenses_alimentation_mensuel = values.period_type === "mensuel" ? values.depenses_alimentation : Math.round(values.depenses_alimentation / 12);
+      const depenses_alimentation_annuel = values.period_type === "annuel" ? values.depenses_alimentation : values.depenses_alimentation * 12;
+      const autres_depenses_mensuel = values.period_type === "mensuel" ? values.autres_depenses : Math.round(values.autres_depenses / 12);
+      const autres_depenses_annuel = values.period_type === "annuel" ? values.autres_depenses : values.autres_depenses * 12;
 
       const dataToSave = {
         period_type: values.period_type,
-        revenu_brut,
-        charges_sociales,
-        depenses_logement,
-        depenses_transport,
-        depenses_alimentation,
-        autres_depenses,
+        revenu_brut: values.revenu_brut,
+        charges_sociales: values.charges_sociales,
+        depenses_logement: values.depenses_logement,
+        depenses_transport: values.depenses_transport,
+        depenses_alimentation: values.depenses_alimentation,
+        autres_depenses: values.autres_depenses,
         revenu_brut_mensuel,
         revenu_brut_annuel,
         charges_sociales_mensuel,
