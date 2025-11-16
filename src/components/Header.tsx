@@ -131,11 +131,9 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            {user ? <Link to="/account/documents" className="text-foreground hover:text-primary transition-colors font-medium">
-                Mes documents
-              </Link> : <a href="#" className="text-foreground hover:text-primary transition-colors">
-                Mes documents
-              </a>}
+            <Link to="/account/documents" className="text-foreground hover:text-primary transition-colors font-medium">
+              Mes documents
+            </Link>
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
               Contact
             </Link>
