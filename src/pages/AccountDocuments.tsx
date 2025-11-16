@@ -106,15 +106,17 @@ const AccountDocuments = () => {
     setLoading(false);
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
+  const handleChooseFile = () => {
     if (!user) {
       setShowAuthAlert(true);
-      e.target.value = "";
       return;
     }
+    document.getElementById('file-upload')?.click();
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
 
     if (!selectedCategory) {
       toast({
@@ -526,7 +528,7 @@ const AccountDocuments = () => {
                       <Button 
                         disabled={uploading} 
                         className="w-full"
-                        onClick={() => document.getElementById('file-upload')?.click()}
+                        onClick={handleChooseFile}
                       >
                         {uploading ? "Téléchargement..." : "Choisir un fichier"}
                       </Button>
