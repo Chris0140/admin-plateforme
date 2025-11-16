@@ -181,6 +181,13 @@ const UserProfile = () => {
   const [depensesOpen, setDepensesOpen] = useState(true);
   const [prevoyanceOpen, setPrevoyanceOpen] = useState(true);
   
+  // Mobile sections states
+  const [mobileInfoOpen, setMobileInfoOpen] = useState(false);
+  const [mobileBudgetOpen, setMobileBudgetOpen] = useState(false);
+  const [mobileImpotsOpen, setMobileImpotsOpen] = useState(false);
+  const [mobileAssurancesOpen, setMobileAssurancesOpen] = useState(false);
+  const [mobileDocumentsOpen, setMobileDocumentsOpen] = useState(false);
+  
   const [budgetData, setBudgetData] = useState<BudgetData>({
     period_type: "mensuel",
     revenu_brut: 0,
@@ -613,7 +620,114 @@ const UserProfile = () => {
             </p>
           </div>
 
-          <Tabs defaultValue="informations" className="space-y-6">
+          {/* Version Mobile - Liste rétractable */}
+          <div className="md:hidden space-y-3">
+            <Collapsible open={mobileInfoOpen} onOpenChange={setMobileInfoOpen}>
+              <Card>
+                <CollapsibleTrigger className="w-full">
+                  <CardHeader className="flex flex-row items-center justify-between p-4 space-y-0">
+                    <div className="flex items-center gap-3">
+                      <User className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-base">Informations</CardTitle>
+                    </div>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${mobileInfoOpen ? 'rotate-180' : ''}`} />
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <Separator />
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-muted-foreground">Cliquez pour voir vos informations personnelles</p>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+
+            <Collapsible open={mobileBudgetOpen} onOpenChange={setMobileBudgetOpen}>
+              <Card>
+                <CollapsibleTrigger className="w-full">
+                  <CardHeader className="flex flex-row items-center justify-between p-4 space-y-0">
+                    <div className="flex items-center gap-3">
+                      <Wallet className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-base">Budget</CardTitle>
+                    </div>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${mobileBudgetOpen ? 'rotate-180' : ''}`} />
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <Separator />
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-muted-foreground">Cliquez pour voir votre budget</p>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+
+            <Collapsible open={mobileImpotsOpen} onOpenChange={setMobileImpotsOpen}>
+              <Card>
+                <CollapsibleTrigger className="w-full">
+                  <CardHeader className="flex flex-row items-center justify-between p-4 space-y-0">
+                    <div className="flex items-center gap-3">
+                      <Calculator className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-base">Impôts</CardTitle>
+                    </div>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${mobileImpotsOpen ? 'rotate-180' : ''}`} />
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <Separator />
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-muted-foreground">Cliquez pour voir vos données fiscales</p>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+
+            <Collapsible open={mobileAssurancesOpen} onOpenChange={setMobileAssurancesOpen}>
+              <Card>
+                <CollapsibleTrigger className="w-full">
+                  <CardHeader className="flex flex-row items-center justify-between p-4 space-y-0">
+                    <div className="flex items-center gap-3">
+                      <Shield className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-base">Assurances</CardTitle>
+                    </div>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${mobileAssurancesOpen ? 'rotate-180' : ''}`} />
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <Separator />
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-muted-foreground">Aucune assurance enregistrée</p>
+                    <Button onClick={() => navigate("/comparateur")} className="mt-4 w-full" size="sm">
+                      Comparer les assurances
+                    </Button>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+
+            <Collapsible open={mobileDocumentsOpen} onOpenChange={setMobileDocumentsOpen}>
+              <Card>
+                <CollapsibleTrigger className="w-full">
+                  <CardHeader className="flex flex-row items-center justify-between p-4 space-y-0">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-base">Documents</CardTitle>
+                    </div>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${mobileDocumentsOpen ? 'rotate-180' : ''}`} />
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <Separator />
+                  <CardContent className="pt-4">
+                    <p className="text-sm text-muted-foreground">{documents.length} document{documents.length !== 1 ? "s" : ""}</p>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          </div>
+
+          {/* Version Desktop - Tabs */}
+          <Tabs defaultValue="informations" className="hidden md:block space-y-6">
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="informations">
                 <User className="h-4 w-4 mr-2" />
