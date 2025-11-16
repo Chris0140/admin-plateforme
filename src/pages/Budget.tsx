@@ -120,7 +120,7 @@ const Budget = () => {
     }
   };
 
-  const saveRevenusData = async () => {
+  const saveAllData = async () => {
     if (!user) {
       toast({
         variant: "destructive",
@@ -138,81 +138,19 @@ const Budget = () => {
         .eq("user_id", user.id)
         .maybeSingle();
 
+      // Conversion des valeurs
       const revenuBrutNum = parseFloat(revenuBrut) || 0;
       const chargesSocialesNum = parseFloat(chargesSociales) || 0;
-
-      // Calculer les deux versions (mensuelle et annuelle)
-      const revenu_brut_mensuel = periodType === "mensuel" ? revenuBrutNum : Math.round(revenuBrutNum / 12);
-      const revenu_brut_annuel = periodType === "annuel" ? revenuBrutNum : revenuBrutNum * 12;
-      const charges_sociales_mensuel = periodType === "mensuel" ? chargesSocialesNum : Math.round(chargesSocialesNum / 12);
-      const charges_sociales_annuel = periodType === "annuel" ? chargesSocialesNum : chargesSocialesNum * 12;
-
-      const revenusData = {
-        user_id: user.id,
-        period_type: periodType,
-        revenu_brut: revenuBrutNum,
-        charges_sociales: chargesSocialesNum,
-        revenu_brut_mensuel,
-        revenu_brut_annuel,
-        charges_sociales_mensuel,
-        charges_sociales_annuel,
-      };
-
-      if (existingData) {
-        const { error } = await supabase
-          .from("budget_data")
-          .update(revenusData)
-          .eq("user_id", user.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("budget_data")
-          .insert(revenusData);
-
-        if (error) throw error;
-      }
-
-      toast({
-        title: "Succès",
-        description: "Revenus sauvegardés dans votre profil",
-      });
-    } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de sauvegarder vos données",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const saveDepensesData = async () => {
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Vous devez être connecté pour sauvegarder vos données",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { data: existingData } = await supabase
-        .from("budget_data")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
       const depensesLogementNum = parseFloat(depensesLogement) || 0;
       const depensesTransportNum = parseFloat(depensesTransport) || 0;
       const depensesAlimentationNum = parseFloat(depensesAlimentation) || 0;
       const autresDepensesNum = parseFloat(autresDepenses) || 0;
 
-      // Calculer les deux versions (mensuelle et annuelle)
+      // Calculer les versions mensuelle et annuelle pour tous les champs
+      const revenu_brut_mensuel = periodType === "mensuel" ? revenuBrutNum : Math.round(revenuBrutNum / 12);
+      const revenu_brut_annuel = periodType === "annuel" ? revenuBrutNum : revenuBrutNum * 12;
+      const charges_sociales_mensuel = periodType === "mensuel" ? chargesSocialesNum : Math.round(chargesSocialesNum / 12);
+      const charges_sociales_annuel = periodType === "annuel" ? chargesSocialesNum : chargesSocialesNum * 12;
       const depenses_logement_mensuel = periodType === "mensuel" ? depensesLogementNum : Math.round(depensesLogementNum / 12);
       const depenses_logement_annuel = periodType === "annuel" ? depensesLogementNum : depensesLogementNum * 12;
       const depenses_transport_mensuel = periodType === "mensuel" ? depensesTransportNum : Math.round(depensesTransportNum / 12);
@@ -222,13 +160,19 @@ const Budget = () => {
       const autres_depenses_mensuel = periodType === "mensuel" ? autresDepensesNum : Math.round(autresDepensesNum / 12);
       const autres_depenses_annuel = periodType === "annuel" ? autresDepensesNum : autresDepensesNum * 12;
 
-      const depensesData = {
+      const allData = {
         user_id: user.id,
         period_type: periodType,
+        revenu_brut: revenuBrutNum,
+        charges_sociales: chargesSocialesNum,
         depenses_logement: depensesLogementNum,
         depenses_transport: depensesTransportNum,
         depenses_alimentation: depensesAlimentationNum,
         autres_depenses: autresDepensesNum,
+        revenu_brut_mensuel,
+        revenu_brut_annuel,
+        charges_sociales_mensuel,
+        charges_sociales_annuel,
         depenses_logement_mensuel,
         depenses_logement_annuel,
         depenses_transport_mensuel,
@@ -237,60 +181,6 @@ const Budget = () => {
         depenses_alimentation_annuel,
         autres_depenses_mensuel,
         autres_depenses_annuel,
-      };
-
-      if (existingData) {
-        const { error } = await supabase
-          .from("budget_data")
-          .update(depensesData)
-          .eq("user_id", user.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("budget_data")
-          .insert(depensesData);
-
-        if (error) throw error;
-      }
-
-      toast({
-        title: "Succès",
-        description: "Dépenses sauvegardées dans votre profil",
-      });
-    } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Impossible de sauvegarder vos données",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const savePrevoyanceData = async () => {
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Vous devez être connecté pour sauvegarder vos données",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { data: existingData } = await supabase
-        .from("budget_data")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      const prevoyanceData = {
-        user_id: user.id,
-        period_type: periodType,
         avs_1er_pilier: parseFloat(avs1erPilier) || 0,
         lpp_2eme_pilier: parseFloat(lpp2emePilier) || 0,
         pilier_3a: parseFloat(pilier3a) || 0,
@@ -300,21 +190,21 @@ const Budget = () => {
       if (existingData) {
         const { error } = await supabase
           .from("budget_data")
-          .update(prevoyanceData)
+          .update(allData)
           .eq("user_id", user.id);
 
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from("budget_data")
-          .insert(prevoyanceData);
+          .insert(allData);
 
         if (error) throw error;
       }
 
       toast({
         title: "Succès",
-        description: "Prévoyance sauvegardée dans votre profil",
+        description: "Budget sauvegardé avec succès",
       });
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
@@ -471,20 +361,6 @@ const Budget = () => {
                       <p className="text-sm text-muted-foreground">Revenu net</p>
                       <p className="text-2xl font-bold text-primary">{formatCurrency(revenuNet)}</p>
                     </div>
-                    {user && (
-                      <div className="flex justify-end mt-4">
-                        <Button 
-                          onClick={saveRevenusData} 
-                          disabled={isLoading}
-                          size="sm"
-                          variant="outline"
-                          className="gap-2"
-                        >
-                          <Save className="h-3 w-3" />
-                          Mettre à jour le profil
-                        </Button>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
 
@@ -551,24 +427,10 @@ const Budget = () => {
                           let value = e.target.value;
                           value = value.replace(/^0+(?=\d)/, '');
                           setAutresDepenses(value);
-                        }}
-                      />
-                    </div>
-                    {user && (
-                      <div className="flex justify-end mt-4">
-                        <Button 
-                          onClick={saveDepensesData} 
-                          disabled={isLoading}
-                          size="sm"
-                          variant="outline"
-                          className="gap-2"
-                        >
-                          <Save className="h-3 w-3" />
-                          Mettre à jour le profil
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
+                      }}
+                    />
+                  </div>
+                </CardContent>
                 </Card>
 
                 <Card className="md:col-span-2">
@@ -576,6 +438,18 @@ const Budget = () => {
                     <CardTitle>Résumé {periodType === "mensuel" ? "Mensuel" : "Annuel"}</CardTitle>
                   </CardHeader>
                   <CardContent>
+                    {user && (
+                      <div className="flex justify-end mb-6">
+                        <Button 
+                          onClick={saveAllData} 
+                          disabled={isLoading}
+                          className="gap-2"
+                        >
+                          <Save className="h-4 w-4" />
+                          Enregistrer le budget
+                        </Button>
+                      </div>
+                    )}
                     <div className="grid md:grid-cols-3 gap-6">
                       <div className="text-center p-4 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground mb-2">Revenu Net</p>
@@ -681,16 +555,14 @@ const Budget = () => {
                       <p className="text-3xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
                     </div>
                     {user && (
-                      <div className="flex justify-end mt-4">
+                      <div className="flex justify-end mt-6">
                         <Button 
-                          onClick={savePrevoyanceData} 
+                          onClick={saveAllData} 
                           disabled={isLoading}
-                          size="sm"
-                          variant="outline"
                           className="gap-2"
                         >
-                          <Save className="h-3 w-3" />
-                          Mettre à jour le profil
+                          <Save className="h-4 w-4" />
+                          Enregistrer le budget
                         </Button>
                       </div>
                     )}
