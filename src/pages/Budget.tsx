@@ -6,10 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 const Budget = () => {
   // Budget Personnel State
+  const [periodType, setPeriodType] = useState<"mensuel" | "annuel">("mensuel");
   const [revenuBrut, setRevenuBrut] = useState("");
   const [chargesSociales, setChargesSociales] = useState("");
   const [depensesLogement, setDepensesLogement] = useState("");
@@ -24,6 +26,7 @@ const Budget = () => {
   const [pilier3b, setPilier3b] = useState("");
 
   // Calculs Budget Personnel
+  const multiplier = periodType === "annuel" ? 12 : 1;
   const revenuNet = parseFloat(revenuBrut || "0") - parseFloat(chargesSociales || "0");
   const totalDepenses = 
     parseFloat(depensesLogement || "0") +
@@ -31,6 +34,11 @@ const Budget = () => {
     parseFloat(depensesAlimentation || "0") +
     parseFloat(autresDepenses || "0");
   const solde = revenuNet - totalDepenses;
+  
+  // Montants affichés selon la période
+  const revenuNetAffiche = revenuNet * multiplier;
+  const totalDepensesAffiche = totalDepenses * multiplier;
+  const soldeAffiche = solde * multiplier;
 
   // Calculs Prévoyance Retraite
   const total1erPilier = parseFloat(avs1erPilier || "0");
@@ -83,11 +91,27 @@ const Budget = () => {
 
             {/* Budget Personnel */}
             <TabsContent value="personnel">
+              <div className="mb-6 flex justify-center">
+                <ToggleGroup 
+                  type="single" 
+                  value={periodType}
+                  onValueChange={(value) => value && setPeriodType(value as "mensuel" | "annuel")}
+                  className="bg-muted rounded-lg p-1"
+                >
+                  <ToggleGroupItem value="mensuel" className="px-6">
+                    Mensuel
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="annuel" className="px-6">
+                    Annuel
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
                     <CardTitle>Revenus</CardTitle>
-                    <CardDescription>Vos revenus mensuels</CardDescription>
+                    <CardDescription>Vos revenus {periodType === "mensuel" ? "mensuels" : "annuels"}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
@@ -192,22 +216,22 @@ const Budget = () => {
 
                 <Card className="md:col-span-2">
                   <CardHeader>
-                    <CardTitle>Résumé Mensuel</CardTitle>
+                    <CardTitle>Résumé {periodType === "mensuel" ? "Mensuel" : "Annuel"}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid md:grid-cols-3 gap-6">
                       <div className="text-center p-4 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground mb-2">Revenu Net</p>
-                        <p className="text-2xl font-bold text-foreground">{formatCurrency(revenuNet)}</p>
+                        <p className="text-2xl font-bold text-foreground">{formatCurrency(revenuNetAffiche)}</p>
                       </div>
                       <div className="text-center p-4 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground mb-2">Total Dépenses</p>
-                        <p className="text-2xl font-bold text-foreground">{formatCurrency(totalDepenses)}</p>
+                        <p className="text-2xl font-bold text-foreground">{formatCurrency(totalDepensesAffiche)}</p>
                       </div>
                       <div className="text-center p-4 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground mb-2">Solde</p>
-                        <p className={`text-2xl font-bold ${solde >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(solde)}
+                        <p className={`text-2xl font-bold ${soldeAffiche >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(soldeAffiche)}
                         </p>
                       </div>
                     </div>
