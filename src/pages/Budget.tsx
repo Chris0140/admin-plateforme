@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,7 @@ const Budget = () => {
   const [periodType, setPeriodType] = useState<"mensuel" | "annuel">("mensuel");
   const [revenuBrut, setRevenuBrut] = useState("");
   const [chargesSociales, setChargesSociales] = useState("");
+  const [chargesSocialesManuallyEdited, setChargesSocialesManuallyEdited] = useState(false);
   const [depensesLogement, setDepensesLogement] = useState("");
   const [depensesTransport, setDepensesTransport] = useState("");
   const [depensesAlimentation, setDepensesAlimentation] = useState("");
@@ -24,6 +25,17 @@ const Budget = () => {
   const [lpp2emePilier, setLpp2emePilier] = useState("");
   const [pilier3a, setPilier3a] = useState("");
   const [pilier3b, setPilier3b] = useState("");
+
+  // Calcul automatique des charges sociales à 6,8% du salaire brut
+  useEffect(() => {
+    if (revenuBrut && !chargesSocialesManuallyEdited) {
+      const brut = parseFloat(revenuBrut);
+      if (!isNaN(brut)) {
+        const chargesAuto = (brut * 0.068).toFixed(2);
+        setChargesSociales(chargesAuto);
+      }
+    }
+  }, [revenuBrut, chargesSocialesManuallyEdited]);
 
   // Calculs Budget Personnel
   const multiplier = periodType === "annuel" ? 12 : 1;
@@ -139,8 +151,10 @@ const Budget = () => {
                           let value = e.target.value;
                           value = value.replace(/^0+(?=\d)/, '');
                           setChargesSociales(value);
+                          setChargesSocialesManuallyEdited(true);
                         }}
                       />
+                      <p className="text-xs text-muted-foreground mt-1">Proposition: 6,8% du salaire brut</p>
                     </div>
                     <div className="pt-4 border-t">
                       <p className="text-sm text-muted-foreground">Revenu net</p>
