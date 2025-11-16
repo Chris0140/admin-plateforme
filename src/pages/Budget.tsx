@@ -37,8 +37,29 @@ const Budget = () => {
     }
   }, [revenuBrut, chargesSocialesManuallyEdited]);
 
+  // Ajustement automatique des valeurs lors du changement de période
+  useEffect(() => {
+    const prevPeriod = localStorage.getItem('budgetPeriodType') || 'mensuel';
+    
+    if (prevPeriod !== periodType) {
+      const multiplier = periodType === 'annuel' ? 12 : 1/12;
+      
+      if (revenuBrut) setRevenuBrut((parseFloat(revenuBrut) * multiplier).toFixed(2));
+      if (chargesSociales) {
+        setChargesSociales((parseFloat(chargesSociales) * multiplier).toFixed(2));
+        setChargesSocialesManuallyEdited(true);
+      }
+      if (depensesLogement) setDepensesLogement((parseFloat(depensesLogement) * multiplier).toFixed(2));
+      if (depensesTransport) setDepensesTransport((parseFloat(depensesTransport) * multiplier).toFixed(2));
+      if (depensesAlimentation) setDepensesAlimentation((parseFloat(depensesAlimentation) * multiplier).toFixed(2));
+      if (autresDepenses) setAutresDepenses((parseFloat(autresDepenses) * multiplier).toFixed(2));
+      
+      localStorage.setItem('budgetPeriodType', periodType);
+    }
+  }, [periodType]);
+
   // Calculs Budget Personnel
-  const multiplier = periodType === "annuel" ? 12 : 1;
+  const multiplier = 1;
   const revenuNet = parseFloat(revenuBrut || "0") - parseFloat(chargesSociales || "0");
   const totalDepenses = 
     parseFloat(depensesLogement || "0") +
@@ -47,10 +68,10 @@ const Budget = () => {
     parseFloat(autresDepenses || "0");
   const solde = revenuNet - totalDepenses;
   
-  // Montants affichés selon la période
-  const revenuNetAffiche = revenuNet * multiplier;
-  const totalDepensesAffiche = totalDepenses * multiplier;
-  const soldeAffiche = solde * multiplier;
+  // Montants affichés (déjà dans la bonne unité)
+  const revenuNetAffiche = revenuNet;
+  const totalDepensesAffiche = totalDepenses;
+  const soldeAffiche = solde;
 
   // Calculs Prévoyance Retraite
   const total1erPilier = parseFloat(avs1erPilier || "0");
