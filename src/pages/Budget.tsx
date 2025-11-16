@@ -156,7 +156,7 @@ const Budget = () => {
                         value={revenuBrut}
                         onChange={(e) => {
                           let value = e.target.value;
-                          value = value.replace(/^0+(?=\d)/, '');
+                          value = value.replace(/^0+(?=\d)/, '').replace(/,/g, '');
                           setRevenuBrut(value);
                         }}
                       />
