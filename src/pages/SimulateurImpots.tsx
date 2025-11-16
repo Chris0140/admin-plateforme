@@ -917,43 +917,71 @@ const SimulateurImpots = () => {
   });
   const selectedCanton = form.watch("canton");
 
-  // Charger les données fiscales existantes au démarrage
+  // Charger les données fiscales et budget existantes au démarrage
   useEffect(() => {
     const loadTaxData = async () => {
       if (!user) return;
 
       try {
-        const { data, error } = await supabase
+        // Charger les données fiscales
+        const { data: taxData, error: taxError } = await supabase
           .from("tax_data")
           .select("*")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (error) throw error;
+        if (taxError) throw taxError;
 
-        if (data) {
-          // Préremplir le formulaire avec les données existantes
+        // Charger les données de budget
+        const { data: budgetData, error: budgetError } = await supabase
+          .from("budget_data")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (budgetError) throw budgetError;
+
+        if (taxData) {
+          // Préremplir le formulaire avec les données fiscales existantes
           form.reset({
-            canton: data.canton,
-            commune: data.commune,
-            etatCivil: data.etat_civil,
-            confession: data.confession || "aucune",
-            revenuAnnuel: data.revenu_annuel.toString(),
-            fortune: data.fortune.toString(),
-            nombreEnfants: data.nombre_enfants.toString(),
-            deduction3emePilier: data.deduction_3eme_pilier.toString(),
-            interetsHypothecaires: data.interets_hypothecaires.toString(),
-            autresDeductions: data.autres_deductions.toString(),
-            chargesSociales: data.charges_sociales.toString(),
+            canton: taxData.canton,
+            commune: taxData.commune,
+            etatCivil: taxData.etat_civil,
+            confession: taxData.confession || "aucune",
+            revenuAnnuel: taxData.revenu_annuel.toString(),
+            fortune: taxData.fortune.toString(),
+            nombreEnfants: taxData.nombre_enfants.toString(),
+            deduction3emePilier: taxData.deduction_3eme_pilier.toString(),
+            interetsHypothecaires: taxData.interets_hypothecaires.toString(),
+            autresDeductions: taxData.autres_deductions.toString(),
+            chargesSociales: taxData.charges_sociales.toString(),
           });
 
           // Charger les communes pour le canton sélectionné
-          if (communesParCanton[data.canton]) {
-            setCommunesDisponibles(communesParCanton[data.canton]);
+          if (communesParCanton[taxData.canton]) {
+            setCommunesDisponibles(communesParCanton[taxData.canton]);
           }
+        } else if (budgetData) {
+          // Si pas de données fiscales, utiliser les données de budget
+          const revenuAnnuel = budgetData.revenu_brut_annuel || 0;
+          const chargesSociales = budgetData.charges_sociales_annuel || 0;
+
+          form.reset({
+            canton: "",
+            commune: "",
+            etatCivil: "",
+            confession: "aucune",
+            revenuAnnuel: revenuAnnuel.toString(),
+            fortune: "0",
+            nombreEnfants: "0",
+            deduction3emePilier: "0",
+            interetsHypothecaires: "0",
+            autresDeductions: "0",
+            chargesSociales: chargesSociales.toString(),
+          });
         }
       } catch (error) {
-        console.error("Erreur lors du chargement des données fiscales:", error);
+        console.error("Erreur lors du chargement des données:", error);
       }
     };
 
