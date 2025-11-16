@@ -8,8 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Save } from "lucide-react";
 
 const Budget = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+  
   // Budget Personnel State
   const [periodType, setPeriodType] = useState<"mensuel" | "annuel">("mensuel");
   const [revenuBrut, setRevenuBrut] = useState("");
@@ -25,6 +33,105 @@ const Budget = () => {
   const [lpp2emePilier, setLpp2emePilier] = useState("");
   const [pilier3a, setPilier3a] = useState("");
   const [pilier3b, setPilier3b] = useState("");
+
+  // Charger les données depuis Supabase
+  useEffect(() => {
+    if (user) {
+      fetchBudgetData();
+    }
+  }, [user]);
+
+  const fetchBudgetData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("budget_data")
+        .select("*")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setPeriodType(data.period_type as "mensuel" | "annuel");
+        setRevenuBrut(data.revenu_brut?.toString() || "");
+        setChargesSociales(data.charges_sociales?.toString() || "");
+        setDepensesLogement(data.depenses_logement?.toString() || "");
+        setDepensesTransport(data.depenses_transport?.toString() || "");
+        setDepensesAlimentation(data.depenses_alimentation?.toString() || "");
+        setAutresDepenses(data.autres_depenses?.toString() || "");
+        setAvs1erPilier(data.avs_1er_pilier?.toString() || "");
+        setLpp2emePilier(data.lpp_2eme_pilier?.toString() || "");
+        setPilier3a(data.pilier_3a?.toString() || "");
+        setPilier3b(data.pilier_3b?.toString() || "");
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des données:", error);
+    }
+  };
+
+  const saveBudgetData = async () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour sauvegarder vos données",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data: existingData } = await supabase
+        .from("budget_data")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const budgetData = {
+        user_id: user.id,
+        period_type: periodType,
+        revenu_brut: parseFloat(revenuBrut) || 0,
+        charges_sociales: parseFloat(chargesSociales) || 0,
+        depenses_logement: parseFloat(depensesLogement) || 0,
+        depenses_transport: parseFloat(depensesTransport) || 0,
+        depenses_alimentation: parseFloat(depensesAlimentation) || 0,
+        autres_depenses: parseFloat(autresDepenses) || 0,
+        avs_1er_pilier: parseFloat(avs1erPilier) || 0,
+        lpp_2eme_pilier: parseFloat(lpp2emePilier) || 0,
+        pilier_3a: parseFloat(pilier3a) || 0,
+        pilier_3b: parseFloat(pilier3b) || 0,
+      };
+
+      if (existingData) {
+        const { error } = await supabase
+          .from("budget_data")
+          .update(budgetData)
+          .eq("user_id", user.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("budget_data")
+          .insert(budgetData);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Succès",
+        description: "Vos données ont été sauvegardées dans votre profil",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de sauvegarder vos données",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Calcul automatique des charges sociales à 6,8% du salaire brut
   useEffect(() => {
@@ -124,7 +231,7 @@ const Budget = () => {
 
             {/* Budget Personnel */}
             <TabsContent value="personnel">
-              <div className="mb-6 flex justify-center">
+              <div className="mb-6 flex flex-col items-center gap-4">
                 <ToggleGroup 
                   type="single" 
                   value={periodType}
@@ -138,6 +245,12 @@ const Budget = () => {
                     Annuel
                   </ToggleGroupItem>
                 </ToggleGroup>
+                {user && (
+                  <Button onClick={saveBudgetData} disabled={isLoading}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {isLoading ? "Enregistrement..." : "Enregistrer dans mon profil"}
+                  </Button>
+                )}
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
@@ -283,6 +396,14 @@ const Budget = () => {
 
             {/* Prévoyance Retraite */}
             <TabsContent value="prevoyance">
+              {user && (
+                <div className="mb-6 flex justify-center">
+                  <Button onClick={saveBudgetData} disabled={isLoading}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {isLoading ? "Enregistrement..." : "Enregistrer dans mon profil"}
+                  </Button>
+                </div>
+              )}
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
