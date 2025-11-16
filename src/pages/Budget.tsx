@@ -11,7 +11,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save } from "lucide-react";
+import { Save, ChevronDown } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const Budget = () => {
   const { user } = useAuth();
@@ -33,6 +34,9 @@ const Budget = () => {
   const [lpp2emePilier, setLpp2emePilier] = useState("");
   const [pilier3a, setPilier3a] = useState("");
   const [pilier3b, setPilier3b] = useState("");
+  
+  // Collapsible state for mobile
+  const [revenusDepensesOpen, setRevenusDepensesOpen] = useState(true);
 
   // Charger les données depuis Supabase
   useEffect(() => {
@@ -318,7 +322,143 @@ const Budget = () => {
                 </ToggleGroup>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6">
+              {/* Section rétractable sur mobile */}
+              <div className="md:hidden mb-4">
+                <Collapsible open={revenusDepensesOpen} onOpenChange={setRevenusDepensesOpen}>
+                  <CollapsibleTrigger className="flex items-center justify-between w-full p-4 bg-card rounded-lg border border-border hover:bg-card/80 transition-colors">
+                    <h2 className="text-lg font-semibold text-foreground">Revenus et dépenses fixes</h2>
+                    <ChevronDown 
+                      className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
+                        revenusDepensesOpen ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-4">
+                    <div className="grid gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Revenus</CardTitle>
+                          <CardDescription>Vos revenus {periodType === "mensuel" ? "mensuels" : "annuels"}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <Label htmlFor="revenuBrut">Revenu brut (CHF)</Label>
+                            <Input
+                              id="revenuBrut"
+                              type="number"
+                              step="1"
+                              placeholder="8'000"
+                              value={revenuBrut}
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                value = value.replace(/^0+(?=\d)/, '');
+                                setRevenuBrut(value);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="chargesSociales">Charges sociales (CHF)</Label>
+                            <Input
+                              id="chargesSociales"
+                              type="number"
+                              step="1"
+                              placeholder="1'200"
+                              value={chargesSociales}
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                value = value.replace(/^0+(?=\d)/, '');
+                                setChargesSociales(value);
+                                setChargesSocialesManuallyEdited(true);
+                              }}
+                            />
+                            <p className="text-xs text-muted-foreground mt-1">Proposition: 6,8% du salaire brut</p>
+                          </div>
+                          <div className="pt-4 border-t">
+                            <p className="text-sm text-muted-foreground">Revenu net</p>
+                            <p className="text-2xl font-bold text-primary">{formatCurrency(revenuNet)}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Dépenses Fixes</CardTitle>
+                          <CardDescription>Vos dépenses mensuelles</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <Label htmlFor="depensesLogement">Logement (CHF)</Label>
+                            <Input
+                              id="depensesLogement"
+                              type="number"
+                              step="1"
+                              placeholder="1'500"
+                              value={depensesLogement}
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                value = value.replace(/^0+(?=\d)/, '');
+                                setDepensesLogement(value);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="depensesTransport">Transport (CHF)</Label>
+                            <Input
+                              id="depensesTransport"
+                              type="number"
+                              step="1"
+                              placeholder="300"
+                              value={depensesTransport}
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                value = value.replace(/^0+(?=\d)/, '');
+                                setDepensesTransport(value);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="depensesAlimentation">Alimentation (CHF)</Label>
+                            <Input
+                              id="depensesAlimentation"
+                              type="number"
+                              step="1"
+                              placeholder="500"
+                              value={depensesAlimentation}
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                value = value.replace(/^0+(?=\d)/, '');
+                                setDepensesAlimentation(value);
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="autresDepenses">Autres (CHF)</Label>
+                            <Input
+                              id="autresDepenses"
+                              type="number"
+                              step="1"
+                              placeholder="200"
+                              value={autresDepenses}
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                value = value.replace(/^0+(?=\d)/, '');
+                                setAutresDepenses(value);
+                              }}
+                            />
+                          </div>
+                          <div className="pt-4 border-t">
+                            <p className="text-sm text-muted-foreground">Total dépenses</p>
+                            <p className="text-2xl font-bold text-destructive">{formatCurrency(totalDepenses)}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+
+              {/* Section normale sur desktop */}
+              <div className="hidden md:grid md:grid-cols-2 gap-6">
                 <Card>
                   <CardHeader>
                     <CardTitle>Revenus</CardTitle>
@@ -326,9 +466,9 @@ const Budget = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <Label htmlFor="revenuBrut">Revenu brut (CHF)</Label>
+                      <Label htmlFor="revenuBrut-desktop">Revenu brut (CHF)</Label>
                       <Input
-                        id="revenuBrut"
+                        id="revenuBrut-desktop"
                         type="number"
                         step="1"
                         placeholder="8'000"
@@ -341,9 +481,9 @@ const Budget = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="chargesSociales">Charges sociales (CHF)</Label>
+                      <Label htmlFor="chargesSociales-desktop">Charges sociales (CHF)</Label>
                       <Input
-                        id="chargesSociales"
+                        id="chargesSociales-desktop"
                         type="number"
                         step="1"
                         placeholder="1'200"
@@ -371,9 +511,9 @@ const Budget = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <Label htmlFor="depensesLogement">Logement (CHF)</Label>
+                      <Label htmlFor="depensesLogement-desktop">Logement (CHF)</Label>
                       <Input
-                        id="depensesLogement"
+                        id="depensesLogement-desktop"
                         type="number"
                         step="1"
                         placeholder="1'500"
@@ -386,9 +526,9 @@ const Budget = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="depensesTransport">Assurances (CHF)</Label>
+                      <Label htmlFor="depensesTransport-desktop">Transport (CHF)</Label>
                       <Input
-                        id="depensesTransport"
+                        id="depensesTransport-desktop"
                         type="number"
                         step="1"
                         placeholder="300"
@@ -401,12 +541,12 @@ const Budget = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="depensesAlimentation">Alimentation (CHF)</Label>
+                      <Label htmlFor="depensesAlimentation-desktop">Alimentation (CHF)</Label>
                       <Input
-                        id="depensesAlimentation"
+                        id="depensesAlimentation-desktop"
                         type="number"
                         step="1"
-                        placeholder="600"
+                        placeholder="500"
                         value={depensesAlimentation}
                         onChange={(e) => {
                           let value = e.target.value;
@@ -416,55 +556,23 @@ const Budget = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="autresDepenses">Autres dépenses (CHF)</Label>
+                      <Label htmlFor="autresDepenses-desktop">Autres (CHF)</Label>
                       <Input
-                        id="autresDepenses"
+                        id="autresDepenses-desktop"
                         type="number"
                         step="1"
-                        placeholder="400"
+                        placeholder="200"
                         value={autresDepenses}
                         onChange={(e) => {
                           let value = e.target.value;
                           value = value.replace(/^0+(?=\d)/, '');
                           setAutresDepenses(value);
-                      }}
-                    />
-                  </div>
-                </CardContent>
-                </Card>
-
-                <Card className="md:col-span-2">
-                  <CardHeader>
-                    <CardTitle>Résumé {periodType === "mensuel" ? "Mensuel" : "Annuel"}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {user && (
-                      <div className="flex justify-end mb-6">
-                        <Button 
-                          onClick={saveAllData} 
-                          disabled={isLoading}
-                          className="gap-2"
-                        >
-                          <Save className="h-4 w-4" />
-                          Enregistrer le budget
-                        </Button>
-                      </div>
-                    )}
-                    <div className="grid md:grid-cols-3 gap-6">
-                      <div className="text-center p-4 bg-muted rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-2">Revenu Net</p>
-                        <p className="text-2xl font-bold text-foreground">{formatCurrency(revenuNetAffiche)}</p>
-                      </div>
-                      <div className="text-center p-4 bg-muted rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-2">Total Dépenses</p>
-                        <p className="text-2xl font-bold text-foreground">{formatCurrency(totalDepensesAffiche)}</p>
-                      </div>
-                      <div className="text-center p-4 bg-muted rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-2">Solde</p>
-                        <p className={`text-2xl font-bold ${soldeAffiche >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(soldeAffiche)}
-                        </p>
-                      </div>
+                        }}
+                      />
+                    </div>
+                    <div className="pt-4 border-t">
+                      <p className="text-sm text-muted-foreground">Total dépenses</p>
+                      <p className="text-2xl font-bold text-destructive">{formatCurrency(totalDepenses)}</p>
                     </div>
                   </CardContent>
                 </Card>
