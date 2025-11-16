@@ -9,7 +9,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Wallet, Calculator, FileText, Loader2, Edit, Save, X } from "lucide-react";
+import { User, Wallet, Calculator, FileText, Loader2, Edit, Save, X, ChevronDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 
 interface Profile {
   nom: string;
@@ -174,6 +175,12 @@ const UserProfile = () => {
   const [editingTax, setEditingTax] = useState(false);
   const [displayPeriodType, setDisplayPeriodType] = useState<"mensuel" | "annuel">("mensuel");
   const [communesDisponibles, setCommunesDisponibles] = useState<Array<{ value: string; label: string; coefficientCommunal: number }>>([]);
+  
+  // Collapsible states
+  const [revenusOpen, setRevenusOpen] = useState(true);
+  const [depensesOpen, setDepensesOpen] = useState(true);
+  const [prevoyanceOpen, setPrevoyanceOpen] = useState(true);
+  
   const [budgetData, setBudgetData] = useState<BudgetData>({
     period_type: "mensuel",
     revenu_brut: 0,
@@ -911,9 +918,17 @@ const UserProfile = () => {
                           )}
                         />
 
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Revenus</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen}>
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">Revenus</h3>
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <ChevronDown className={`h-4 w-4 transition-transform ${revenusOpen ? 'rotate-180' : ''}`} />
+                              </Button>
+                            </CollapsibleTrigger>
+                          </div>
+                          <CollapsibleContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                               control={budgetForm.control}
                               name="revenu_brut"
@@ -953,13 +968,22 @@ const UserProfile = () => {
                               )}
                             />
                           </div>
-                        </div>
+                          </CollapsibleContent>
+                        </Collapsible>
 
                         <Separator />
 
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Dépenses</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Collapsible open={depensesOpen} onOpenChange={setDepensesOpen}>
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">Dépenses</h3>
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <ChevronDown className={`h-4 w-4 transition-transform ${depensesOpen ? 'rotate-180' : ''}`} />
+                              </Button>
+                            </CollapsibleTrigger>
+                          </div>
+                          <CollapsibleContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                               control={budgetForm.control}
                               name="depenses_logement"
@@ -1037,13 +1061,22 @@ const UserProfile = () => {
                               )}
                             />
                           </div>
-                        </div>
+                          </CollapsibleContent>
+                        </Collapsible>
 
                         <Separator />
 
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Prévoyance</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Collapsible open={prevoyanceOpen} onOpenChange={setPrevoyanceOpen}>
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold">Prévoyance</h3>
+                            <CollapsibleTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <ChevronDown className={`h-4 w-4 transition-transform ${prevoyanceOpen ? 'rotate-180' : ''}`} />
+                              </Button>
+                            </CollapsibleTrigger>
+                          </div>
+                          <CollapsibleContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <FormField
                               control={budgetForm.control}
                               name="avs_1er_pilier"
@@ -1121,7 +1154,8 @@ const UserProfile = () => {
                               )}
                             />
                           </div>
-                        </div>
+                          </CollapsibleContent>
+                        </Collapsible>
 
                         <Button type="submit" className="w-full md:w-auto">
                           <Save className="h-4 w-4 mr-2" />
