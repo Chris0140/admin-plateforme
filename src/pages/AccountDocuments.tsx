@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 
@@ -75,15 +76,13 @@ const AccountDocuments = () => {
   const [documentUrl, setDocumentUrl] = useState<string>('');
   const [activeTab, setActiveTab] = useState<Category>('assurance');
   const [uploadSectionOpen, setUploadSectionOpen] = useState(false);
+  const [showAuthAlert, setShowAuthAlert] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/signup");
-      return;
+    if (user) {
+      fetchDocuments();
     }
-
-    fetchDocuments();
-  }, [user, authLoading, navigate]);
+  }, [user]);
 
   const fetchDocuments = async () => {
     if (!user) return;
@@ -109,7 +108,13 @@ const AccountDocuments = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
+    
+    if (!user) {
+      setShowAuthAlert(true);
+      e.target.value = "";
+      return;
+    }
 
     if (!selectedCategory) {
       toast({
@@ -357,7 +362,7 @@ const AccountDocuments = () => {
     );
   };
 
-  if (authLoading || loading) {
+  if (authLoading) {
     return (
       <>
         <Header />
@@ -563,6 +568,22 @@ const AccountDocuments = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showAuthAlert} onOpenChange={setShowAuthAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Créer un compte</AlertDialogTitle>
+            <AlertDialogDescription>
+              Pour ajouter des documents, vous devez d'abord créer un compte. Cela ne prend que quelques instants !
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => navigate("/auth")}>
+              Créer un compte
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </>
