@@ -896,6 +896,7 @@ const SimulateurImpots = () => {
   const [results, setResults] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [revenusOpen, setRevenusOpen] = useState(true);
+  const [deductionsOpen, setDeductionsOpen] = useState(true);
   const [communesDisponibles, setCommunesDisponibles] = useState<Array<{
     value: string;
     label: string;
@@ -1743,8 +1744,17 @@ const SimulateurImpots = () => {
 
                     <Separator />
 
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-foreground">Déductions</h3>
+                    <Collapsible open={deductionsOpen} onOpenChange={setDeductionsOpen}>
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold text-foreground">Déductions</h3>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <ChevronDown className={`h-4 w-4 transition-transform ${deductionsOpen ? 'rotate-180' : ''}`} />
+                          </Button>
+                        </CollapsibleTrigger>
+                      </div>
+                      
+                      <CollapsibleContent className="space-y-4">
                       
                       <FormField control={form.control} name="chargesSociales" render={({
                       field
@@ -1809,7 +1819,8 @@ const SimulateurImpots = () => {
                             </FormControl>
                             <FormMessage />
                           </FormItem>} />
-                    </div>
+                      </CollapsibleContent>
+                    </Collapsible>
 
                     <Button type="submit" className="w-full" size="lg">
                       <Calculator className="mr-2 h-5 w-5" />
