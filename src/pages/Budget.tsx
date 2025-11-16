@@ -127,7 +127,7 @@ const Budget = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <Label htmlFor="revenuBrut">Revenu brut mensuel (CHF)</Label>
+                      <Label htmlFor="revenuBrut">Revenu brut (CHF)</Label>
                       <Input
                         id="revenuBrut"
                         type="number"
