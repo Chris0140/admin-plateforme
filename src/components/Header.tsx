@@ -65,6 +65,15 @@ const Header = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-72 bg-card/95 backdrop-blur-md border-border shadow-lg z-50 p-2">
                 <DropdownMenuItem asChild>
+                  <Link to="/comparateur" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
+                      <ChevronRight className="h-4 w-4 text-primary" />
+                    </div>
+                    <span className="font-medium">Voir tous les comparateurs</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
                   <Link to="/comparateur/assurance-maladie" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10">
                       <Heart className="h-4 w-4 text-red-500" />
@@ -217,6 +226,14 @@ const Header = () => {
                       <ChevronRight className={`h-4 w-4 transition-transform ${comparateurOpen ? 'rotate-90' : ''}`} />
                     </CollapsibleTrigger>
                     <CollapsibleContent className="space-y-2 pl-4 mt-2">
+                      <Link 
+                        to="/comparateur" 
+                        className="flex items-center gap-3 py-2 hover:bg-accent rounded-md transition-colors font-medium"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <ChevronRight className="h-4 w-4 text-primary" />
+                        <span>Voir tous les comparateurs</span>
+                      </Link>
                       <Link 
                         to="/comparateur/assurance-maladie" 
                         className="flex items-center gap-3 py-2 hover:bg-accent rounded-md transition-colors"
