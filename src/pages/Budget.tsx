@@ -41,6 +41,31 @@ const Budget = () => {
     }
   }, [user]);
 
+  // Écouter les changements en temps réel
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('budget-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'budget_data',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          fetchBudgetData();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const fetchBudgetData = async () => {
     try {
       const { data, error } = await supabase
