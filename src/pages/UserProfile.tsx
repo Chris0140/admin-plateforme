@@ -100,6 +100,20 @@ const budgetSchema = z.object({
   pilier_3b: z.number().min(0, "Le montant doit être positif"),
 });
 
+const taxSchema = z.object({
+  canton: z.string().min(1, "Le canton est requis"),
+  commune: z.string().min(1, "La commune est requise"),
+  etat_civil: z.string().min(1, "L'état civil est requis"),
+  confession: z.string().optional(),
+  revenu_annuel: z.number().min(0, "Le montant doit être positif"),
+  fortune: z.number().min(0, "Le montant doit être positif"),
+  nombre_enfants: z.number().min(0, "Le nombre doit être positif"),
+  deduction_3eme_pilier: z.number().min(0, "Le montant doit être positif"),
+  interets_hypothecaires: z.number().min(0, "Le montant doit être positif"),
+  autres_deductions: z.number().min(0, "Le montant doit être positif"),
+  charges_sociales: z.number().min(0, "Le montant doit être positif"),
+});
+
 const UserProfile = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -110,6 +124,7 @@ const UserProfile = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
   const [editingBudget, setEditingBudget] = useState(false);
+  const [editingTax, setEditingTax] = useState(false);
   const [displayPeriodType, setDisplayPeriodType] = useState<"mensuel" | "annuel">("mensuel");
   const [budgetData, setBudgetData] = useState<BudgetData>({
     period_type: "mensuel",
@@ -142,6 +157,23 @@ const UserProfile = () => {
   const budgetForm = useForm<z.infer<typeof budgetSchema>>({
     resolver: zodResolver(budgetSchema),
     defaultValues: budgetData,
+  });
+
+  const taxForm = useForm<z.infer<typeof taxSchema>>({
+    resolver: zodResolver(taxSchema),
+    defaultValues: {
+      canton: "",
+      commune: "",
+      etat_civil: "",
+      confession: "aucune",
+      revenu_annuel: 0,
+      fortune: 0,
+      nombre_enfants: 0,
+      deduction_3eme_pilier: 0,
+      interets_hypothecaires: 0,
+      autres_deductions: 0,
+      charges_sociales: 0,
+    },
   });
 
   useEffect(() => {
@@ -228,6 +260,19 @@ const UserProfile = () => {
 
       if (taxDataResult) {
         setTaxData(taxDataResult as TaxData);
+        taxForm.reset({
+          canton: taxDataResult.canton,
+          commune: taxDataResult.commune,
+          etat_civil: taxDataResult.etat_civil,
+          confession: taxDataResult.confession || "aucune",
+          revenu_annuel: Number(taxDataResult.revenu_annuel),
+          fortune: Number(taxDataResult.fortune),
+          nombre_enfants: Number(taxDataResult.nombre_enfants),
+          deduction_3eme_pilier: Number(taxDataResult.deduction_3eme_pilier),
+          interets_hypothecaires: Number(taxDataResult.interets_hypothecaires),
+          autres_deductions: Number(taxDataResult.autres_deductions),
+          charges_sociales: Number(taxDataResult.charges_sociales),
+        });
       }
     } catch (error) {
       toast({
@@ -353,6 +398,60 @@ const UserProfile = () => {
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de mettre à jour le budget",
+      });
+    }
+  };
+
+  const onSubmitTax = async (values: z.infer<typeof taxSchema>) => {
+    try {
+      const { data: existingTax } = await supabase
+        .from("tax_data")
+        .select("id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      const taxDataToSave = {
+        user_id: user?.id,
+        canton: values.canton,
+        commune: values.commune,
+        etat_civil: values.etat_civil,
+        confession: values.confession || null,
+        revenu_annuel: values.revenu_annuel,
+        fortune: values.fortune,
+        nombre_enfants: values.nombre_enfants,
+        deduction_3eme_pilier: values.deduction_3eme_pilier,
+        interets_hypothecaires: values.interets_hypothecaires,
+        autres_deductions: values.autres_deductions,
+        charges_sociales: values.charges_sociales,
+      };
+
+      if (existingTax) {
+        const { error } = await supabase
+          .from("tax_data")
+          .update(taxDataToSave)
+          .eq("user_id", user?.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("tax_data")
+          .insert(taxDataToSave);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Données fiscales mises à jour",
+        description: "Vos informations fiscales ont été enregistrées",
+      });
+
+      setEditingTax(false);
+      fetchUserData();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de mettre à jour les données fiscales",
       });
     }
   };
@@ -1079,14 +1178,250 @@ const UserProfile = () => {
             {/* Impôts */}
             <TabsContent value="impots">
               <Card>
-                <CardHeader>
-                  <CardTitle>Données fiscales</CardTitle>
-                  <CardDescription>
-                    Résultat de votre dernière simulation d'impôts
-                  </CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Données fiscales</CardTitle>
+                    <CardDescription>
+                      Informations de votre simulation d'impôts
+                    </CardDescription>
+                  </div>
+                  {taxData && !editingTax && (
+                    <Button variant="outline" size="sm" onClick={() => setEditingTax(true)}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Modifier
+                    </Button>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {taxData ? (
+                    editingTax ? (
+                      <Form {...taxForm}>
+                        <form onSubmit={taxForm.handleSubmit(onSubmitTax)} className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={taxForm.control}
+                              name="canton"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Canton</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={taxForm.control}
+                              name="commune"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Commune</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={taxForm.control}
+                              name="etat_civil"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>État civil</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={taxForm.control}
+                              name="confession"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Confession</FormLabel>
+                                  <FormControl>
+                                    <Input {...field} value={field.value || ""} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <Separator />
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={taxForm.control}
+                              name="revenu_annuel"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Revenu annuel (CHF)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      onFocus={(e) => e.target.select()}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={taxForm.control}
+                              name="fortune"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Fortune (CHF)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      onFocus={(e) => e.target.select()}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={taxForm.control}
+                              name="nombre_enfants"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Nombre d'enfants</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                      onFocus={(e) => e.target.select()}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={taxForm.control}
+                              name="charges_sociales"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Charges sociales (CHF)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      onFocus={(e) => e.target.select()}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <Separator />
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={taxForm.control}
+                              name="deduction_3eme_pilier"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>3ème pilier A (CHF)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      onFocus={(e) => e.target.select()}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={taxForm.control}
+                              name="interets_hypothecaires"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Intérêts hypothécaires (CHF)</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      step="1"
+                                      {...field}
+                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                      onFocus={(e) => e.target.select()}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <FormField
+                            control={taxForm.control}
+                            name="autres_deductions"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Autres déductions (CHF)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="1"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    onFocus={(e) => e.target.select()}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <div className="flex gap-2 justify-end pt-4 border-t">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingTax(false);
+                                taxForm.reset();
+                              }}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Annuler
+                            </Button>
+                            <Button type="submit">
+                              <Save className="h-4 w-4 mr-2" />
+                              Enregistrer
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    ) : (
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -1220,6 +1555,7 @@ const UserProfile = () => {
                         </Button>
                       </div>
                     </div>
+                    )
                   ) : (
                     <div className="text-center py-8">
                       <Calculator className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

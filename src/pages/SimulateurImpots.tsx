@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -916,6 +916,49 @@ const SimulateurImpots = () => {
     }
   });
   const selectedCanton = form.watch("canton");
+
+  // Charger les données fiscales existantes au démarrage
+  useEffect(() => {
+    const loadTaxData = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("tax_data")
+          .select("*")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          // Préremplir le formulaire avec les données existantes
+          form.reset({
+            canton: data.canton,
+            commune: data.commune,
+            etatCivil: data.etat_civil,
+            confession: data.confession || "aucune",
+            revenuAnnuel: data.revenu_annuel.toString(),
+            fortune: data.fortune.toString(),
+            nombreEnfants: data.nombre_enfants.toString(),
+            deduction3emePilier: data.deduction_3eme_pilier.toString(),
+            interetsHypothecaires: data.interets_hypothecaires.toString(),
+            autresDeductions: data.autres_deductions.toString(),
+            chargesSociales: data.charges_sociales.toString(),
+          });
+
+          // Charger les communes pour le canton sélectionné
+          if (communesParCanton[data.canton]) {
+            setCommunesDisponibles(communesParCanton[data.canton]);
+          }
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des données fiscales:", error);
+      }
+    };
+
+    loadTaxData();
+  }, [user]);
 
   const saveTaxData = async () => {
     if (!user) {
