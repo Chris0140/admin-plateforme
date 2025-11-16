@@ -1603,7 +1603,7 @@ const SimulateurImpots = () => {
                         field.onChange(value);
                         setCommunesDisponibles(communesParCanton[value] || []);
                         form.setValue("commune", "");
-                      }} defaultValue={field.value}>
+                      }} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Sélectionnez un canton" />
@@ -1622,7 +1622,7 @@ const SimulateurImpots = () => {
                       field
                     }) => <FormItem>
                             <FormLabel>Commune de résidence *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedCanton}>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCanton}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Sélectionnez une commune" />
@@ -1643,7 +1643,7 @@ const SimulateurImpots = () => {
                       field
                     }) => <FormItem>
                             <FormLabel>État civil *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Sélectionnez" />
@@ -1664,7 +1664,7 @@ const SimulateurImpots = () => {
                       field
                     }) => <FormItem>
                             <FormLabel>Confession</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Aucune" />
