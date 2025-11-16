@@ -260,14 +260,47 @@ const UserProfile = () => {
         return value;
       };
 
+      // Calculer les deux versions (mensuelle et annuelle) pour chaque valeur
+      const revenu_brut = convertForSave(values.revenu_brut);
+      const charges_sociales = convertForSave(values.charges_sociales);
+      const depenses_logement = convertForSave(values.depenses_logement);
+      const depenses_transport = convertForSave(values.depenses_transport);
+      const depenses_alimentation = convertForSave(values.depenses_alimentation);
+      const autres_depenses = convertForSave(values.autres_depenses);
+
+      const revenu_brut_mensuel = values.period_type === "mensuel" ? revenu_brut : Math.round(revenu_brut / 12);
+      const revenu_brut_annuel = values.period_type === "annuel" ? revenu_brut : revenu_brut * 12;
+      const charges_sociales_mensuel = values.period_type === "mensuel" ? charges_sociales : Math.round(charges_sociales / 12);
+      const charges_sociales_annuel = values.period_type === "annuel" ? charges_sociales : charges_sociales * 12;
+      const depenses_logement_mensuel = values.period_type === "mensuel" ? depenses_logement : Math.round(depenses_logement / 12);
+      const depenses_logement_annuel = values.period_type === "annuel" ? depenses_logement : depenses_logement * 12;
+      const depenses_transport_mensuel = values.period_type === "mensuel" ? depenses_transport : Math.round(depenses_transport / 12);
+      const depenses_transport_annuel = values.period_type === "annuel" ? depenses_transport : depenses_transport * 12;
+      const depenses_alimentation_mensuel = values.period_type === "mensuel" ? depenses_alimentation : Math.round(depenses_alimentation / 12);
+      const depenses_alimentation_annuel = values.period_type === "annuel" ? depenses_alimentation : depenses_alimentation * 12;
+      const autres_depenses_mensuel = values.period_type === "mensuel" ? autres_depenses : Math.round(autres_depenses / 12);
+      const autres_depenses_annuel = values.period_type === "annuel" ? autres_depenses : autres_depenses * 12;
+
       const dataToSave = {
         period_type: values.period_type,
-        revenu_brut: convertForSave(values.revenu_brut),
-        charges_sociales: convertForSave(values.charges_sociales),
-        depenses_logement: convertForSave(values.depenses_logement),
-        depenses_transport: convertForSave(values.depenses_transport),
-        depenses_alimentation: convertForSave(values.depenses_alimentation),
-        autres_depenses: convertForSave(values.autres_depenses),
+        revenu_brut,
+        charges_sociales,
+        depenses_logement,
+        depenses_transport,
+        depenses_alimentation,
+        autres_depenses,
+        revenu_brut_mensuel,
+        revenu_brut_annuel,
+        charges_sociales_mensuel,
+        charges_sociales_annuel,
+        depenses_logement_mensuel,
+        depenses_logement_annuel,
+        depenses_transport_mensuel,
+        depenses_transport_annuel,
+        depenses_alimentation_mensuel,
+        depenses_alimentation_annuel,
+        autres_depenses_mensuel,
+        autres_depenses_annuel,
         avs_1er_pilier: values.avs_1er_pilier,
         lpp_2eme_pilier: values.lpp_2eme_pilier,
         pilier_3a: values.pilier_3a,
