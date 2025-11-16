@@ -1176,9 +1176,17 @@ const UserProfile = () => {
                         </ToggleGroup>
                       </div>
                       
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4">Revenus</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen}>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold">Revenus</h3>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <ChevronDown className={`h-4 w-4 transition-transform ${revenusOpen ? 'rotate-180' : ''}`} />
+                            </Button>
+                          </CollapsibleTrigger>
+                        </div>
+                        <CollapsibleContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-muted-foreground">Revenu brut</p>
                             <p className="text-xl font-semibold">{formatCurrency(displayData.revenu_brut)}</p>
@@ -1191,14 +1199,23 @@ const UserProfile = () => {
                             <p className="text-sm text-muted-foreground">Revenu net</p>
                             <p className="text-2xl font-bold text-primary">{formatCurrency(revenuNet)}</p>
                           </div>
-                        </div>
-                      </div>
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
 
                       <Separator />
 
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4">Dépenses</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Collapsible open={depensesOpen} onOpenChange={setDepensesOpen}>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold">Dépenses</h3>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <ChevronDown className={`h-4 w-4 transition-transform ${depensesOpen ? 'rotate-180' : ''}`} />
+                            </Button>
+                          </CollapsibleTrigger>
+                        </div>
+                        <CollapsibleContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-muted-foreground">Logement</p>
                             <p className="text-xl font-semibold">{formatCurrency(displayData.depenses_logement)}</p>
@@ -1220,7 +1237,8 @@ const UserProfile = () => {
                             <p className="text-2xl font-bold text-primary">{formatCurrency(totalDepenses)}</p>
                           </div>
                         </div>
-                      </div>
+                        </CollapsibleContent>
+                      </Collapsible>
 
                       <Separator />
 
@@ -1233,9 +1251,17 @@ const UserProfile = () => {
 
                       <Separator />
 
-                      <div>
-                        <h3 className="text-lg font-semibold mb-4">Prévoyance</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Collapsible open={prevoyanceOpen} onOpenChange={setPrevoyanceOpen}>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold">Prévoyance</h3>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <ChevronDown className={`h-4 w-4 transition-transform ${prevoyanceOpen ? 'rotate-180' : ''}`} />
+                            </Button>
+                          </CollapsibleTrigger>
+                        </div>
+                        <CollapsibleContent>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-muted-foreground">1er Pilier</p>
                             <p className="text-xl font-semibold">{formatCurrency(budgetData.avs_1er_pilier)}</p>
@@ -1257,7 +1283,8 @@ const UserProfile = () => {
                             <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
                           </div>
                         </div>
-                      </div>
+                        </CollapsibleContent>
+                      </Collapsible>
                     </div>
                   )}
                 </CardContent>
