@@ -886,7 +886,7 @@ const UserProfile = () => {
                           </div>
                           <div className="md:col-span-2">
                             <p className="text-sm text-muted-foreground">Total</p>
-                            <p className="text-2xl font-bold">{formatCurrency(totalDepenses)}</p>
+                            <p className="text-2xl font-bold text-primary">{formatCurrency(totalDepenses)}</p>
                           </div>
                         </div>
                       </div>
