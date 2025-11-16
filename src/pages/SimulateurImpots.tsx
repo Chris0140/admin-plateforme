@@ -943,7 +943,7 @@ const SimulateurImpots = () => {
 
         if (taxData) {
           // Préremplir le formulaire avec les données fiscales existantes
-          form.reset({
+          const formValues = {
             canton: taxData.canton,
             commune: taxData.commune,
             etatCivil: taxData.etat_civil,
@@ -955,12 +955,19 @@ const SimulateurImpots = () => {
             interetsHypothecaires: taxData.interets_hypothecaires.toString(),
             autresDeductions: taxData.autres_deductions.toString(),
             chargesSociales: taxData.charges_sociales.toString(),
-          });
+          };
+          
+          form.reset(formValues);
 
           // Charger les communes pour le canton sélectionné
           if (communesParCanton[taxData.canton]) {
             setCommunesDisponibles(communesParCanton[taxData.canton]);
           }
+
+          // Calculer automatiquement les impôts avec les données chargées
+          setTimeout(() => {
+            calculateTax(formValues);
+          }, 100);
         } else if (budgetData) {
           // Si pas de données fiscales, utiliser les données de budget
           const revenuAnnuel = budgetData.revenu_brut_annuel || 0;
