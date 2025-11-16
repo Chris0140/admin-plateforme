@@ -69,7 +69,7 @@ const Budget = () => {
   const solde = revenuNet - totalDepenses;
   
   // Montants affichés (déjà dans la bonne unité)
-  const revenuNetAffiche = revenuNet;
+  const revenuNetAffiche = Math.round(revenuNet);
   const totalDepensesAffiche = totalDepenses;
   const soldeAffiche = solde;
 
