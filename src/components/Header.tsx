@@ -131,10 +131,7 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <a href="#" className="text-foreground hover:text-primary transition-colors">
-              Budget
-            </a>
-            {user ? <Link to="/account/documents" className="text-foreground hover:text-primary transition-colors">
+            {user ? <Link to="/account/documents" className="text-foreground hover:text-primary transition-colors font-medium">
                 Mes documents
               </Link> : <a href="#" className="text-foreground hover:text-primary transition-colors">
                 Mes documents
@@ -285,14 +282,7 @@ const Header = () => {
                   </Collapsible>
 
                   <Link 
-                    to="#" 
-                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Budget
-                  </Link>
-                  <Link 
-                    to="/account/documents" 
+                    to="/account/documents"
                     className="text-foreground hover:text-primary transition-colors font-medium py-2"
                     onClick={() => setMobileMenuOpen(false)}
                   >
