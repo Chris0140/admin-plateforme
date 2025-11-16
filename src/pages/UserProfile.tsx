@@ -636,7 +636,181 @@ const UserProfile = () => {
                 <CollapsibleContent>
                   <Separator />
                   <CardContent className="pt-4">
-                    <p className="text-sm text-muted-foreground">Cliquez pour voir vos informations personnelles</p>
+                    <div className="flex justify-between items-center mb-4">
+                      {!editingProfile ? (
+                        <Button onClick={() => setEditingProfile(true)} variant="outline" size="sm" className="w-full">
+                          <Edit className="h-4 w-4 mr-2" />
+                          Modifier
+                        </Button>
+                      ) : (
+                        <Button onClick={() => setEditingProfile(false)} variant="outline" size="sm" className="w-full">
+                          <X className="h-4 w-4 mr-2" />
+                          Annuler
+                        </Button>
+                      )}
+                    </div>
+                    {editingProfile ? (
+                      <Form {...profileForm}>
+                        <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="space-y-4">
+                          <FormField
+                            control={profileForm.control}
+                            name="appellation"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Appellation</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Sélectionnez" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Monsieur">Monsieur</SelectItem>
+                                    <SelectItem value="Madame">Madame</SelectItem>
+                                    <SelectItem value="Autre">Autre</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="nom"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nom</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="prenom"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Prénom</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="email"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="email" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="date_naissance"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Date de naissance</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="date" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="localite"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Localité</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="adresse"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Adresse (optionnel)</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="telephone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Téléphone (optionnel)</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="tel" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button type="submit" className="w-full">
+                            <Save className="h-4 w-4 mr-2" />
+                            Enregistrer
+                          </Button>
+                        </form>
+                      </Form>
+                    ) : (
+                      <div className="space-y-4">
+                        {profile && (
+                          <>
+                            <div>
+                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Appellation</h3>
+                              <p className="text-foreground">{profile.appellation}</p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Nom</h3>
+                              <p className="text-foreground">{profile.nom}</p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Prénom</h3>
+                              <p className="text-foreground">{profile.prenom}</p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Email</h3>
+                              <p className="text-foreground">{profile.email}</p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Date de naissance</h3>
+                              <p className="text-foreground">{formatDate(profile.date_naissance)}</p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Localité</h3>
+                              <p className="text-foreground">{profile.localite}</p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Adresse</h3>
+                              <p className="text-foreground">{profile.adresse || "Non renseignée"}</p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Téléphone</h3>
+                              <p className="text-foreground">{profile.telephone || "Non renseigné"}</p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </CollapsibleContent>
               </Card>
@@ -656,7 +830,110 @@ const UserProfile = () => {
                 <CollapsibleContent>
                   <Separator />
                   <CardContent className="pt-4">
-                    <p className="text-sm text-muted-foreground">Cliquez pour voir votre budget</p>
+                    <div className="flex justify-between items-center mb-4">
+                      {!editingBudget ? (
+                        <Button onClick={() => {
+                          setEditingBudget(true);
+                          const formValues = {
+                            ...budgetData,
+                            period_type: displayPeriodType,
+                            revenu_brut: convertValue(budgetData.revenu_brut),
+                            charges_sociales: convertValue(budgetData.charges_sociales),
+                            depenses_logement: convertValue(budgetData.depenses_logement),
+                            depenses_transport: convertValue(budgetData.depenses_transport),
+                            depenses_alimentation: convertValue(budgetData.depenses_alimentation),
+                            autres_depenses: convertValue(budgetData.autres_depenses),
+                          };
+                          budgetForm.reset(formValues);
+                        }} variant="outline" size="sm" className="w-full">
+                          <Edit className="h-4 w-4 mr-2" />
+                          Modifier
+                        </Button>
+                      ) : (
+                        <Button onClick={() => {
+                          setEditingBudget(false);
+                          budgetForm.reset(budgetData);
+                        }} variant="outline" size="sm" className="w-full">
+                          <X className="h-4 w-4 mr-2" />
+                          Annuler
+                        </Button>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Données en {budgetData.period_type}
+                    </p>
+                    {!editingBudget ? (
+                      <div className="space-y-6">
+                        <div className="space-y-3">
+                          <h3 className="font-semibold text-base">Revenus</h3>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Revenu brut</span>
+                              <span className="text-sm font-medium">{formatCurrency(convertValue(budgetData.revenu_brut))}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Charges sociales</span>
+                              <span className="text-sm font-medium text-destructive">-{formatCurrency(convertValue(budgetData.charges_sociales))}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Separator />
+                        <div className="space-y-3">
+                          <h3 className="font-semibold text-base">Dépenses</h3>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Logement</span>
+                              <span className="text-sm font-medium">{formatCurrency(convertValue(budgetData.depenses_logement))}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Transport</span>
+                              <span className="text-sm font-medium">{formatCurrency(convertValue(budgetData.depenses_transport))}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Alimentation</span>
+                              <span className="text-sm font-medium">{formatCurrency(convertValue(budgetData.depenses_alimentation))}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Autres</span>
+                              <span className="text-sm font-medium">{formatCurrency(convertValue(budgetData.autres_depenses))}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Separator />
+                        <div className="space-y-3">
+                          <h3 className="font-semibold text-base">Prévoyance</h3>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">AVS (1er pilier)</span>
+                              <span className="text-sm font-medium">{formatCurrency(budgetData.avs_1er_pilier)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">LPP (2ème pilier)</span>
+                              <span className="text-sm font-medium">{formatCurrency(budgetData.lpp_2eme_pilier)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Pilier 3a</span>
+                              <span className="text-sm font-medium">{formatCurrency(budgetData.pilier_3a)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Pilier 3b</span>
+                              <span className="text-sm font-medium">{formatCurrency(budgetData.pilier_3b)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between items-center pt-2">
+                          <span className="font-semibold">Solde</span>
+                          <span className={`font-bold text-lg ${soldeBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {formatCurrency(convertValue(soldeBudget))}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <Button onClick={() => navigate("/budget")} variant="outline" size="sm" className="w-full">
+                        Ouvrir l'éditeur de budget
+                      </Button>
+                    )}
                   </CardContent>
                 </CollapsibleContent>
               </Card>
@@ -676,7 +953,66 @@ const UserProfile = () => {
                 <CollapsibleContent>
                   <Separator />
                   <CardContent className="pt-4">
-                    <p className="text-sm text-muted-foreground">Cliquez pour voir vos données fiscales</p>
+                    {taxData ? (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Canton</span>
+                            <span className="text-sm font-medium">{cantons.find(c => c.value === taxData.canton)?.label}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Commune</span>
+                            <span className="text-sm font-medium capitalize">{taxData.commune}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">État civil</span>
+                            <span className="text-sm font-medium capitalize">{taxData.etat_civil}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Revenu annuel</span>
+                            <span className="text-sm font-medium">{formatCurrency(taxData.revenu_annuel)}</span>
+                          </div>
+                        </div>
+                        <Separator />
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-sm">Impôts calculés</h3>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Impôt fédéral</span>
+                            <span className="text-sm font-medium">{formatCurrency(taxData.impot_federal)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Impôt cantonal</span>
+                            <span className="text-sm font-medium">{formatCurrency(taxData.impot_cantonal)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Impôt communal</span>
+                            <span className="text-sm font-medium">{formatCurrency(taxData.impot_communal)}</span>
+                          </div>
+                          {taxData.impot_ecclesiastique > 0 && (
+                            <div className="flex justify-between">
+                              <span className="text-sm text-muted-foreground">Impôt ecclésiastique</span>
+                              <span className="text-sm font-medium">{formatCurrency(taxData.impot_ecclesiastique)}</span>
+                            </div>
+                          )}
+                          <Separator />
+                          <div className="flex justify-between items-center pt-2">
+                            <span className="font-semibold">Total annuel</span>
+                            <span className="font-bold text-lg text-primary">{formatCurrency(taxData.total_impots)}</span>
+                          </div>
+                        </div>
+                        <Button onClick={() => navigate("/simulateur-impots")} variant="outline" size="sm" className="w-full mt-4">
+                          Modifier la simulation
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <Calculator className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-sm text-muted-foreground mb-4">Aucune simulation d'impôts</p>
+                        <Button onClick={() => navigate("/simulateur-impots")} size="sm" className="w-full">
+                          Lancer une simulation
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </CollapsibleContent>
               </Card>
@@ -719,7 +1055,29 @@ const UserProfile = () => {
                 <CollapsibleContent>
                   <Separator />
                   <CardContent className="pt-4">
-                    <p className="text-sm text-muted-foreground">{documents.length} document{documents.length !== 1 ? "s" : ""}</p>
+                    {documents.length > 0 ? (
+                      <div className="space-y-3">
+                        {documents.map((doc) => (
+                          <div
+                            key={doc.id}
+                            className="flex items-start gap-3 p-3 rounded-lg border"
+                          >
+                            <FileText className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm truncate">{doc.file_name}</p>
+                              <div className="flex flex-col gap-1 text-xs text-muted-foreground mt-1">
+                                <span className="capitalize">{doc.category}</span>
+                                {doc.subcategory && <span>{doc.subcategory}</span>}
+                                <span>{formatFileSize(doc.file_size)}</span>
+                                <span>{formatDate(doc.uploaded_at)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-4">Aucun document</p>
+                    )}
                   </CardContent>
                 </CollapsibleContent>
               </Card>
