@@ -184,7 +184,7 @@ const Budget = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="depensesTransport">Transport (CHF)</Label>
+                      <Label htmlFor="depensesTransport">Assurances (CHF)</Label>
                       <Input
                         id="depensesTransport"
                         type="number"
