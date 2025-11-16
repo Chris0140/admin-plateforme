@@ -180,6 +180,7 @@ const Budget = () => {
 
       const depensesData = {
         user_id: user.id,
+        period_type: periodType,
         depenses_logement: parseFloat(depensesLogement) || 0,
         depenses_transport: parseFloat(depensesTransport) || 0,
         depenses_alimentation: parseFloat(depensesAlimentation) || 0,
@@ -237,6 +238,7 @@ const Budget = () => {
 
       const prevoyanceData = {
         user_id: user.id,
+        period_type: periodType,
         avs_1er_pilier: parseFloat(avs1erPilier) || 0,
         lpp_2eme_pilier: parseFloat(lpp2emePilier) || 0,
         pilier_3a: parseFloat(pilier3a) || 0,
