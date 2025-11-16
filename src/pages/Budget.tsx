@@ -79,7 +79,17 @@ const Budget = () => {
       if (data) {
         setPeriodType(data.period_type as "mensuel" | "annuel");
         setRevenuBrut(data.revenu_brut?.toString() || "");
-        setChargesSociales(data.charges_sociales?.toString() || "");
+        
+        // Si charges_sociales > 0, on utilise la valeur du profil
+        // Sinon, on laisse le calcul automatique s'appliquer
+        if (data.charges_sociales && data.charges_sociales > 0) {
+          setChargesSociales(data.charges_sociales.toString());
+          setChargesSocialesManuallyEdited(true);
+        } else {
+          setChargesSociales("");
+          setChargesSocialesManuallyEdited(false);
+        }
+        
         setDepensesLogement(data.depenses_logement?.toString() || "");
         setDepensesTransport(data.depenses_transport?.toString() || "");
         setDepensesAlimentation(data.depenses_alimentation?.toString() || "");
