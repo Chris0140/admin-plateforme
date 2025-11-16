@@ -466,23 +466,24 @@ const Budget = () => {
                   </Card>
                 </Collapsible>
 
+                {user && (
+                  <div className="flex justify-center mb-6 md:col-span-2">
+                    <Button 
+                      onClick={saveAllData} 
+                      disabled={isLoading}
+                      className="gap-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      Enregistrer le budget
+                    </Button>
+                  </div>
+                )}
+
                 <Card className="md:col-span-2">
                   <CardHeader>
                     <CardTitle>Résumé {periodType === "mensuel" ? "Mensuel" : "Annuel"}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {user && (
-                      <div className="flex justify-end mb-6">
-                        <Button 
-                          onClick={saveAllData} 
-                          disabled={isLoading}
-                          className="gap-2"
-                        >
-                          <Save className="h-4 w-4" />
-                          Enregistrer le budget
-                        </Button>
-                      </div>
-                    )}
                     <div className="grid md:grid-cols-3 gap-6">
                       <div className="text-center p-4 bg-muted rounded-lg">
                         <p className="text-sm text-muted-foreground mb-2">Revenu Net</p>
