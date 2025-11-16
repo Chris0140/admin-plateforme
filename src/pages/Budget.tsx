@@ -152,6 +152,7 @@ const Budget = () => {
                       <Input
                         id="revenuBrut"
                         type="number"
+                        step="1"
                         placeholder="8'000"
                         value={revenuBrut}
                         onChange={(e) => {
@@ -166,6 +167,7 @@ const Budget = () => {
                       <Input
                         id="chargesSociales"
                         type="number"
+                        step="1"
                         placeholder="1'200"
                         value={chargesSociales}
                         onChange={(e) => {
@@ -195,6 +197,7 @@ const Budget = () => {
                       <Input
                         id="depensesLogement"
                         type="number"
+                        step="1"
                         placeholder="1'500"
                         value={depensesLogement}
                         onChange={(e) => {
@@ -209,6 +212,7 @@ const Budget = () => {
                       <Input
                         id="depensesTransport"
                         type="number"
+                        step="1"
                         placeholder="300"
                         value={depensesTransport}
                         onChange={(e) => {
@@ -223,6 +227,7 @@ const Budget = () => {
                       <Input
                         id="depensesAlimentation"
                         type="number"
+                        step="1"
                         placeholder="600"
                         value={depensesAlimentation}
                         onChange={(e) => {
@@ -237,6 +242,7 @@ const Budget = () => {
                       <Input
                         id="autresDepenses"
                         type="number"
+                        step="1"
                         placeholder="400"
                         value={autresDepenses}
                         onChange={(e) => {
@@ -291,6 +297,7 @@ const Budget = () => {
                           <Input
                             id="avs1erPilier"
                             type="number"
+                            step="1"
                             placeholder="28'680"
                             value={avs1erPilier}
                             onChange={(e) => {
@@ -306,6 +313,7 @@ const Budget = () => {
                           <Input
                             id="lpp2emePilier"
                             type="number"
+                            step="1"
                             placeholder="350'000"
                             value={lpp2emePilier}
                             onChange={(e) => {
@@ -323,6 +331,7 @@ const Budget = () => {
                           <Input
                             id="pilier3a"
                             type="number"
+                            step="1"
                             placeholder="50'000"
                             value={pilier3a}
                             onChange={(e) => {
@@ -338,6 +347,7 @@ const Budget = () => {
                           <Input
                             id="pilier3b"
                             type="number"
+                            step="1"
                             placeholder="25'000"
                             value={pilier3b}
                             onChange={(e) => {
