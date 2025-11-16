@@ -31,7 +31,7 @@ const Budget = () => {
     if (revenuBrut && !chargesSocialesManuallyEdited) {
       const brut = parseFloat(revenuBrut);
       if (!isNaN(brut)) {
-        const chargesAuto = (brut * 0.068).toFixed(2);
+        const chargesAuto = (brut * 0.068).toFixed(0);
         setChargesSociales(chargesAuto);
       }
     }
@@ -44,15 +44,15 @@ const Budget = () => {
     if (prevPeriod !== periodType) {
       const multiplier = periodType === 'annuel' ? 12 : 1/12;
       
-      if (revenuBrut) setRevenuBrut((parseFloat(revenuBrut) * multiplier).toFixed(2));
+      if (revenuBrut) setRevenuBrut((parseFloat(revenuBrut) * multiplier).toFixed(0));
       if (chargesSociales) {
-        setChargesSociales((parseFloat(chargesSociales) * multiplier).toFixed(2));
+        setChargesSociales((parseFloat(chargesSociales) * multiplier).toFixed(0));
         setChargesSocialesManuallyEdited(true);
       }
-      if (depensesLogement) setDepensesLogement((parseFloat(depensesLogement) * multiplier).toFixed(2));
-      if (depensesTransport) setDepensesTransport((parseFloat(depensesTransport) * multiplier).toFixed(2));
-      if (depensesAlimentation) setDepensesAlimentation((parseFloat(depensesAlimentation) * multiplier).toFixed(2));
-      if (autresDepenses) setAutresDepenses((parseFloat(autresDepenses) * multiplier).toFixed(2));
+      if (depensesLogement) setDepensesLogement((parseFloat(depensesLogement) * multiplier).toFixed(0));
+      if (depensesTransport) setDepensesTransport((parseFloat(depensesTransport) * multiplier).toFixed(0));
+      if (depensesAlimentation) setDepensesAlimentation((parseFloat(depensesAlimentation) * multiplier).toFixed(0));
+      if (autresDepenses) setAutresDepenses((parseFloat(autresDepenses) * multiplier).toFixed(0));
       
       localStorage.setItem('budgetPeriodType', periodType);
     }
