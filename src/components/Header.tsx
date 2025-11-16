@@ -1,4 +1,4 @@
-import { Settings, FileText, LogOut, ChevronDown, Heart, Car, Bike, Shield, Plane, Home, PawPrint, PiggyBank, Menu, ChevronRight } from "lucide-react";
+import { Settings, FileText, LogOut, ChevronDown, Heart, Car, Bike, Shield, Plane, Home, PawPrint, PiggyBank, Menu, ChevronRight, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -137,6 +137,11 @@ const Header = () => {
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
               Contact
             </Link>
+            {user && (
+              <Link to="/profil" className="text-foreground hover:text-primary transition-colors font-medium">
+                Profil utilisateur
+              </Link>
+            )}
           </nav>
 
           {/* Account Button/Menu - Desktop */}
@@ -293,6 +298,16 @@ const Header = () => {
                   >
                     Contact
                   </Link>
+                  
+                  {user && (
+                    <Link 
+                      to="/profil" 
+                      className="text-foreground hover:text-primary transition-colors font-medium py-2"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Profil utilisateur
+                    </Link>
+                  )}
 
                   {/* Auth Section */}
                   <div className="pt-4 border-t border-border mt-4">

@@ -18,6 +18,7 @@ import AssuranceVehicule from "./pages/comparateur/AssuranceVehicule";
 import TroisiemePilier from "./pages/comparateur/TroisiemePilier";
 import AssuranceAnimaux from "./pages/comparateur/AssuranceAnimaux";
 import Budget from "./pages/Budget";
+import UserProfile from "./pages/UserProfile";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/account/settings" element={<AccountSettings />} />
             <Route path="/account/security" element={<AccountSecurity />} />
             <Route path="/account/documents" element={<AccountDocuments />} />
+            <Route path="/profil" element={<UserProfile />} />
             <Route path="/comparateur" element={<Comparateur />} />
             <Route path="/comparateur/assurance-maladie" element={<AssuranceMaladie />} />
             <Route path="/comparateur/assurance-vehicule" element={<AssuranceVehicule />} />
