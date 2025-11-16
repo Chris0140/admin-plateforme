@@ -17,6 +17,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 interface Profile {
   nom: string;
@@ -173,6 +175,8 @@ const UserProfile = () => {
   const [editingBudget, setEditingBudget] = useState(false);
   const [editingTax, setEditingTax] = useState(false);
   const [displayPeriodType, setDisplayPeriodType] = useState<"mensuel" | "annuel">("mensuel");
+  const [budgetPersonnelOpen, setBudgetPersonnelOpen] = useState(true);
+  const [prevoyanceOpen, setPrevoyanceOpen] = useState(true);
   const [communesDisponibles, setCommunesDisponibles] = useState<Array<{ value: string; label: string; coefficientCommunal: number }>>([]);
   const [budgetData, setBudgetData] = useState<BudgetData>({
     period_type: "mensuel",
@@ -911,217 +915,234 @@ const UserProfile = () => {
                           )}
                         />
 
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Revenus</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={budgetForm.control}
-                              name="revenu_brut"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Revenu brut</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="charges_sociales"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Charges sociales</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
+
+                        {/* Budget Personnel Section */}
+                        <Collapsible open={budgetPersonnelOpen} onOpenChange={setBudgetPersonnelOpen}>
+                          <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 rounded-lg transition-colors">
+                            <h3 className="text-lg font-semibold">Budget Personnel</h3>
+                            <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${budgetPersonnelOpen ? 'rotate-180' : ''}`} />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="space-y-6 pt-4">
+                            <div>
+                              <h4 className="text-md font-medium mb-4">Revenus</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                  control={budgetForm.control}
+                                  name="revenu_brut"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Revenu brut</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={budgetForm.control}
+                                  name="charges_sociales"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Charges sociales</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                            </div>
+
+                            <Separator />
+
+                            <div>
+                              <h4 className="text-md font-medium mb-4">Dépenses</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                  control={budgetForm.control}
+                                  name="depenses_logement"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Logement</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={budgetForm.control}
+                                  name="depenses_transport"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Transport</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={budgetForm.control}
+                                  name="depenses_alimentation"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Alimentation</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={budgetForm.control}
+                                  name="autres_depenses"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Autres dépenses</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
 
                         <Separator />
 
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Dépenses</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={budgetForm.control}
-                              name="depenses_logement"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Logement</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="depenses_transport"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Transport</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="depenses_alimentation"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Alimentation</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="autres_depenses"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Autres</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
+                        {/* Prévoyance Section */}
+                        <Collapsible open={prevoyanceOpen} onOpenChange={setPrevoyanceOpen}>
+                          <CollapsibleTrigger className="flex items-center justify-between w-full p-4 hover:bg-muted/50 rounded-lg transition-colors">
+                            <h3 className="text-lg font-semibold">Prévoyance</h3>
+                            <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${prevoyanceOpen ? 'rotate-180' : ''}`} />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="space-y-6 pt-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={budgetForm.control}
+                                name="avs_1er_pilier"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>1er Pilier</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="1"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                        onFocus={(e) => e.target.select()}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={budgetForm.control}
+                                name="lpp_2eme_pilier"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>2ème Pilier</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="1"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                        onFocus={(e) => e.target.select()}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={budgetForm.control}
+                                name="pilier_3a"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>3ème Pilier A</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="1"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                        onFocus={(e) => e.target.select()}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={budgetForm.control}
+                                name="pilier_3b"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>3ème Pilier B</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="1"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                        onFocus={(e) => e.target.select()}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </CollapsibleContent>
+                        </Collapsible>
 
-                        <Separator />
-
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Prévoyance</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={budgetForm.control}
-                              name="avs_1er_pilier"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>1er Pilier</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="lpp_2eme_pilier"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>2ème Pilier</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="pilier_3a"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>3ème Pilier A</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="pilier_3b"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>3ème Pilier B</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
 
                         <Button type="submit" className="w-full md:w-auto">
                           <Save className="h-4 w-4 mr-2" />
