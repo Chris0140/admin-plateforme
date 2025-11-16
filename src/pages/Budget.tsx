@@ -152,11 +152,12 @@ const Budget = () => {
                       <Input
                         id="revenuBrut"
                         type="number"
-                        placeholder="8'000"
+                        step="1"
+                        placeholder="8000"
                         value={revenuBrut}
                         onChange={(e) => {
                           let value = e.target.value;
-                          value = value.replace(/^0+(?=\d)/, '').replace(/,/g, '');
+                          value = value.replace(/^0+(?=\d)/, '').replace(/,/g, '').split('.')[0];
                           setRevenuBrut(value);
                         }}
                       />
