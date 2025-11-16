@@ -69,7 +69,7 @@ const Budget = () => {
   const solde = revenuNet - totalDepenses;
   
   // Montants affichés (déjà dans la bonne unité)
-  const revenuNetAffiche = Math.round(revenuNet);
+  const revenuNetAffiche = revenuNet;
   const totalDepensesAffiche = totalDepenses;
   const soldeAffiche = solde;
 
@@ -152,12 +152,11 @@ const Budget = () => {
                       <Input
                         id="revenuBrut"
                         type="number"
-                        step="1"
-                        placeholder="8000"
+                        placeholder="8'000"
                         value={revenuBrut}
                         onChange={(e) => {
                           let value = e.target.value;
-                          value = value.replace(/^0+(?=\d)/, '').replace(/,/g, '').split('.')[0];
+                          value = value.replace(/^0+(?=\d)/, '');
                           setRevenuBrut(value);
                         }}
                       />
