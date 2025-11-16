@@ -191,6 +191,78 @@ export type Database = {
         }
         Relationships: []
       }
+      tax_data: {
+        Row: {
+          autres_deductions: number | null
+          canton: string
+          charges_sociales: number | null
+          commune: string
+          confession: string | null
+          created_at: string
+          deduction_3eme_pilier: number | null
+          etat_civil: string
+          fortune: number | null
+          id: string
+          impot_cantonal: number | null
+          impot_communal: number | null
+          impot_ecclesiastique: number | null
+          impot_federal: number | null
+          impot_fortune: number | null
+          interets_hypothecaires: number | null
+          nombre_enfants: number | null
+          revenu_annuel: number
+          total_impots: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          autres_deductions?: number | null
+          canton: string
+          charges_sociales?: number | null
+          commune: string
+          confession?: string | null
+          created_at?: string
+          deduction_3eme_pilier?: number | null
+          etat_civil: string
+          fortune?: number | null
+          id?: string
+          impot_cantonal?: number | null
+          impot_communal?: number | null
+          impot_ecclesiastique?: number | null
+          impot_federal?: number | null
+          impot_fortune?: number | null
+          interets_hypothecaires?: number | null
+          nombre_enfants?: number | null
+          revenu_annuel?: number
+          total_impots?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          autres_deductions?: number | null
+          canton?: string
+          charges_sociales?: number | null
+          commune?: string
+          confession?: string | null
+          created_at?: string
+          deduction_3eme_pilier?: number | null
+          etat_civil?: string
+          fortune?: number | null
+          id?: string
+          impot_cantonal?: number | null
+          impot_communal?: number | null
+          impot_ecclesiastique?: number | null
+          impot_federal?: number | null
+          impot_fortune?: number | null
+          interets_hypothecaires?: number | null
+          nombre_enfants?: number | null
+          revenu_annuel?: number
+          total_impots?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
