@@ -390,7 +390,7 @@ const Budget = () => {
                       <div className="flex items-center justify-between">
                         <div>
                           <CardTitle>Dépenses Fixes</CardTitle>
-                          <CardDescription>Vos dépenses mensuelles</CardDescription>
+                          <CardDescription>Vos dépenses {periodType === "mensuel" ? "mensuelles" : "annuelles"}</CardDescription>
                         </div>
                         <CollapsibleTrigger asChild>
                           <Button variant="ghost" size="sm" className="md:hidden">
