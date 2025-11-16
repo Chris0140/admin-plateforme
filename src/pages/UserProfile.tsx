@@ -114,6 +114,53 @@ const taxSchema = z.object({
   charges_sociales: z.number().min(0, "Le montant doit être positif"),
 });
 
+// Cantons disponibles avec leurs taux
+const cantons = [
+  { value: "GE", label: "Genève", tauxCantonal: 1.00, coefficientCantonal: 45.50 },
+  { value: "VD", label: "Vaud", tauxCantonal: 1.00, coefficientCantonal: 1.00 }
+];
+
+// Communes par canton avec leurs coefficients
+const communesParCanton: Record<string, Array<{ value: string; label: string; coefficientCommunal: number }>> = {
+  VD: [
+    { value: "aigle", label: "Aigle", coefficientCommunal: 0.66 },
+    { value: "lausanne", label: "Lausanne", coefficientCommunal: 0.76 },
+    { value: "yverdon-les-bains", label: "Yverdon-les-Bains", coefficientCommunal: 0.78 },
+    { value: "montreux", label: "Montreux", coefficientCommunal: 0.68 },
+    { value: "vevey", label: "Vevey", coefficientCommunal: 0.73 },
+    { value: "nyon", label: "Nyon", coefficientCommunal: 0.66 },
+    { value: "renens", label: "Renens", coefficientCommunal: 0.79 },
+    { value: "pully", label: "Pully", coefficientCommunal: 0.67 },
+    { value: "morges", label: "Morges", coefficientCommunal: 0.72 },
+    { value: "prilly", label: "Prilly", coefficientCommunal: 0.77 },
+    { value: "ecublens", label: "Ecublens", coefficientCommunal: 0.75 },
+    { value: "gland", label: "Gland", coefficientCommunal: 0.64 },
+    { value: "payerne", label: "Payerne", coefficientCommunal: 0.70 },
+    { value: "lutry", label: "Lutry", coefficientCommunal: 0.72 },
+    { value: "epalinges", label: "Epalinges", coefficientCommunal: 0.71 },
+    { value: "rolle", label: "Rolle", coefficientCommunal: 0.69 },
+    { value: "crissier", label: "Crissier", coefficientCommunal: 0.73 },
+    { value: "bex", label: "Bex", coefficientCommunal: 0.71 },
+    { value: "la-tour-de-peilz", label: "La Tour-de-Peilz", coefficientCommunal: 0.71 },
+    { value: "cossonay", label: "Cossonay", coefficientCommunal: 0.76 }
+  ],
+  GE: [
+    { value: "geneve", label: "Genève", coefficientCommunal: 0.455 },
+    { value: "vernier", label: "Vernier", coefficientCommunal: 0.46 },
+    { value: "lancy", label: "Lancy", coefficientCommunal: 0.45 },
+    { value: "meyrin", label: "Meyrin", coefficientCommunal: 0.43 },
+    { value: "carouge", label: "Carouge", coefficientCommunal: 0.44 },
+    { value: "onex", label: "Onex", coefficientCommunal: 0.46 },
+    { value: "thonex", label: "Thônex", coefficientCommunal: 0.42 },
+    { value: "versoix", label: "Versoix", coefficientCommunal: 0.41 },
+    { value: "grand-saconnex", label: "Le Grand-Saconnex", coefficientCommunal: 0.40 },
+    { value: "plan-les-ouates", label: "Plan-les-Ouates", coefficientCommunal: 0.39 },
+    { value: "chene-bougeries", label: "Chêne-Bougeries", coefficientCommunal: 0.36 },
+    { value: "cologny", label: "Cologny", coefficientCommunal: 0.35 },
+    { value: "veyrier", label: "Veyrier", coefficientCommunal: 0.42 }
+  ]
+};
+
 const UserProfile = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -126,6 +173,7 @@ const UserProfile = () => {
   const [editingBudget, setEditingBudget] = useState(false);
   const [editingTax, setEditingTax] = useState(false);
   const [displayPeriodType, setDisplayPeriodType] = useState<"mensuel" | "annuel">("mensuel");
+  const [communesDisponibles, setCommunesDisponibles] = useState<Array<{ value: string; label: string; coefficientCommunal: number }>>([]);
   const [budgetData, setBudgetData] = useState<BudgetData>({
     period_type: "mensuel",
     revenu_brut: 0,
@@ -175,6 +223,8 @@ const UserProfile = () => {
       charges_sociales: 0,
     },
   });
+
+  const selectedCanton = taxForm.watch("canton");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -273,6 +323,11 @@ const UserProfile = () => {
           autres_deductions: Number(taxDataResult.autres_deductions),
           charges_sociales: Number(taxDataResult.charges_sociales),
         });
+
+        // Charger les communes pour le canton sélectionné
+        if (taxDataResult.canton && communesParCanton[taxDataResult.canton]) {
+          setCommunesDisponibles(communesParCanton[taxDataResult.canton]);
+        }
       }
     } catch (error) {
       toast({
@@ -1203,10 +1258,28 @@ const UserProfile = () => {
                               name="canton"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Canton</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} />
-                                  </FormControl>
+                                  <FormLabel>Canton de résidence</FormLabel>
+                                  <Select 
+                                    onValueChange={(value) => {
+                                      field.onChange(value);
+                                      setCommunesDisponibles(communesParCanton[value] || []);
+                                      taxForm.setValue("commune", "");
+                                    }} 
+                                    value={field.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Sélectionnez un canton" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent className="bg-background z-50">
+                                      {cantons.map((canton) => (
+                                        <SelectItem key={canton.value} value={canton.value}>
+                                          {canton.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                   <FormMessage />
                                 </FormItem>
                               )}
@@ -1216,10 +1289,25 @@ const UserProfile = () => {
                               name="commune"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>Commune</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} />
-                                  </FormControl>
+                                  <FormLabel>Commune de résidence</FormLabel>
+                                  <Select 
+                                    onValueChange={field.onChange} 
+                                    value={field.value}
+                                    disabled={!selectedCanton}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Sélectionnez une commune" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent className="bg-background z-50">
+                                      {communesDisponibles.map((commune) => (
+                                        <SelectItem key={commune.value} value={commune.value}>
+                                          {commune.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
                                   <FormMessage />
                                 </FormItem>
                               )}
@@ -1233,9 +1321,20 @@ const UserProfile = () => {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>État civil</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} />
-                                  </FormControl>
+                                  <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Sélectionnez" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent className="bg-background z-50">
+                                      <SelectItem value="celibataire">Célibataire</SelectItem>
+                                      <SelectItem value="marie">Marié(e)</SelectItem>
+                                      <SelectItem value="parent">Parent seul avec enfants</SelectItem>
+                                      <SelectItem value="divorce">Divorcé(e)</SelectItem>
+                                      <SelectItem value="veuf">Veuf/Veuve</SelectItem>
+                                    </SelectContent>
+                                  </Select>
                                   <FormMessage />
                                 </FormItem>
                               )}
@@ -1246,9 +1345,19 @@ const UserProfile = () => {
                               render={({ field }) => (
                                 <FormItem>
                                   <FormLabel>Confession</FormLabel>
-                                  <FormControl>
-                                    <Input {...field} value={field.value || ""} />
-                                  </FormControl>
+                                  <Select onValueChange={field.onChange} value={field.value || "aucune"}>
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Aucune" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent className="bg-background z-50">
+                                      <SelectItem value="aucune">Aucune</SelectItem>
+                                      <SelectItem value="catholique">Catholique romaine</SelectItem>
+                                      <SelectItem value="protestant">Protestante / Réformée évangélique</SelectItem>
+                                      <SelectItem value="catholique-chretien">Catholique-chrétienne</SelectItem>
+                                    </SelectContent>
+                                  </Select>
                                   <FormMessage />
                                 </FormItem>
                               )}
