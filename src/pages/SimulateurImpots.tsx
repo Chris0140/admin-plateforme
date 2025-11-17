@@ -1581,20 +1581,21 @@ const SimulateurImpots = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          {/* Formulaire */}
-          <div className="md:col-span-2">
-            <Card className="bg-card border-border shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  Vos informations
-                </CardTitle>
-                <CardDescription>
-                  Remplissez les champs ci-dessous pour calculer vos impôts
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+        <div className="max-w-7xl mx-auto space-y-8">
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Formulaire */}
+            <div className="md:col-span-2">
+              <Card className="bg-card border-border shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Vos informations
+                  </CardTitle>
+                  <CardDescription>
+                    Remplissez les champs ci-dessous pour calculer vos impôts
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-4">
@@ -1832,92 +1833,8 @@ const SimulateurImpots = () => {
             </Card>
           </div>
 
-          {/* Résultats et Conseils */}
+          {/* Conseils et Disclaimer */}
           <div className="space-y-6">
-            {/* Résultats */}
-            {results && <Card className="bg-card border-border shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-primary">Estimation fiscale</CardTitle>
-                  <CardDescription>
-                    {results.commune}, Canton de {results.canton}
-                    <span className="block text-xs mt-1">
-                      Coefficient communal: {results.coefficientCommunal}
-                    </span>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Revenu imposable</span>
-                      <span className="font-semibold">CHF {results.revenuImposable.toLocaleString()}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Fortune imposable</span>
-                      <span className="font-semibold">CHF {results.fortuneImposable.toLocaleString()}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-muted-foreground">Déductions totales</span>
-                      <span className="font-semibold text-green-500">- CHF {results.deductionsTotal.toLocaleString()}</span>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Impôt fédéral direct</span>
-                      <span className="font-medium">CHF {results.impotFederal.toLocaleString()}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Impôt cantonal</span>
-                      <span className="font-medium">CHF {results.impotCantonal.toLocaleString()}</span>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">Impôt communal</span>
-                      <span className="font-medium">CHF {results.impotCommunal.toLocaleString()}</span>
-                    </div>
-
-                    {results.impotEcclesiastique > 0 && <div className="flex justify-between items-center">
-                        <span className="text-sm text-muted-foreground">Impôt ecclésiastique (culte)</span>
-                        <span className="font-medium">CHF {results.impotEcclesiastique.toLocaleString()}</span>
-                      </div>}
-                  </div>
-
-                  <Separator />
-
-                  <div className="bg-primary/10 p-4 rounded-lg">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-bold text-lg text-foreground">Total des impôts</span>
-                      <span className="font-bold text-2xl text-primary">CHF {results.totalImpots.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Taux effectif</span>
-                      <span className="font-semibold text-accent">{results.tauxEffectif.toFixed(2)}%</span>
-                    </div>
-                    {results.economiePilier3 > 0 && <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-primary/20">
-                        <span className="text-muted-foreground">Économie grâce au 3ème pilier</span>
-                        <span className="font-semibold text-green-500">- CHF {results.economiePilier3.toLocaleString()}</span>
-                      </div>}
-                  </div>
-                  
-                  {user && (
-                    <Button 
-                      onClick={saveTaxData} 
-                      disabled={isSaving}
-                      className="w-full mt-4"
-                      size="lg"
-                    >
-                      <Save className="mr-2 h-4 w-4" />
-                      {isSaving ? "Enregistrement..." : "Sauvegarder dans mon profil"}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>}
-
             {/* Conseils */}
             <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20">
               <CardHeader>
@@ -1987,6 +1904,103 @@ const SimulateurImpots = () => {
             </Card>
           </div>
         </div>
+
+        {/* Résultats - En dessous du formulaire sur tablette */}
+        {results && (
+          <div className="max-w-7xl mx-auto mt-8">
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="md:col-span-2">
+                <Card className="bg-card border-border shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="text-primary">Estimation fiscale</CardTitle>
+                    <CardDescription>
+                      {results.commune}, Canton de {results.canton}
+                      <span className="block text-xs mt-1">
+                        Coefficient communal: {results.coefficientCommunal}
+                      </span>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Revenu imposable</span>
+                        <span className="font-semibold">CHF {results.revenuImposable.toLocaleString()}</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Fortune imposable</span>
+                        <span className="font-semibold">CHF {results.fortuneImposable.toLocaleString()}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Déductions totales</span>
+                        <span className="font-semibold text-green-500">- CHF {results.deductionsTotal.toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Impôt fédéral direct</span>
+                        <span className="font-medium">CHF {results.impotFederal.toLocaleString()}</span>
+                      </div>
+                      
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Impôt cantonal</span>
+                        <span className="font-medium">CHF {results.impotCantonal.toLocaleString()}</span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Impôt communal</span>
+                        <span className="font-medium">CHF {results.impotCommunal.toLocaleString()}</span>
+                      </div>
+
+                      {results.impotEcclesiastique > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Impôt ecclésiastique (culte)</span>
+                          <span className="font-medium">CHF {results.impotEcclesiastique.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <Separator />
+
+                    <div className="bg-primary/10 p-4 rounded-lg">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-bold text-lg text-foreground">Total des impôts</span>
+                        <span className="font-bold text-2xl text-primary">CHF {results.totalImpots.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Taux effectif</span>
+                        <span className="font-semibold text-accent">{results.tauxEffectif.toFixed(2)}%</span>
+                      </div>
+                      {results.economiePilier3 > 0 && (
+                        <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-primary/20">
+                          <span className="text-muted-foreground">Économie grâce au 3ème pilier</span>
+                          <span className="font-semibold text-green-500">- CHF {results.economiePilier3.toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {user && (
+                      <Button 
+                        onClick={saveTaxData} 
+                        disabled={isSaving}
+                        className="w-full mt-4"
+                        size="lg"
+                      >
+                        <Save className="mr-2 h-4 w-4" />
+                        {isSaving ? "Enregistrement..." : "Sauvegarder dans mon profil"}
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
       </main>
 
       <Footer />
