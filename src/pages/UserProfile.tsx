@@ -1678,7 +1678,7 @@ const UserProfile = () => {
                       <Separator />
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-muted-foreground">Revenu net</span>
-                        <span className="font-semibold">{formatCurrency(convertValue(revenuNet))}</span>
+                        <span className="font-semibold text-amber-700">{formatCurrency(convertValue(revenuNet))}</span>
                       </div>
                       <Separator />
                       <div className="space-y-2">
