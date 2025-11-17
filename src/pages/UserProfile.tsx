@@ -47,6 +47,9 @@ interface BudgetData {
   depenses_transport: number;
   depenses_alimentation: number;
   autres_depenses: number;
+}
+
+interface PrevoyanceData {
   avs_1er_pilier: number;
   lpp_2eme_pilier: number;
   pilier_3a: number;
@@ -95,6 +98,9 @@ const budgetSchema = z.object({
   depenses_transport: z.number().min(0, "Le montant doit être positif"),
   depenses_alimentation: z.number().min(0, "Le montant doit être positif"),
   autres_depenses: z.number().min(0, "Le montant doit être positif"),
+});
+
+const prevoyanceSchema = z.object({
   avs_1er_pilier: z.number().min(0, "Le montant doit être positif"),
   lpp_2eme_pilier: z.number().min(0, "Le montant doit être positif"),
   pilier_3a: z.number().min(0, "Le montant doit être positif"),
@@ -172,6 +178,7 @@ const UserProfile = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [editingProfile, setEditingProfile] = useState(false);
   const [editingBudget, setEditingBudget] = useState(false);
+  const [editingPrevoyance, setEditingPrevoyance] = useState(false);
   const [editingTax, setEditingTax] = useState(false);
   const [displayPeriodType, setDisplayPeriodType] = useState<"mensuel" | "annuel">("mensuel");
   const [communesDisponibles, setCommunesDisponibles] = useState<Array<{ value: string; label: string; coefficientCommunal: number }>>([]);
@@ -179,11 +186,11 @@ const UserProfile = () => {
   // Collapsible states
   const [revenusOpen, setRevenusOpen] = useState(true);
   const [depensesOpen, setDepensesOpen] = useState(true);
-  const [prevoyanceOpen, setPrevoyanceOpen] = useState(true);
   
   // Mobile sections states
   const [mobileInfoOpen, setMobileInfoOpen] = useState(false);
   const [mobileBudgetOpen, setMobileBudgetOpen] = useState(false);
+  const [mobilePrevoyanceOpen, setMobilePrevoyanceOpen] = useState(false);
   const [mobileImpotsOpen, setMobileImpotsOpen] = useState(false);
   const [mobileAssurancesOpen, setMobileAssurancesOpen] = useState(false);
   const [mobileDocumentsOpen, setMobileDocumentsOpen] = useState(false);
@@ -196,6 +203,9 @@ const UserProfile = () => {
     depenses_transport: 0,
     depenses_alimentation: 0,
     autres_depenses: 0,
+  });
+
+  const [prevoyanceData, setPrevoyanceData] = useState<PrevoyanceData>({
     avs_1er_pilier: 0,
     lpp_2eme_pilier: 0,
     pilier_3a: 0,
@@ -219,6 +229,11 @@ const UserProfile = () => {
   const budgetForm = useForm<z.infer<typeof budgetSchema>>({
     resolver: zodResolver(budgetSchema),
     defaultValues: budgetData,
+  });
+
+  const prevoyanceForm = useForm<z.infer<typeof prevoyanceSchema>>({
+    resolver: zodResolver(prevoyanceSchema),
+    defaultValues: prevoyanceData,
   });
 
   const taxForm = useForm<z.infer<typeof taxSchema>>({
@@ -295,14 +310,29 @@ const UserProfile = () => {
           depenses_transport: Number(budgetDataResult.depenses_transport),
           depenses_alimentation: Number(budgetDataResult.depenses_alimentation),
           autres_depenses: Number(budgetDataResult.autres_depenses),
-          avs_1er_pilier: Number(budgetDataResult.avs_1er_pilier),
-          lpp_2eme_pilier: Number(budgetDataResult.lpp_2eme_pilier),
-          pilier_3a: Number(budgetDataResult.pilier_3a),
-          pilier_3b: Number(budgetDataResult.pilier_3b),
         };
         setBudgetData(budget);
         setDisplayPeriodType(budget.period_type);
         budgetForm.reset(budget);
+      }
+
+      const { data: prevoyanceDataResult, error: prevoyanceError } = await supabase
+        .from("prevoyance_data")
+        .select("*")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (prevoyanceError && prevoyanceError.code !== 'PGRST116') throw prevoyanceError;
+
+      if (prevoyanceDataResult) {
+        const prevoyance: PrevoyanceData = {
+          avs_1er_pilier: Number(prevoyanceDataResult.avs_1er_pilier),
+          lpp_2eme_pilier: Number(prevoyanceDataResult.lpp_2eme_pilier),
+          pilier_3a: Number(prevoyanceDataResult.pilier_3a),
+          pilier_3b: Number(prevoyanceDataResult.pilier_3b),
+        };
+        setPrevoyanceData(prevoyance);
+        prevoyanceForm.reset(prevoyance);
       }
 
       const { data: documentsData, error: documentsError } = await supabase
@@ -431,10 +461,6 @@ const UserProfile = () => {
         depenses_alimentation_annuel,
         autres_depenses_mensuel,
         autres_depenses_annuel,
-        avs_1er_pilier: values.avs_1er_pilier,
-        lpp_2eme_pilier: values.lpp_2eme_pilier,
-        pilier_3a: values.pilier_3a,
-        pilier_3b: values.pilier_3b,
       };
 
       if (existingBudget) {
@@ -467,6 +493,54 @@ const UserProfile = () => {
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de mettre à jour le budget",
+      });
+    }
+  };
+
+  const onSubmitPrevoyance = async (values: z.infer<typeof prevoyanceSchema>) => {
+    try {
+      const { data: existingPrevoyance } = await supabase
+        .from("prevoyance_data")
+        .select("id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      const dataToSave = {
+        user_id: user?.id,
+        avs_1er_pilier: values.avs_1er_pilier,
+        lpp_2eme_pilier: values.lpp_2eme_pilier,
+        pilier_3a: values.pilier_3a,
+        pilier_3b: values.pilier_3b,
+      };
+
+      if (existingPrevoyance) {
+        const { error } = await supabase
+          .from("prevoyance_data")
+          .update(dataToSave)
+          .eq("user_id", user?.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("prevoyance_data")
+          .insert(dataToSave);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Prévoyance mise à jour",
+        description: "Vos informations de prévoyance ont été enregistrées avec succès",
+      });
+
+      setEditingPrevoyance(false);
+      setPrevoyanceData(values as PrevoyanceData);
+      fetchUserData();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de mettre à jour les données de prévoyance",
       });
     }
   };
@@ -603,10 +677,10 @@ const UserProfile = () => {
   const soldeBudget = revenuNet - totalDepenses;
 
   const totalPrevoyance =
-    budgetData.avs_1er_pilier +
-    budgetData.lpp_2eme_pilier +
-    budgetData.pilier_3a +
-    budgetData.pilier_3b;
+    prevoyanceData.avs_1er_pilier +
+    prevoyanceData.lpp_2eme_pilier +
+    prevoyanceData.pilier_3a +
+    prevoyanceData.pilier_3b;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -900,28 +974,6 @@ const UserProfile = () => {
                           </div>
                         </div>
                         <Separator />
-                        <div className="space-y-3">
-                          <h3 className="font-semibold text-base">Prévoyance</h3>
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">AVS (1er pilier)</span>
-                              <span className="text-sm font-medium">{formatCurrency(budgetData.avs_1er_pilier)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">LPP (2ème pilier)</span>
-                              <span className="text-sm font-medium">{formatCurrency(budgetData.lpp_2eme_pilier)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">Pilier 3a</span>
-                              <span className="text-sm font-medium">{formatCurrency(budgetData.pilier_3a)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-sm text-muted-foreground">Pilier 3b</span>
-                              <span className="text-sm font-medium">{formatCurrency(budgetData.pilier_3b)}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <Separator />
                         <div className="flex justify-between items-center pt-2">
                           <span className="font-semibold">Solde</span>
                           <span className={`font-bold text-lg ${soldeBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -1086,7 +1138,7 @@ const UserProfile = () => {
 
           {/* Version Desktop - Tabs */}
           <Tabs defaultValue="informations" className="hidden md:block space-y-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="informations">
                 <User className="h-4 w-4 mr-2" />
                 Informations
@@ -1094,6 +1146,10 @@ const UserProfile = () => {
               <TabsTrigger value="budget">
                 <Wallet className="h-4 w-4 mr-2" />
                 Budget
+              </TabsTrigger>
+              <TabsTrigger value="prevoyance">
+                <Wallet className="h-4 w-4 mr-2" />
+                Prévoyance & Retraite
               </TabsTrigger>
               <TabsTrigger value="impots">
                 <Calculator className="h-4 w-4 mr-2" />
@@ -1539,182 +1595,6 @@ const UserProfile = () => {
                           </div>
                           </CollapsibleContent>
                         </Collapsible>
-
-                        <Separator />
-
-                        <Collapsible open={prevoyanceOpen} onOpenChange={setPrevoyanceOpen}>
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold">Prévoyance</h3>
-                            <CollapsibleTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <ChevronDown className={`h-4 w-4 transition-transform ${prevoyanceOpen ? 'rotate-180' : ''}`} />
-                              </Button>
-                            </CollapsibleTrigger>
-                          </div>
-                          <CollapsibleContent>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                              control={budgetForm.control}
-                              name="avs_1er_pilier"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>1er Pilier</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="lpp_2eme_pilier"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>2ème Pilier</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="pilier_3a"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>3ème Pilier A</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={budgetForm.control}
-                              name="pilier_3b"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>3ème Pilier B</FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="number"
-                                      step="1"
-                                      {...field}
-                                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                      onFocus={(e) => e.target.select()}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-
-                        <Button type="submit" className="w-full md:w-auto">
-                          <Save className="h-4 w-4 mr-2" />
-                          Enregistrer
-                        </Button>
-                      </form>
-                    </Form>
-                  ) : (
-                    <div className="space-y-6">
-                      <div className="flex justify-end mb-4">
-                        <ToggleGroup 
-                          type="single" 
-                          value={displayPeriodType}
-                          onValueChange={(value) => value && setDisplayPeriodType(value as "mensuel" | "annuel")}
-                        >
-                          <ToggleGroupItem value="mensuel">Mensuel</ToggleGroupItem>
-                          <ToggleGroupItem value="annuel">Annuel</ToggleGroupItem>
-                        </ToggleGroup>
-                      </div>
-                      
-                      <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen}>
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold">Revenus</h3>
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <ChevronDown className={`h-4 w-4 transition-transform ${revenusOpen ? 'rotate-180' : ''}`} />
-                            </Button>
-                          </CollapsibleTrigger>
-                        </div>
-                        <CollapsibleContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Revenu brut</p>
-                            <p className="text-xl font-semibold">{formatCurrency(displayData.revenu_brut)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Charges sociales</p>
-                            <p className="text-xl font-semibold">{formatCurrency(displayData.charges_sociales)}</p>
-                          </div>
-                          <div className="md:col-span-2">
-                            <p className="text-sm text-muted-foreground">Revenu net</p>
-                            <p className="text-2xl font-bold text-primary">{formatCurrency(revenuNet)}</p>
-                          </div>
-                          </div>
-                        </CollapsibleContent>
-                      </Collapsible>
-
-                      <Separator />
-
-                      <Collapsible open={depensesOpen} onOpenChange={setDepensesOpen}>
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold">Dépenses</h3>
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <ChevronDown className={`h-4 w-4 transition-transform ${depensesOpen ? 'rotate-180' : ''}`} />
-                            </Button>
-                          </CollapsibleTrigger>
-                        </div>
-                        <CollapsibleContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">Logement</p>
-                            <p className="text-xl font-semibold">{formatCurrency(displayData.depenses_logement)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Transport</p>
-                            <p className="text-xl font-semibold">{formatCurrency(displayData.depenses_transport)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Alimentation</p>
-                            <p className="text-xl font-semibold">{formatCurrency(displayData.depenses_alimentation)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">Autres</p>
-                            <p className="text-xl font-semibold">{formatCurrency(displayData.autres_depenses)}</p>
-                          </div>
-                          <div className="md:col-span-2">
-                            <p className="text-sm text-muted-foreground">Total</p>
-                            <p className="text-2xl font-bold text-primary">{formatCurrency(totalDepenses)}</p>
-                          </div>
-                        </div>
-                        </CollapsibleContent>
-                      </Collapsible>
 
                       <Separator />
 

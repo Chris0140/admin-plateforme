@@ -146,6 +146,39 @@ export type Database = {
         }
         Relationships: []
       }
+      prevoyance_data: {
+        Row: {
+          avs_1er_pilier: number | null
+          created_at: string
+          id: string
+          lpp_2eme_pilier: number | null
+          pilier_3a: number | null
+          pilier_3b: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avs_1er_pilier?: number | null
+          created_at?: string
+          id?: string
+          lpp_2eme_pilier?: number | null
+          pilier_3a?: number | null
+          pilier_3b?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avs_1er_pilier?: number | null
+          created_at?: string
+          id?: string
+          lpp_2eme_pilier?: number | null
+          pilier_3a?: number | null
+          pilier_3b?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           adresse: string | null
