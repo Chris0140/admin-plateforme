@@ -991,6 +991,51 @@ const UserProfile = () => {
               </Card>
             </Collapsible>
 
+            {/* Prévoyance & Retraite Mobile */}
+            <Collapsible open={mobilePrevoyanceOpen} onOpenChange={setMobilePrevoyanceOpen}>
+              <Card>
+                <CollapsibleTrigger className="w-full">
+                  <CardHeader className="flex flex-row items-center justify-between p-4 space-y-0">
+                    <div className="flex items-center gap-3">
+                      <Wallet className="h-5 w-5 text-primary" />
+                      <CardTitle className="text-base">Prévoyance & Retraite</CardTitle>
+                    </div>
+                    <ChevronDown className={`h-5 w-5 transition-transform ${mobilePrevoyanceOpen ? 'rotate-180' : ''}`} />
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <Separator />
+                  <CardContent className="pt-4">
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">AVS (1er pilier)</p>
+                          <p className="text-lg font-semibold">{formatCurrency(prevoyanceData.avs_1er_pilier)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">LPP (2ème pilier)</p>
+                          <p className="text-lg font-semibold">{formatCurrency(prevoyanceData.lpp_2eme_pilier)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">3ème Pilier A</p>
+                          <p className="text-lg font-semibold">{formatCurrency(prevoyanceData.pilier_3a)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">3ème Pilier B</p>
+                          <p className="text-lg font-semibold">{formatCurrency(prevoyanceData.pilier_3b)}</p>
+                        </div>
+                      </div>
+                      <Separator />
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">Total prévoyance</p>
+                        <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+
             <Collapsible open={mobileImpotsOpen} onOpenChange={setMobileImpotsOpen}>
               <Card>
                 <CollapsibleTrigger className="w-full">
@@ -1596,51 +1641,226 @@ const UserProfile = () => {
                           </CollapsibleContent>
                         </Collapsible>
 
-                      <Separator />
-
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-2">Solde</p>
-                        <p className={`text-3xl font-bold ${soldeBudget >= 0 ? "text-green-600" : "text-red-600"}`}>
-                          {formatCurrency(soldeBudget)}
-                        </p>
+                        <div className="flex gap-2 mt-6">
+                          <Button
+                            onClick={() => setEditingBudget(false)}
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            <X className="mr-2 h-4 w-4" />
+                            Annuler
+                          </Button>
+                          <Button
+                            type="submit"
+                            className="flex-1"
+                            disabled={budgetForm.formState.isSubmitting}
+                          >
+                            {budgetForm.formState.isSubmitting ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Save className="mr-2 h-4 w-4" />
+                            )}
+                            Enregistrer
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Revenu brut</span>
+                        <span className="font-medium">{formatCurrency(convertValue(budgetData.revenu_brut))}</span>
                       </div>
-
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Charges sociales</span>
+                        <span className="font-medium">- {formatCurrency(convertValue(budgetData.charges_sociales))}</span>
+                      </div>
                       <Separator />
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">Revenu net</span>
+                        <span className="font-semibold">{formatCurrency(convertValue(revenuNet))}</span>
+                      </div>
+                      <Separator />
+                      <div className="space-y-2">
+                        <h3 className="font-semibold text-sm">Dépenses</h3>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Logement</span>
+                          <span>{formatCurrency(convertValue(budgetData.depenses_logement))}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Transport</span>
+                          <span>{formatCurrency(convertValue(budgetData.depenses_transport))}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Alimentation</span>
+                          <span>{formatCurrency(convertValue(budgetData.depenses_alimentation))}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Autres</span>
+                          <span>{formatCurrency(convertValue(budgetData.autres_depenses))}</span>
+                        </div>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between items-center pt-2">
+                        <span className="font-semibold">Solde</span>
+                        <span className={`font-bold text-lg ${soldeBudget >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatCurrency(convertValue(soldeBudget))}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-                      <Collapsible open={prevoyanceOpen} onOpenChange={setPrevoyanceOpen}>
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="text-lg font-semibold">Prévoyance</h3>
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <ChevronDown className={`h-4 w-4 transition-transform ${prevoyanceOpen ? 'rotate-180' : ''}`} />
-                            </Button>
-                          </CollapsibleTrigger>
+            {/* Prévoyance & Retraite */}
+            <TabsContent value="prevoyance">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Prévoyance & Retraite</CardTitle>
+                    <CardDescription>
+                      Vos cotisations et piliers de prévoyance
+                    </CardDescription>
+                  </div>
+                  {!editingPrevoyance && (
+                    <Button onClick={() => setEditingPrevoyance(true)} variant="outline" size="sm">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Modifier
+                    </Button>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  {editingPrevoyance ? (
+                    <Form {...prevoyanceForm}>
+                      <form onSubmit={prevoyanceForm.handleSubmit(onSubmitPrevoyance)} className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={prevoyanceForm.control}
+                            name="avs_1er_pilier"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>AVS (1er pilier)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="1"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    onFocus={(e) => e.target.select()}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={prevoyanceForm.control}
+                            name="lpp_2eme_pilier"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>LPP (2ème pilier)</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="1"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    onFocus={(e) => e.target.select()}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={prevoyanceForm.control}
+                            name="pilier_3a"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>3ème Pilier A</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="1"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    onFocus={(e) => e.target.select()}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={prevoyanceForm.control}
+                            name="pilier_3b"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>3ème Pilier B</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    step="1"
+                                    {...field}
+                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                    onFocus={(e) => e.target.select()}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                         </div>
-                        <CollapsibleContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-sm text-muted-foreground">1er Pilier</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.avs_1er_pilier)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">2ème Pilier</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.lpp_2eme_pilier)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">3ème Pilier A</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.pilier_3a)}</p>
-                          </div>
-                          <div>
-                            <p className="text-sm text-muted-foreground">3ème Pilier B</p>
-                            <p className="text-xl font-semibold">{formatCurrency(budgetData.pilier_3b)}</p>
-                          </div>
-                          <div className="md:col-span-2">
-                            <p className="text-sm text-muted-foreground">Total</p>
-                            <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
-                          </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => setEditingPrevoyance(false)}
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            <X className="mr-2 h-4 w-4" />
+                            Annuler
+                          </Button>
+                          <Button
+                            type="submit"
+                            className="flex-1"
+                            disabled={prevoyanceForm.formState.isSubmitting}
+                          >
+                            {prevoyanceForm.formState.isSubmitting ? (
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                              <Save className="mr-2 h-4 w-4" />
+                            )}
+                            Enregistrer
+                          </Button>
                         </div>
-                        </CollapsibleContent>
-                      </Collapsible>
+                      </form>
+                    </Form>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">AVS (1er pilier)</p>
+                          <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.avs_1er_pilier)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">LPP (2ème pilier)</p>
+                          <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_2eme_pilier)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">3ème Pilier A</p>
+                          <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.pilier_3a)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">3ème Pilier B</p>
+                          <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.pilier_3b)}</p>
+                        </div>
+                        <div className="md:col-span-2">
+                          <p className="text-sm text-muted-foreground">Total prévoyance</p>
+                          <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </CardContent>
