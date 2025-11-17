@@ -481,6 +481,40 @@ const UserProfile = () => {
         if (error) throw error;
       }
 
+      // Synchroniser les données de prévoyance depuis budget_data vers prevoyance_data
+      const { data: budgetWithPrevoyance } = await supabase
+        .from("budget_data")
+        .select("avs_1er_pilier, lpp_2eme_pilier, pilier_3a, pilier_3b")
+        .eq("user_id", user.id)
+        .single();
+
+      if (budgetWithPrevoyance) {
+        const { data: existingPrevoyance } = await supabase
+          .from("prevoyance_data")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        const prevoyanceDataToSave = {
+          user_id: user.id,
+          avs_1er_pilier: budgetWithPrevoyance.avs_1er_pilier || 0,
+          lpp_2eme_pilier: budgetWithPrevoyance.lpp_2eme_pilier || 0,
+          pilier_3a: budgetWithPrevoyance.pilier_3a || 0,
+          pilier_3b: budgetWithPrevoyance.pilier_3b || 0,
+        };
+
+        if (existingPrevoyance) {
+          await supabase
+            .from("prevoyance_data")
+            .update(prevoyanceDataToSave)
+            .eq("user_id", user.id);
+        } else {
+          await supabase
+            .from("prevoyance_data")
+            .insert(prevoyanceDataToSave);
+        }
+      }
+
       toast({
         title: "Budget mis à jour",
         description: "Vos données budgétaires ont été enregistrées",
@@ -526,6 +560,25 @@ const UserProfile = () => {
           .insert(dataToSave);
 
         if (error) throw error;
+      }
+
+      // Synchroniser les données vers budget_data
+      const { data: existingBudget } = await supabase
+        .from("budget_data")
+        .select("id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (existingBudget) {
+        await supabase
+          .from("budget_data")
+          .update({
+            avs_1er_pilier: values.avs_1er_pilier,
+            lpp_2eme_pilier: values.lpp_2eme_pilier,
+            pilier_3a: values.pilier_3a,
+            pilier_3b: values.pilier_3b,
+          })
+          .eq("user_id", user?.id);
       }
 
       toast({

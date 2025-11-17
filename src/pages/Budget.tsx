@@ -207,6 +207,32 @@ const Budget = () => {
         if (error) throw error;
       }
 
+      // Synchroniser les données de prévoyance vers prevoyance_data
+      const { data: existingPrevoyance } = await supabase
+        .from("prevoyance_data")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const prevoyanceDataToSave = {
+        user_id: user.id,
+        avs_1er_pilier: parseFloat(avs1erPilier) || 0,
+        lpp_2eme_pilier: parseFloat(lpp2emePilier) || 0,
+        pilier_3a: parseFloat(pilier3a) || 0,
+        pilier_3b: parseFloat(pilier3b) || 0,
+      };
+
+      if (existingPrevoyance) {
+        await supabase
+          .from("prevoyance_data")
+          .update(prevoyanceDataToSave)
+          .eq("user_id", user.id);
+      } else {
+        await supabase
+          .from("prevoyance_data")
+          .insert(prevoyanceDataToSave);
+      }
+
       toast({
         title: "Succès",
         description: "Budget sauvegardé avec succès",
