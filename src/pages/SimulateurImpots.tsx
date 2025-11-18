@@ -1199,48 +1199,53 @@ const SimulateurImpots = () => {
     }
     const tranche = baremeGeneve2024[trancheIndex];
 
-    // Calculer l'impôt de base
+    // Calcul de l'impôt de base
     let impotBase = 0;
     if (tranche.taux === 0) {
       impotBase = 0;
     } else {
-      // Impôt cumulé des tranches précédentes + impôt sur la différence
       const difference = revenuPourTaux - tranche.seuilMin;
-      impotBase = tranche.impotCumul + difference * tranche.taux / 100;
+      impotBase = tranche.impotCumul + (difference * tranche.taux) / 100;
     }
 
     // Si splitting appliqué, multiplier par le ratio
-    if (splittingCoeff < 1.0) {
-      impotBase = revenuNet / revenuPourTaux * impotBase;
+    if (splittingCoeff < 1.0 && revenuPourTaux > 0) {
+      impotBase = (revenuNet / revenuPourTaux) * impotBase;
     }
 
-    // Appliquer la réduction de 12% (art. loi du 26 septembre 1999)
-    const impotBaseReduit = impotBase * 0.88;
+    // --- NOUVELLE LOGIQUE GENEVE ---
 
-    // Calcul de l'impôt cantonal
-    // Centimes additionnels cantonaux: 47.5% de l'impôt de base
+    // 1) Centimes additionnels cantonaux: 47.5% de l'impôt de base
     const centimesCantonal = impotBase * 0.475;
-    // Centime additionnel cantonal supplémentaire pour l'aide à domicile: 1%
-    const supplementAideDomicile = impotBase * 0.01;
-    const impotCantonal = impotBaseReduit + centimesCantonal + supplementAideDomicile;
 
-    // Calcul de l'impôt communal
-    // Centimes additionnels communaux (calculés sur l'impôt de base, pas le réduit)
+    // 2) Montant avant réduction: impôt de base + centimes cantonaux
+    const montantAvantReduction = impotBase + centimesCantonal;
+
+    // 3) Réduction de 12% sur ce montant
+    const montantApresReduction = montantAvantReduction * 0.88;
+
+    // 4) Centime additionnel pour l'aide à domicile: 1% de l'impôt de base
+    const supplementAideDomicile = impotBase * 0.01;
+
+    // Impôt cantonal final
+    const impotCantonal = montantApresReduction + supplementAideDomicile;
+
+    // Impôt communal: centimes communaux calculés sur l'impôt de base
     const centimesCommunal = impotBase * coefficientCommunal;
     const impotCommunal = centimesCommunal;
 
-    // Calcul de l'impôt ecclésiastique (culte) pour Genève
-    // Taux: 7 centimes additionnels sur l'impôt de base pour les confessions reconnues
+    // Impôt ecclésiastique pour Genève: % de l'impôt de base
     let impotEcclesiastique = 0;
     const tauxEcclesiastique = confession && tauxEcclesiastiqueParCanton.GE?.[confession];
     if (tauxEcclesiastique) {
       impotEcclesiastique = impotBase * tauxEcclesiastique;
     }
+
     return {
       impotBase,
       impotCantonal: Math.round(impotCantonal * 100) / 100,
       impotCommunal: Math.round(impotCommunal * 100) / 100,
-      impotEcclesiastique: Math.round(impotEcclesiastique * 100) / 100
+      impotEcclesiastique: Math.round(impotEcclesiastique * 100) / 100,
     };
   };
 
