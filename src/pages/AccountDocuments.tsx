@@ -14,7 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, CheckCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Document {
   id: string;
@@ -77,6 +79,16 @@ const AccountDocuments = () => {
   const [activeTab, setActiveTab] = useState<Category>('assurance');
   const [uploadSectionOpen, setUploadSectionOpen] = useState(false);
   const [showAuthAlert, setShowAuthAlert] = useState(false);
+  const [verifyDataOpen, setVerifyDataOpen] = useState(false);
+  const [prevoyanceData, setPrevoyanceData] = useState({
+    avs1erPilier: "",
+    lpp2emePilier: "",
+    pilier3a: "",
+    pilier3b: "",
+    employeur: "",
+    numeroAffilie: "",
+    notes: "",
+  });
 
   useEffect(() => {
     if (user) {
@@ -455,7 +467,17 @@ const AccountDocuments = () => {
               {renderDocumentsList(getDocumentsByCategory('assurance'))}
             </TabsContent>
 
-            <TabsContent value="prevoyance_retraite">
+            <TabsContent value="prevoyance_retraite" className="space-y-4">
+              <div className="flex justify-end">
+                <Button 
+                  onClick={() => setVerifyDataOpen(true)}
+                  className="gap-2"
+                  variant="outline"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Vérifier les données
+                </Button>
+              </div>
               {renderDocumentsList(getDocumentsByCategory('prevoyance_retraite'))}
             </TabsContent>
 
@@ -567,6 +589,96 @@ const AccountDocuments = () => {
                 title={viewingDocument?.file_name}
               />
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={verifyDataOpen} onOpenChange={setVerifyDataOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Vérifier les données de prévoyance</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="avs1erPilier">1er Pilier (AVS)</Label>
+                <Input
+                  id="avs1erPilier"
+                  placeholder="Montant AVS"
+                  value={prevoyanceData.avs1erPilier}
+                  onChange={(e) => setPrevoyanceData({ ...prevoyanceData, avs1erPilier: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lpp2emePilier">2ème Pilier (LPP)</Label>
+                <Input
+                  id="lpp2emePilier"
+                  placeholder="Avoir LPP"
+                  value={prevoyanceData.lpp2emePilier}
+                  onChange={(e) => setPrevoyanceData({ ...prevoyanceData, lpp2emePilier: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pilier3a">3ème Pilier 3a</Label>
+                <Input
+                  id="pilier3a"
+                  placeholder="Avoir 3a"
+                  value={prevoyanceData.pilier3a}
+                  onChange={(e) => setPrevoyanceData({ ...prevoyanceData, pilier3a: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="pilier3b">3ème Pilier 3b</Label>
+                <Input
+                  id="pilier3b"
+                  placeholder="Avoir 3b"
+                  value={prevoyanceData.pilier3b}
+                  onChange={(e) => setPrevoyanceData({ ...prevoyanceData, pilier3b: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="employeur">Employeur / Institution</Label>
+                <Input
+                  id="employeur"
+                  placeholder="Nom de l'employeur"
+                  value={prevoyanceData.employeur}
+                  onChange={(e) => setPrevoyanceData({ ...prevoyanceData, employeur: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="numeroAffilie">Numéro d'affilié</Label>
+                <Input
+                  id="numeroAffilie"
+                  placeholder="Numéro AVS ou LPP"
+                  value={prevoyanceData.numeroAffilie}
+                  onChange={(e) => setPrevoyanceData({ ...prevoyanceData, numeroAffilie: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Notes complémentaires</Label>
+              <Textarea
+                id="notes"
+                placeholder="Informations supplémentaires..."
+                value={prevoyanceData.notes}
+                onChange={(e) => setPrevoyanceData({ ...prevoyanceData, notes: e.target.value })}
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={() => setVerifyDataOpen(false)}>
+                Annuler
+              </Button>
+              <Button onClick={() => {
+                toast({
+                  title: "Données enregistrées",
+                  description: "Vos données de prévoyance ont été mises à jour",
+                });
+                setVerifyDataOpen(false);
+              }}>
+                Enregistrer
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
