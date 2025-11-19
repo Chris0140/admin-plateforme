@@ -1,4 +1,4 @@
-import { Calculator, Wallet, Scale } from "lucide-react";
+import { Calculator, Wallet, Scale, FileText } from "lucide-react";
 import ServiceCard from "./ServiceCard";
 
 const Services = () => {
@@ -27,12 +27,20 @@ const Services = () => {
       iconBg: "bg-accent",
       link: "/simulateur-impots",
     },
+    {
+      icon: FileText,
+      title: "Mes documents",
+      description: "Stockez et gérez tous vos documents importants en toute sécurité",
+      savings: "Accès rapide à vos documents",
+      iconBg: "bg-primary",
+      link: "/account/documents",
+    },
   ];
 
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
           {services.map((service, index) => (
             <ServiceCard key={index} {...service} />
           ))}
