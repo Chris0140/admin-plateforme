@@ -140,6 +140,17 @@ export type Database = {
           created_at: string
           id: string
           lpp_2eme_pilier: number | null
+          lpp_avoir_vieillesse: number | null
+          lpp_capital_deces: number | null
+          lpp_capital_invalidite: number | null
+          lpp_capital_projete_65: number | null
+          lpp_derniere_maj: string | null
+          lpp_rente_annuelle_projetee: number | null
+          lpp_rente_conjoint_survivant: number | null
+          lpp_rente_invalidite_annuelle: number | null
+          lpp_rente_invalidite_mensuelle: number | null
+          lpp_rente_mensuelle_projetee: number | null
+          lpp_rente_orphelins: number | null
           pilier_3a: number | null
           pilier_3b: number | null
           rente_invalidite_annuelle: number | null
@@ -155,6 +166,17 @@ export type Database = {
           created_at?: string
           id?: string
           lpp_2eme_pilier?: number | null
+          lpp_avoir_vieillesse?: number | null
+          lpp_capital_deces?: number | null
+          lpp_capital_invalidite?: number | null
+          lpp_capital_projete_65?: number | null
+          lpp_derniere_maj?: string | null
+          lpp_rente_annuelle_projetee?: number | null
+          lpp_rente_conjoint_survivant?: number | null
+          lpp_rente_invalidite_annuelle?: number | null
+          lpp_rente_invalidite_mensuelle?: number | null
+          lpp_rente_mensuelle_projetee?: number | null
+          lpp_rente_orphelins?: number | null
           pilier_3a?: number | null
           pilier_3b?: number | null
           rente_invalidite_annuelle?: number | null
@@ -170,6 +192,17 @@ export type Database = {
           created_at?: string
           id?: string
           lpp_2eme_pilier?: number | null
+          lpp_avoir_vieillesse?: number | null
+          lpp_capital_deces?: number | null
+          lpp_capital_invalidite?: number | null
+          lpp_capital_projete_65?: number | null
+          lpp_derniere_maj?: string | null
+          lpp_rente_annuelle_projetee?: number | null
+          lpp_rente_conjoint_survivant?: number | null
+          lpp_rente_invalidite_annuelle?: number | null
+          lpp_rente_invalidite_mensuelle?: number | null
+          lpp_rente_mensuelle_projetee?: number | null
+          lpp_rente_orphelins?: number | null
           pilier_3a?: number | null
           pilier_3b?: number | null
           rente_invalidite_annuelle?: number | null

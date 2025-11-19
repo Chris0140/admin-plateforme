@@ -134,6 +134,11 @@ const Budget = () => {
         setLpp2emePilier(prevoyanceData.lpp_2eme_pilier?.toString() || "");
         setPilier3a(prevoyanceData.pilier_3a?.toString() || "");
         setPilier3b(prevoyanceData.pilier_3b?.toString() || "");
+        
+        // Charger les nouvelles données LPP pour l'affichage
+        if (prevoyanceData.lpp_avoir_vieillesse) {
+          // Ces données seront utilisées dans l'affichage de la section prévoyance
+        }
       }
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);

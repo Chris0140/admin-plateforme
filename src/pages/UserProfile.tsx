@@ -60,6 +60,18 @@ interface PrevoyanceData {
   rente_invalidite_mensuelle?: number;
   rente_invalidite_annuelle?: number;
   revenu_annuel_determinant?: number;
+  // Nouveaux champs LPP depuis certificat
+  lpp_avoir_vieillesse?: number;
+  lpp_capital_projete_65?: number;
+  lpp_rente_mensuelle_projetee?: number;
+  lpp_rente_annuelle_projetee?: number;
+  lpp_rente_invalidite_mensuelle?: number;
+  lpp_rente_invalidite_annuelle?: number;
+  lpp_capital_invalidite?: number;
+  lpp_rente_conjoint_survivant?: number;
+  lpp_rente_orphelins?: number;
+  lpp_capital_deces?: number;
+  lpp_derniere_maj?: string;
 }
 
 interface TaxData {
@@ -116,6 +128,18 @@ const prevoyanceSchema = z.object({
   rente_invalidite_mensuelle: z.number().min(0).optional(),
   rente_invalidite_annuelle: z.number().min(0).optional(),
   revenu_annuel_determinant: z.number().min(0).optional(),
+  // Nouveaux champs LPP depuis certificat
+  lpp_avoir_vieillesse: z.number().min(0).optional(),
+  lpp_capital_projete_65: z.number().min(0).optional(),
+  lpp_rente_mensuelle_projetee: z.number().min(0).optional(),
+  lpp_rente_annuelle_projetee: z.number().min(0).optional(),
+  lpp_rente_invalidite_mensuelle: z.number().min(0).optional(),
+  lpp_rente_invalidite_annuelle: z.number().min(0).optional(),
+  lpp_capital_invalidite: z.number().min(0).optional(),
+  lpp_rente_conjoint_survivant: z.number().min(0).optional(),
+  lpp_rente_orphelins: z.number().min(0).optional(),
+  lpp_capital_deces: z.number().min(0).optional(),
+  lpp_derniere_maj: z.string().optional(),
 });
 
 const taxSchema = z.object({
@@ -2211,13 +2235,10 @@ const UserProfile = () => {
                           />
                           <div className="text-left">
                             <CardTitle>2ème pilier LPP</CardTitle>
-                            <CardDescription>Prévoyance professionnelle</CardDescription>
+                            <CardDescription>Prévoyance professionnelle - Certificat de caisse de pension</CardDescription>
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
-                          <span className="text-2xl font-bold">
-                            {formatCurrency(prevoyanceData.lpp_2eme_pilier)}
-                          </span>
                           {editingPrevoyanceCategory !== "2eme_pilier" && (
                             <Button
                               onClick={(e) => {
@@ -2237,27 +2258,283 @@ const UserProfile = () => {
                       <CardContent>
                         {editingPrevoyanceCategory === "2eme_pilier" ? (
                           <Form {...prevoyanceForm}>
-                            <form onSubmit={prevoyanceForm.handleSubmit(onSubmitPrevoyance)} className="space-y-4">
-                              <FormField
-                                control={prevoyanceForm.control}
-                                name="lpp_2eme_pilier"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Cotisation LPP (2ème pilier)</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        type="number"
-                                        step="1"
-                                        {...field}
-                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                        onFocus={(e) => e.target.select()}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
-                              <div className="flex gap-2">
+                            <form onSubmit={prevoyanceForm.handleSubmit(onSubmitPrevoyance)} className="space-y-6">
+                              {/* Avoir actuel */}
+                              <div className="space-y-4 p-4 rounded-lg bg-muted/50">
+                                <h3 className="font-semibold text-sm flex items-center gap-2">
+                                  📄 Avoir de vieillesse actuel
+                                </h3>
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_avoir_vieillesse"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Avoir de vieillesse (CHF)</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_derniere_maj"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Date de dernière mise à jour</FormLabel>
+                                      <FormControl>
+                                        <Input type="date" {...field} />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              {/* Prestations vieillesse projetées */}
+                              <div className="space-y-4 p-4 rounded-lg bg-muted/50">
+                                <h3 className="font-semibold text-sm flex items-center gap-2">
+                                  👴 Prestations de vieillesse projetées
+                                </h3>
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_capital_projete_65"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Capital projeté à 65 ans (CHF)</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_rente_mensuelle_projetee"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Rente mensuelle projetée (CHF/mois)</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => {
+                                            const value = parseFloat(e.target.value) || 0;
+                                            field.onChange(value);
+                                            // Auto-calculer l'annuelle
+                                            prevoyanceForm.setValue("lpp_rente_annuelle_projetee", value * 12);
+                                          }}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_rente_annuelle_projetee"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Rente annuelle projetée (CHF/an)</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => {
+                                            const value = parseFloat(e.target.value) || 0;
+                                            field.onChange(value);
+                                            // Auto-calculer la mensuelle
+                                            prevoyanceForm.setValue("lpp_rente_mensuelle_projetee", value / 12);
+                                          }}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              {/* Prestations invalidité */}
+                              <div className="space-y-4 p-4 rounded-lg bg-muted/50">
+                                <h3 className="font-semibold text-sm flex items-center gap-2">
+                                  🏥 Prestations d'invalidité
+                                </h3>
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_rente_invalidite_mensuelle"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Rente mensuelle (CHF/mois)</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => {
+                                            const value = parseFloat(e.target.value) || 0;
+                                            field.onChange(value);
+                                            // Auto-calculer l'annuelle
+                                            prevoyanceForm.setValue("lpp_rente_invalidite_annuelle", value * 12);
+                                          }}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_rente_invalidite_annuelle"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Rente annuelle (CHF/an)</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => {
+                                            const value = parseFloat(e.target.value) || 0;
+                                            field.onChange(value);
+                                            // Auto-calculer la mensuelle
+                                            prevoyanceForm.setValue("lpp_rente_invalidite_mensuelle", value / 12);
+                                          }}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_capital_invalidite"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Capital invalidité (CHF)</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              {/* Prestations décès */}
+                              <div className="space-y-4 p-4 rounded-lg bg-muted/50">
+                                <h3 className="font-semibold text-sm flex items-center gap-2">
+                                  💔 Prestations en cas de décès
+                                </h3>
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_rente_conjoint_survivant"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Rente conjoint survivant (CHF/mois)</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_rente_orphelins"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Rente orphelins (CHF/mois)</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_capital_deces"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Capital décès (CHF)</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              {/* Cotisation annuelle (champ existant) */}
+                              <div className="space-y-4 p-4 rounded-lg bg-muted/50">
+                                <h3 className="font-semibold text-sm">💰 Cotisation annuelle</h3>
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="lpp_2eme_pilier"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Cotisation LPP annuelle (CHF)</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
+                              <div className="flex gap-2 pt-4">
                                 <Button
                                   onClick={() => {
                                     setEditingPrevoyanceCategory(null);
@@ -2269,27 +2546,141 @@ const UserProfile = () => {
                                 >
                                   Annuler
                                 </Button>
-                                <Button
-                                  type="submit"
-                                  className="flex-1"
-                                  disabled={prevoyanceForm.formState.isSubmitting}
-                                >
-                                  {prevoyanceForm.formState.isSubmitting ? (
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <Save className="mr-2 h-4 w-4" />
-                                  )}
-                                  Enregistrer
+                                <Button type="submit" className="flex-1" disabled={loadingData}>
+                                  {loadingData ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sauvegarder"}
                                 </Button>
                               </div>
                             </form>
                           </Form>
                         ) : (
-                          <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground">
-                              Montant cotisé annuellement au 2ème pilier (LPP)
-                            </p>
-                            <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_2eme_pilier)}</p>
+                          <div className="space-y-6">
+                            {/* Avoir actuel */}
+                            {(prevoyanceData.lpp_avoir_vieillesse || prevoyanceData.lpp_derniere_maj) && (
+                              <div className="p-4 rounded-lg bg-muted/30">
+                                <h3 className="font-semibold text-sm flex items-center gap-2 mb-3">
+                                  📄 Avoir de vieillesse actuel
+                                </h3>
+                                {prevoyanceData.lpp_avoir_vieillesse && (
+                                  <p className="text-2xl font-bold mb-2">{formatCurrency(prevoyanceData.lpp_avoir_vieillesse)}</p>
+                                )}
+                                {prevoyanceData.lpp_derniere_maj && (
+                                  <p className="text-sm text-muted-foreground">
+                                    Dernière mise à jour: {new Date(prevoyanceData.lpp_derniere_maj).toLocaleDateString('fr-CH')}
+                                  </p>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Prestations vieillesse */}
+                            {(prevoyanceData.lpp_capital_projete_65 || prevoyanceData.lpp_rente_mensuelle_projetee) && (
+                              <div className="p-4 rounded-lg bg-muted/30">
+                                <h3 className="font-semibold text-sm flex items-center gap-2 mb-3">
+                                  👴 Prestations de vieillesse projetées
+                                </h3>
+                                {prevoyanceData.lpp_capital_projete_65 && (
+                                  <div className="mb-2">
+                                    <p className="text-sm text-muted-foreground">Capital projeté à 65 ans</p>
+                                    <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_capital_projete_65)}</p>
+                                  </div>
+                                )}
+                                {prevoyanceData.lpp_rente_mensuelle_projetee && (
+                                  <div className="mb-2">
+                                    <p className="text-sm text-muted-foreground">Rente mensuelle projetée</p>
+                                    <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_rente_mensuelle_projetee)}/mois</p>
+                                  </div>
+                                )}
+                                {prevoyanceData.lpp_rente_annuelle_projetee && (
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Rente annuelle projetée</p>
+                                    <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_rente_annuelle_projetee)}/an</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Prestations invalidité */}
+                            {(prevoyanceData.lpp_rente_invalidite_mensuelle || prevoyanceData.lpp_capital_invalidite) && (
+                              <div className="p-4 rounded-lg bg-muted/30">
+                                <h3 className="font-semibold text-sm flex items-center gap-2 mb-3">
+                                  🏥 Prestations d'invalidité
+                                </h3>
+                                {prevoyanceData.lpp_rente_invalidite_mensuelle && (
+                                  <div className="mb-2">
+                                    <p className="text-sm text-muted-foreground">Rente mensuelle</p>
+                                    <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_rente_invalidite_mensuelle)}/mois</p>
+                                  </div>
+                                )}
+                                {prevoyanceData.lpp_rente_invalidite_annuelle && (
+                                  <div className="mb-2">
+                                    <p className="text-sm text-muted-foreground">Rente annuelle</p>
+                                    <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_rente_invalidite_annuelle)}/an</p>
+                                  </div>
+                                )}
+                                {prevoyanceData.lpp_capital_invalidite && (
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Capital</p>
+                                    <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_capital_invalidite)}</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Prestations décès */}
+                            {(prevoyanceData.lpp_rente_conjoint_survivant || prevoyanceData.lpp_capital_deces) && (
+                              <div className="p-4 rounded-lg bg-muted/30">
+                                <h3 className="font-semibold text-sm flex items-center gap-2 mb-3">
+                                  💔 Prestations en cas de décès
+                                </h3>
+                                {prevoyanceData.lpp_rente_conjoint_survivant && (
+                                  <div className="mb-2">
+                                    <p className="text-sm text-muted-foreground">Rente conjoint survivant</p>
+                                    <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_rente_conjoint_survivant)}/mois</p>
+                                  </div>
+                                )}
+                                {prevoyanceData.lpp_rente_orphelins && (
+                                  <div className="mb-2">
+                                    <p className="text-sm text-muted-foreground">Rente orphelins</p>
+                                    <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_rente_orphelins)}/mois</p>
+                                  </div>
+                                )}
+                                {prevoyanceData.lpp_capital_deces && (
+                                  <div>
+                                    <p className="text-sm text-muted-foreground">Capital décès</p>
+                                    <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_capital_deces)}</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Cotisation annuelle */}
+                            {prevoyanceData.lpp_2eme_pilier > 0 && (
+                              <div className="p-4 rounded-lg bg-muted/30">
+                                <h3 className="font-semibold text-sm mb-2">💰 Cotisation annuelle</h3>
+                                <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_2eme_pilier)}/an</p>
+                              </div>
+                            )}
+
+                            {/* Message si aucune donnée */}
+                            {!prevoyanceData.lpp_avoir_vieillesse && 
+                             !prevoyanceData.lpp_capital_projete_65 && 
+                             !prevoyanceData.lpp_rente_invalidite_mensuelle && 
+                             !prevoyanceData.lpp_rente_conjoint_survivant && 
+                             prevoyanceData.lpp_2eme_pilier === 0 && (
+                              <div className="text-center py-8">
+                                <p className="text-muted-foreground mb-4">
+                                  💡 Retrouvez ces informations sur votre certificat de caisse de pension annuel
+                                </p>
+                                <Button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingPrevoyanceCategory("2eme_pilier");
+                                  }}
+                                  variant="outline"
+                                >
+                                  Renseigner les données LPP
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         )}
                       </CardContent>
