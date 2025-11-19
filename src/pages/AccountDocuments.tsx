@@ -86,6 +86,7 @@ const AccountDocuments = () => {
   const [savingData, setSavingData] = useState(false);
   const [activeVerifyTab, setActiveVerifyTab] = useState<'avoir' | 'vieillesse' | 'invalidite' | 'deces'>('avoir');
   const [analyzingDocuments, setAnalyzingDocuments] = useState<Record<string, boolean>>({});
+  const [showAnalysisPrompt, setShowAnalysisPrompt] = useState<Document | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -173,14 +174,14 @@ const AccountDocuments = () => {
       if (uploadError) throw uploadError;
 
       // Save to database
-      const { error: dbError } = await supabase.from("documents").insert({
+      const { data: docData, error: dbError } = await supabase.from("documents").insert({
         user_id: user.id,
         file_name: file.name,
         file_path: filePath,
         file_size: file.size,
         category: activeTab,
         subcategory: selectedSubcategory || null,
-      });
+      }).select().single();
 
       if (dbError) throw dbError;
 
@@ -191,6 +192,11 @@ const AccountDocuments = () => {
 
       fetchDocuments();
       setSelectedSubcategory('');
+
+      // Show analysis prompt for LPP documents
+      if (selectedSubcategory === '2eme_pilier_lpp' && docData) {
+        setShowAnalysisPrompt(docData);
+      }
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -388,6 +394,48 @@ const AccountDocuments = () => {
     return documents.filter(doc => doc.category === category);
   };
 
+  const getStatusBadge = (doc: Document) => {
+    const status = doc.extraction_status || 'pending';
+    
+    if (status === 'pending') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+          🟡 À analyser
+        </span>
+      );
+    } else if (status === 'processing') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          Analyse en cours...
+        </span>
+      );
+    } else if (status === 'completed') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+          ✅ Prêt à vérifier
+        </span>
+      );
+    } else if (status === 'failed') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+          ❌ Échec
+        </span>
+      );
+    }
+    return null;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const renderDocumentsList = (categoryDocs: Document[]) => {
     if (categoryDocs.length === 0) {
       return (
@@ -416,138 +464,150 @@ const AccountDocuments = () => {
                 {categories[docs[0].category as Category]?.subcategories.find(s => s.value === subcategory)?.label || subcategory}
               </h3>
             )}
-            <div className="space-y-2">
+            {subcategory === '2eme_pilier_lpp' && docs.some(d => d.extraction_status === 'pending') && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">💡</div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-sm text-blue-900 dark:text-blue-100 mb-1">Action requise</h4>
+                    <p className="text-xs text-blue-800 dark:text-blue-200">
+                      Pour utiliser vos données LPP, analysez d'abord votre certificat en cliquant sur "Analyser le certificat"
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="space-y-3">
               {docs.map((doc) => {
                 const isLppCertificate = doc.subcategory === '2eme_pilier_lpp';
                 const isAnalyzing = analyzingDocuments[doc.id];
                 const hasExtractedData = doc.extraction_status === 'completed' && doc.extracted_data;
+                const isPending = doc.extraction_status === 'pending';
 
                 return (
                   <div
                     key={doc.id}
-                    className="bg-card rounded-lg border p-4"
+                    className="bg-card rounded-lg border p-4 space-y-3 hover:bg-accent/10 transition-colors"
                   >
-                    <div className="flex items-center justify-between">
-                      <div 
-                        className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                        onClick={() => handleView(doc)}
-                      >
-                        <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-foreground truncate hover:underline">
-                            {doc.file_name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {formatFileSize(doc.file_size)} •{" "}
-                            {new Date(doc.uploaded_at).toLocaleDateString("fr-FR")}
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                        <div className="flex-1 min-w-0 space-y-1">
+                          <p className="text-sm font-medium truncate">{doc.file_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Uploadé le: {formatDate(doc.uploaded_at)} • {formatFileSize(doc.file_size)}
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2 flex-shrink-0">
-                        {isLppCertificate && !hasExtractedData && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleAnalyzeCertificate(doc)}
-                            disabled={isAnalyzing}
-                            title="Analyser le certificat"
-                          >
-                            {isAnalyzing ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Search className="h-4 w-4" />
-                            )}
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleView(doc)}
-                          title="Visualiser"
-                        >
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button onClick={() => handleView(doc)} size="sm" variant="ghost" title="Voir le PDF">
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDownload(doc)}
-                          title="Télécharger"
-                        >
+                        <Button onClick={() => handleDownload(doc)} size="sm" variant="ghost" title="Télécharger">
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(doc.id)}
-                          className="text-destructive hover:text-destructive"
-                          title="Supprimer"
-                        >
+                        <Button onClick={() => handleDelete(doc.id)} size="sm" variant="ghost" title="Supprimer" className="text-destructive hover:text-destructive">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
 
-                    {/* Extraction status and data display for LPP certificates */}
+                    {/* LPP Certificate specific UI */}
                     {isLppCertificate && (
-                      <div className="mt-3 pt-3 border-t">
-                        {doc.extraction_status === 'pending' && (
-                          <p className="text-sm text-muted-foreground">
-                            ⚙️ Pas encore analysé
-                          </p>
-                        )}
-                        {doc.extraction_status === 'processing' && (
-                          <p className="text-sm text-muted-foreground flex items-center gap-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Analyse en cours...
-                          </p>
-                        )}
-                        {doc.extraction_status === 'failed' && (
-                          <p className="text-sm text-destructive">
-                            ⚠️ Échec de l'extraction - Réessayez ou complétez manuellement
-                          </p>
-                        )}
-                        {hasExtractedData && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          {getStatusBadge(doc)}
+                        </div>
+
+                        {isPending && (
                           <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                              <p className="text-sm font-medium text-green-600">
-                                Données extraites le {new Date(doc.extraction_date!).toLocaleDateString("fr-FR")}
-                              </p>
-                            </div>
-                            <div className="bg-muted/50 rounded-md p-3 space-y-1 text-sm">
-                              <p className="font-semibold text-foreground mb-2">📊 Données détectées:</p>
-                              {doc.extracted_data.avoir_vieillesse && (
-                                <p className="text-muted-foreground">
-                                  • Avoir vieillesse: CHF {doc.extracted_data.avoir_vieillesse?.toLocaleString('fr-CH')}
-                                </p>
+                            <p className="text-xs text-muted-foreground">
+                              Ce certificat n'a pas encore été analysé.
+                            </p>
+                            <Button
+                              onClick={() => handleAnalyzeCertificate(doc)}
+                              size="sm"
+                              variant="default"
+                              disabled={isAnalyzing}
+                              className="w-full gap-2"
+                            >
+                              {isAnalyzing ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Analyse en cours...
+                                </>
+                              ) : (
+                                <>
+                                  <Search className="h-4 w-4" />
+                                  Analyser le certificat
+                                </>
                               )}
-                              {doc.extracted_data.rente_mensuelle_projetee && (
-                                <p className="text-muted-foreground">
-                                  • Rente projetée: CHF {doc.extracted_data.rente_mensuelle_projetee?.toLocaleString('fr-CH')}/mois
-                                </p>
-                              )}
-                              {doc.extracted_data.capital_invalidite && (
-                                <p className="text-muted-foreground">
-                                  • Capital invalidité: CHF {doc.extracted_data.capital_invalidite?.toLocaleString('fr-CH')}
-                                </p>
-                              )}
-                              {Object.keys(doc.extracted_data).filter(k => doc.extracted_data[k] !== null).length > 3 && (
-                                <p className="text-muted-foreground">
-                                  ... et {Object.keys(doc.extracted_data).filter(k => doc.extracted_data[k] !== null).length - 3} autres valeurs
+                            </Button>
+                          </div>
+                        )}
+
+                        {hasExtractedData && doc.extracted_data && (
+                          <div className="space-y-2">
+                            <div className="bg-accent/50 rounded-md p-3 space-y-1">
+                              <p className="text-xs font-medium mb-1.5">📊 Données détectées:</p>
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                                {doc.extracted_data.avoir_vieillesse && (
+                                  <p className="text-muted-foreground">• Avoir vieillesse: <span className="font-medium text-foreground">CHF {doc.extracted_data.avoir_vieillesse?.toLocaleString('fr-CH')}</span></p>
+                                )}
+                                {doc.extracted_data.rente_mensuelle_projetee && (
+                                  <p className="text-muted-foreground">• Rente projetée: <span className="font-medium text-foreground">CHF {doc.extracted_data.rente_mensuelle_projetee?.toLocaleString('fr-CH')}/mois</span></p>
+                                )}
+                                {doc.extracted_data.capital_invalidite && (
+                                  <p className="text-muted-foreground">• Capital invalidité: <span className="font-medium text-foreground">CHF {doc.extracted_data.capital_invalidite?.toLocaleString('fr-CH')}</span></p>
+                                )}
+                                {doc.extracted_data.capital_deces && (
+                                  <p className="text-muted-foreground">• Capital décès: <span className="font-medium text-foreground">CHF {doc.extracted_data.capital_deces?.toLocaleString('fr-CH')}</span></p>
+                                )}
+                              </div>
+                              {doc.extraction_date && (
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Analysé le {formatDate(doc.extraction_date)}
                                 </p>
                               )}
                             </div>
                             <Button
-                              variant="default"
-                              size="sm"
-                              className="mt-2"
                               onClick={() => {
                                 setVerifyingDocument(doc);
-                                setEditableData({ ...doc.extracted_data });
-                                setActiveVerifyTab('avoir');
+                                setEditableData(doc.extracted_data);
                               }}
+                              size="sm"
+                              variant="default"
+                              className="w-full gap-2"
                             >
-                              🔍 Vérifier les données
+                              <Search className="h-4 w-4" />
+                              Vérifier et modifier les données
+                            </Button>
+                          </div>
+                        )}
+
+                        {doc.extraction_status === 'failed' && (
+                          <div className="space-y-2">
+                            <p className="text-xs text-red-600 dark:text-red-400">
+                              L'analyse a échoué. Veuillez réessayer.
+                            </p>
+                            <Button
+                              onClick={() => handleAnalyzeCertificate(doc)}
+                              size="sm"
+                              variant="outline"
+                              disabled={isAnalyzing}
+                              className="w-full gap-2"
+                            >
+                              {isAnalyzing ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Analyse en cours...
+                                </>
+                              ) : (
+                                <>
+                                  <Search className="h-4 w-4" />
+                                  Réessayer l'analyse
+                                </>
+                              )}
                             </Button>
                           </div>
                         )}
@@ -804,6 +864,50 @@ const AccountDocuments = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Analysis Prompt Modal */}
+      <Dialog open={!!showAnalysisPrompt} onOpenChange={(open) => {
+        if (!open) setShowAnalysisPrompt(null);
+      }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Certificat LPP uploadé !
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Voulez-vous analyser ce document maintenant pour extraire automatiquement vos données de prévoyance ?
+            </p>
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <p className="text-xs text-blue-800 dark:text-blue-200">
+                ℹ️ L'analyse utilise l'IA pour extraire automatiquement les montants de votre certificat LPP. Vous pourrez vérifier et modifier les données avant de les enregistrer.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setShowAnalysisPrompt(null)}
+            >
+              ⏭️ Plus tard
+            </Button>
+            <Button
+              onClick={() => {
+                if (showAnalysisPrompt) {
+                  handleAnalyzeCertificate(showAnalysisPrompt);
+                  setShowAnalysisPrompt(null);
+                }
+              }}
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Analyser maintenant
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Verification Dialog */}
       <Dialog open={!!verifyingDocument} onOpenChange={() => {
         setVerifyingDocument(null);
         setEditableData(null);
