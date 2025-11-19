@@ -1204,7 +1204,7 @@ const Budget = () => {
                 <BarChart 
                   data={dataRetraiteProjection}
                   margin={{ top: 20, right: 10, left: 0, bottom: 5 }}
-                  barSize={150}
+                  barCategoryGap="20%"
                 >
                   <defs>
                     <pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="8" height="8">
