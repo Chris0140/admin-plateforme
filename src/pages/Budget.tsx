@@ -377,6 +377,8 @@ const Budget = () => {
 
     setIsLoading(true);
     try {
+      console.log('Sauvegarde prévoyance - état civil:', etatCivil, 'nombre enfants:', nombreEnfants);
+      
       // Sauvegarder le revenu brut dans budget_data
       const revenuBrutNum = parseFloat(revenuBrut) || 0;
       const revenu_brut_mensuel = periodType === "mensuel" ? revenuBrutNum : Math.round(revenuBrutNum / 12);
@@ -393,24 +395,36 @@ const Budget = () => {
         });
 
       // Sauvegarder les paramètres de prévoyance dans prevoyance_data
-      await supabase
+      const { error: prevoyanceError } = await supabase
         .from("prevoyance_data")
         .upsert({
           user_id: user.id,
           besoin_pourcentage: parseFloat(besoinPourcentage) || 80,
           revenu_brut_reference: revenuBrutNum,
-          etat_civil: etatCivil,
+          etat_civil: etatCivil || null,
           nombre_enfants: parseInt(nombreEnfants) || 0,
         });
 
+      if (prevoyanceError) {
+        console.error('Erreur prevoyance_data:', prevoyanceError);
+        throw prevoyanceError;
+      }
+      console.log('Prevoyance_data sauvegardé');
+
       // Synchroniser avec profiles (informations personnelles)
-      await supabase
+      const { error: profileError } = await supabase
         .from("profiles")
         .update({
-          etat_civil: etatCivil,
+          etat_civil: etatCivil || null,
           nombre_enfants: parseInt(nombreEnfants) || 0,
         })
         .eq("user_id", user.id);
+
+      if (profileError) {
+        console.error('Erreur profiles update:', profileError);
+        throw profileError;
+      }
+      console.log('Profiles mis à jour avec état civil et nombre enfants');
 
       // Mettre à jour tax_data si un enregistrement existe
       const { data: existingTaxData } = await supabase
@@ -420,13 +434,19 @@ const Budget = () => {
         .maybeSingle();
 
       if (existingTaxData) {
-        await supabase
+        const { error: taxError } = await supabase
           .from("tax_data")
           .update({
-            etat_civil: etatCivil,
+            etat_civil: etatCivil || "",
             nombre_enfants: parseInt(nombreEnfants) || 0,
           })
           .eq("user_id", user.id);
+        
+        if (taxError) {
+          console.error('Erreur tax_data:', taxError);
+        } else {
+          console.log('Tax_data mis à jour');
+        }
       }
 
       toast({
