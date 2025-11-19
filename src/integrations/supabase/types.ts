@@ -146,7 +146,9 @@ export type Database = {
       prevoyance_data: {
         Row: {
           avs_1er_pilier: number | null
+          besoin_pourcentage: number | null
           created_at: string
+          etat_civil: string | null
           id: string
           lpp_2eme_pilier: number | null
           lpp_avoir_vieillesse: number | null
@@ -161,6 +163,7 @@ export type Database = {
           lpp_rente_invalidite_mensuelle: number | null
           lpp_rente_mensuelle_projetee: number | null
           lpp_rente_orphelins: number | null
+          nombre_enfants: number | null
           pilier_3a: number | null
           pilier_3b: number | null
           rente_invalidite_annuelle: number | null
@@ -168,12 +171,15 @@ export type Database = {
           rente_vieillesse_annuelle: number | null
           rente_vieillesse_mensuelle: number | null
           revenu_annuel_determinant: number | null
+          revenu_brut_reference: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avs_1er_pilier?: number | null
+          besoin_pourcentage?: number | null
           created_at?: string
+          etat_civil?: string | null
           id?: string
           lpp_2eme_pilier?: number | null
           lpp_avoir_vieillesse?: number | null
@@ -188,6 +194,7 @@ export type Database = {
           lpp_rente_invalidite_mensuelle?: number | null
           lpp_rente_mensuelle_projetee?: number | null
           lpp_rente_orphelins?: number | null
+          nombre_enfants?: number | null
           pilier_3a?: number | null
           pilier_3b?: number | null
           rente_invalidite_annuelle?: number | null
@@ -195,12 +202,15 @@ export type Database = {
           rente_vieillesse_annuelle?: number | null
           rente_vieillesse_mensuelle?: number | null
           revenu_annuel_determinant?: number | null
+          revenu_brut_reference?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avs_1er_pilier?: number | null
+          besoin_pourcentage?: number | null
           created_at?: string
+          etat_civil?: string | null
           id?: string
           lpp_2eme_pilier?: number | null
           lpp_avoir_vieillesse?: number | null
@@ -215,6 +225,7 @@ export type Database = {
           lpp_rente_invalidite_mensuelle?: number | null
           lpp_rente_mensuelle_projetee?: number | null
           lpp_rente_orphelins?: number | null
+          nombre_enfants?: number | null
           pilier_3a?: number | null
           pilier_3b?: number | null
           rente_invalidite_annuelle?: number | null
@@ -222,6 +233,7 @@ export type Database = {
           rente_vieillesse_annuelle?: number | null
           rente_vieillesse_mensuelle?: number | null
           revenu_annuel_determinant?: number | null
+          revenu_brut_reference?: number | null
           updated_at?: string
           user_id?: string
         }

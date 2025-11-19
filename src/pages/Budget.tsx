@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, LabelList, Cell } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +63,11 @@ const Budget = () => {
   
   // Date de naissance pour calculer l'âge
   const [dateNaissance, setDateNaissance] = useState<string>("");
+  
+  // Configuration prévoyance - nouveaux états
+  const [prenom, setPrenom] = useState("");
+  const [etatCivil, setEtatCivil] = useState("");
+  const [nombreEnfants, setNombreEnfants] = useState("");
 
   // Collapsible states for mobile
   const [revenusOpen, setRevenusOpen] = useState(true);
@@ -153,10 +159,10 @@ const Budget = () => {
 
       if (prevoyanceError) throw prevoyanceError;
 
-      // Charger le profil pour obtenir la date de naissance
+      // Charger le profil pour obtenir la date de naissance et le prénom
       const { data: profileData, error: profileError } = await supabase
         .from("profiles")
-        .select("date_naissance")
+        .select("date_naissance, prenom")
         .eq("user_id", user?.id)
         .maybeSingle();
 
@@ -164,9 +170,15 @@ const Budget = () => {
 
       if (profileData) {
         setDateNaissance(profileData.date_naissance || "");
+        setPrenom(profileData.prenom || "");
       }
 
       if (prevoyanceData) {
+        // Charger les données de configuration
+        setBesoinPourcentage(prevoyanceData.besoin_pourcentage?.toString() || "80");
+        setEtatCivil(prevoyanceData.etat_civil || "");
+        setNombreEnfants(prevoyanceData.nombre_enfants?.toString() || "0");
+        
         // Charger les données AVS
         setAvsRevenuDeterminant(prevoyanceData.revenu_annuel_determinant?.toString() || "");
         setAvsRenteMensuelle(prevoyanceData.rente_vieillesse_mensuelle?.toString() || "");
@@ -329,6 +341,77 @@ const Budget = () => {
         variant: "destructive",
         title: "Erreur",
         description: "Impossible de sauvegarder vos données",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const savePrevoyanceConfig = async () => {
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Vous devez être connecté pour sauvegarder vos données",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Sauvegarder le revenu brut dans budget_data
+      const revenuBrutNum = parseFloat(revenuBrut) || 0;
+      const revenu_brut_mensuel = periodType === "mensuel" ? revenuBrutNum : Math.round(revenuBrutNum / 12);
+      const revenu_brut_annuel = periodType === "annuel" ? revenuBrutNum : revenuBrutNum * 12;
+
+      await supabase
+        .from("budget_data")
+        .upsert({
+          user_id: user.id,
+          revenu_brut: revenuBrutNum,
+          revenu_brut_mensuel,
+          revenu_brut_annuel,
+          period_type: periodType,
+        });
+
+      // Sauvegarder les paramètres de prévoyance dans prevoyance_data
+      await supabase
+        .from("prevoyance_data")
+        .upsert({
+          user_id: user.id,
+          besoin_pourcentage: parseFloat(besoinPourcentage) || 80,
+          revenu_brut_reference: revenuBrutNum,
+          etat_civil: etatCivil,
+          nombre_enfants: parseInt(nombreEnfants) || 0,
+        });
+
+      // Mettre à jour tax_data si un enregistrement existe
+      const { data: existingTaxData } = await supabase
+        .from("tax_data")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingTaxData) {
+        await supabase
+          .from("tax_data")
+          .update({
+            etat_civil: etatCivil,
+            nombre_enfants: parseInt(nombreEnfants) || 0,
+          })
+          .eq("user_id", user.id);
+      }
+
+      toast({
+        title: "Paramètres sauvegardés",
+        description: "Vos paramètres de prévoyance ont été mis à jour avec succès",
+      });
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de sauvegarder vos paramètres",
       });
     } finally {
       setIsLoading(false);
@@ -749,40 +832,76 @@ const Budget = () => {
             {/* Prévoyance Retraite */}
             <TabsContent value="prevoyance">
               <div className="space-y-6">
-                {/* Vue d'ensemble */}
+                {/* Configuration Prévoyance */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Vue d'ensemble de la Prévoyance</CardTitle>
-                    <CardDescription>Vos besoins et votre couverture retraite</CardDescription>
+                    <CardTitle>Prévoyance de {prenom || "..."}</CardTitle>
+                    <CardDescription>Paramètres de base pour vos projections</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">Revenu brut actuel</p>
-                        <p className="text-2xl font-bold text-foreground">{formatCurrency(parseFloat(revenuBrut) || 0)}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{periodType}</p>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* Revenu brut */}
+                      <div>
+                        <Label htmlFor="revenu-brut-prevoyance">Revenu brut ({periodType})</Label>
+                        <Input
+                          id="revenu-brut-prevoyance"
+                          type="number"
+                          value={revenuBrut}
+                          onChange={(e) => setRevenuBrut(e.target.value)}
+                          placeholder="8000"
+                        />
                       </div>
-                      <div className="text-center p-4 bg-muted/50 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">Besoin retraite ({besoinPourcentage}%)</p>
-                        <p className="text-2xl font-bold text-primary">
-                          {formatCurrency((parseFloat(revenuBrut) || 0) * (parseFloat(besoinPourcentage) || 0) / 100)}
-                        </p>
-                        <div className="flex items-center justify-center gap-2 mt-2">
-                          <Input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={besoinPourcentage}
-                            onChange={(e) => setBesoinPourcentage(e.target.value.replace(/^0+(?=\d)/, ''))}
-                            className="w-16 h-7 text-xs"
-                          />
-                          <span className="text-xs">%</span>
-                        </div>
+
+                      {/* Besoin en % */}
+                      <div>
+                        <Label htmlFor="besoin-pourcentage">Besoin à la retraite (%)</Label>
+                        <Input
+                          id="besoin-pourcentage"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={besoinPourcentage}
+                          onChange={(e) => setBesoinPourcentage(e.target.value)}
+                          placeholder="80"
+                        />
                       </div>
-                      <div className="text-center p-4 bg-primary/10 rounded-lg">
-                        <p className="text-sm text-muted-foreground mb-1">Total Prévoyance</p>
-                        <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
+
+                      {/* État civil */}
+                      <div>
+                        <Label htmlFor="etat-civil">État civil</Label>
+                        <Select value={etatCivil} onValueChange={setEtatCivil}>
+                          <SelectTrigger id="etat-civil">
+                            <SelectValue placeholder="Sélectionner" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="celibataire">Célibataire</SelectItem>
+                            <SelectItem value="marie">Marié(e)</SelectItem>
+                            <SelectItem value="divorce">Divorcé(e)</SelectItem>
+                            <SelectItem value="veuf">Veuf/Veuve</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
+
+                      {/* Nombre d'enfants */}
+                      <div>
+                        <Label htmlFor="nombre-enfants">Nombre d'enfants</Label>
+                        <Input
+                          id="nombre-enfants"
+                          type="number"
+                          min="0"
+                          value={nombreEnfants}
+                          onChange={(e) => setNombreEnfants(e.target.value)}
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Bouton de sauvegarde */}
+                    <div className="mt-6 flex justify-end">
+                      <Button onClick={savePrevoyanceConfig} disabled={isLoading}>
+                        <Save className="h-4 w-4 mr-2" />
+                        Enregistrer les paramètres
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
