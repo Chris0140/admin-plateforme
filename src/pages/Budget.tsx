@@ -745,6 +745,117 @@ const Budget = () => {
                   </CardContent>
                 </Card>
 
+                {/* Tour des Piliers - Visualisation des revenus de retraite */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Revenus de retraite projetés à 65 ans</CardTitle>
+                        <CardDescription>Structure des 3 piliers du système suisse</CardDescription>
+                      </div>
+                      <ToggleGroup 
+                        type="single" 
+                        value={graphDisplayMode} 
+                        onValueChange={(value) => value && setGraphDisplayMode(value as "mensuel" | "annuel")}
+                      >
+                        <ToggleGroupItem value="mensuel" aria-label="Vue mensuelle">
+                          Mensuel
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="annuel" aria-label="Vue annuelle">
+                          Annuel
+                        </ToggleGroupItem>
+                      </ToggleGroup>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-col gap-2 w-full max-w-md mx-auto">
+                      {/* 3ème Pilier - En haut */}
+                      <Card className="bg-gradient-to-br from-purple-600 to-purple-700 text-white border-0 animate-fade-in">
+                        <CardContent className="p-6 text-center">
+                          <div className="text-sm font-medium mb-1 opacity-90">🏠 3ème Pilier</div>
+                          <div className="text-3xl font-bold">
+                            {formatCurrency(
+                              graphDisplayMode === 'mensuel' 
+                                ? ((parseFloat(pilier3a) || 0) + (parseFloat(pilier3b) || 0)) / 20 / 12
+                                : ((parseFloat(pilier3a) || 0) + (parseFloat(pilier3b) || 0)) / 20
+                            )}
+                            <span className="text-sm ml-1 font-normal">/{graphDisplayMode === 'mensuel' ? 'mois' : 'an'}</span>
+                          </div>
+                          <div className="text-xs mt-2 opacity-80">
+                            Prévoyance individuelle (÷20 ans)
+                          </div>
+                          <div className="text-xs mt-1 opacity-70">
+                            Total: {formatCurrency((parseFloat(pilier3a) || 0) + (parseFloat(pilier3b) || 0))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      {/* 2ème Pilier - Au milieu */}
+                      <Card className="bg-gradient-to-br from-blue-600 to-blue-700 text-white border-0 animate-fade-in" 
+                            style={{ animationDelay: '0.1s' }}>
+                        <CardContent className="p-6 text-center">
+                          <div className="text-sm font-medium mb-1 opacity-90">🏦 2ème Pilier LPP</div>
+                          <div className="text-3xl font-bold">
+                            {formatCurrency(
+                              graphDisplayMode === 'mensuel' 
+                                ? (parseFloat(lppRenteMensuelleProjetee) || 0)
+                                : (parseFloat(lppRenteAnnuelleProjetee) || 0)
+                            )}
+                            <span className="text-sm ml-1 font-normal">/{graphDisplayMode === 'mensuel' ? 'mois' : 'an'}</span>
+                          </div>
+                          <div className="text-xs mt-2 opacity-80">
+                            Prévoyance professionnelle
+                          </div>
+                          <div className="text-xs mt-1 opacity-70">
+                            Avoir actuel: {formatCurrency(parseFloat(lppAvoirVieillesse) || 0)}
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      {/* 1er Pilier - En bas (fondation) */}
+                      <Card className="bg-gradient-to-br from-green-600 to-green-700 text-white border-0 animate-fade-in" 
+                            style={{ animationDelay: '0.2s' }}>
+                        <CardContent className="p-6 text-center">
+                          <div className="text-sm font-medium mb-1 opacity-90">🏛️ 1er Pilier AVS</div>
+                          <div className="text-3xl font-bold">
+                            {formatCurrency(
+                              graphDisplayMode === 'mensuel' 
+                                ? (parseFloat(avsRenteMensuelle) || 0)
+                                : (parseFloat(avsRenteAnnuelle) || 0)
+                            )}
+                            <span className="text-sm ml-1 font-normal">/{graphDisplayMode === 'mensuel' ? 'mois' : 'an'}</span>
+                          </div>
+                          <div className="text-xs mt-2 opacity-80">
+                            Assurance vieillesse de base
+                          </div>
+                          <div className="text-xs mt-1 opacity-70">
+                            Revenu déterminant: {formatCurrency(parseFloat(avsRevenuDeterminant) || 0)}
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      {/* Total en bas */}
+                      <Card className="bg-muted border-2 border-primary/20">
+                        <CardContent className="p-4 text-center">
+                          <div className="text-sm text-muted-foreground font-medium">Revenu total de retraite</div>
+                          <div className="text-2xl font-bold mt-1 text-primary">
+                            {formatCurrency(
+                              graphDisplayMode === 'mensuel' 
+                                ? (parseFloat(avsRenteMensuelle) || 0) + 
+                                  (parseFloat(lppRenteMensuelleProjetee) || 0) + 
+                                  (((parseFloat(pilier3a) || 0) + (parseFloat(pilier3b) || 0)) / 20 / 12)
+                                : (parseFloat(avsRenteAnnuelle) || 0) + 
+                                  (parseFloat(lppRenteAnnuelleProjetee) || 0) + 
+                                  (((parseFloat(pilier3a) || 0) + (parseFloat(pilier3b) || 0)) / 20)
+                            )}
+                            <span className="text-sm ml-1 font-normal">/{graphDisplayMode === 'mensuel' ? 'mois' : 'an'}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* 1er Pilier AVS */}
                 <Collapsible defaultOpen>
                   <Card>
