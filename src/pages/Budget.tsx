@@ -34,6 +34,7 @@ const Budget = () => {
   const [lpp2emePilier, setLpp2emePilier] = useState("");
   const [pilier3a, setPilier3a] = useState("");
   const [pilier3b, setPilier3b] = useState("");
+  const [besoinPourcentage, setBesoinPourcentage] = useState("80");
 
   // Collapsible states for mobile
   const [revenusOpen, setRevenusOpen] = useState(true);
@@ -529,6 +530,41 @@ const Budget = () => {
                     <CardDescription>Cumulez vos avoirs des trois piliers</CardDescription>
                   </CardHeader>
                   <CardContent>
+                    {/* Revenu Net et Besoin */}
+                    <div className="mb-6 p-4 bg-muted/50 rounded-lg space-y-4">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Revenu net {periodType === "mensuel" ? "mensuel" : "annuel"}</p>
+                          <p className="text-2xl font-bold text-foreground">{formatCurrency(revenuNet)}</p>
+                        </div>
+                        <div>
+                          <Label htmlFor="besoinPourcentage">Besoin en retraite (% du revenu net)</Label>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Input
+                              id="besoinPourcentage"
+                              type="number"
+                              step="1"
+                              min="0"
+                              max="100"
+                              placeholder="80"
+                              value={besoinPourcentage}
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                value = value.replace(/^0+(?=\d)/, '');
+                                setBesoinPourcentage(value);
+                              }}
+                              className="w-24"
+                            />
+                            <span className="text-muted-foreground">%</span>
+                          </div>
+                          <p className="text-sm font-semibold text-primary mt-2">
+                            = {formatCurrency(revenuNet * (parseFloat(besoinPourcentage) || 0) / 100)}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">Montant estimé nécessaire à la retraite</p>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <div>
