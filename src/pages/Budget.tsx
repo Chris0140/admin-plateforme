@@ -385,6 +385,15 @@ const Budget = () => {
           nombre_enfants: parseInt(nombreEnfants) || 0,
         });
 
+      // Synchroniser avec profiles (informations personnelles)
+      await supabase
+        .from("profiles")
+        .update({
+          etat_civil: etatCivil,
+          nombre_enfants: parseInt(nombreEnfants) || 0,
+        })
+        .eq("user_id", user.id);
+
       // Mettre à jour tax_data si un enregistrement existe
       const { data: existingTaxData } = await supabase
         .from("tax_data")
