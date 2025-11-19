@@ -1151,8 +1151,44 @@ const Budget = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    {/* Badge d'alerte si lacune existe */}
-            {totalRetraite < besoinValue && (
+                    {(() => {
+                      // Calcul du besoin selon le mode d'affichage
+                      const revenuBrutValue = parseFloat(revenuBrut) || 0;
+                      const revenuActuel = graphDisplayMode === "mensuel" 
+                        ? (periodType === "mensuel" ? revenuBrutValue : revenuBrutValue / 12)
+                        : (periodType === "annuel" ? revenuBrutValue : revenuBrutValue * 12);
+                      const besoinValue = revenuActuel * (parseFloat(besoinPourcentage) / 100);
+
+                      // Calcul des valeurs pour une année
+                      const avsValue = graphDisplayMode === "mensuel" 
+                        ? parseFloat(avsRenteMensuelle) || 0
+                        : parseFloat(avsRenteAnnuelle) || 0;
+                      const lppValue = graphDisplayMode === "mensuel"
+                        ? parseFloat(lppRenteMensuelleProjetee) || 0
+                        : parseFloat(lppRenteAnnuelleProjetee) || 0;
+                      const pilier3Value = graphDisplayMode === "mensuel"
+                        ? ((parseFloat(pilier3a) || 0) + (parseFloat(pilier3b) || 0)) / 20 / 12
+                        : ((parseFloat(pilier3a) || 0) + (parseFloat(pilier3b) || 0)) / 20;
+                      
+                      const totalRetraite = avsValue + lppValue + pilier3Value;
+                      const lacune = Math.max(0, besoinValue - totalRetraite);
+
+                      // Données pour graphique vertical avec période 65-85 ans
+                      const dataRetraiteProjection = Array.from({ length: 21 }, (_, i) => {
+                        const age = 65 + i;
+                        return {
+                          age: age.toString(),
+                          avs: avsValue,
+                          lpp: lppValue,
+                          pilier3: pilier3Value,
+                          lacune: lacune,
+                        };
+                      });
+
+                      return (
+                        <>
+                          {/* Badge d'alerte si lacune existe */}
+                          {totalRetraite < besoinValue && (
               <div className="mb-4 p-4 bg-destructive/10 border-2 border-destructive/20 rounded-lg">
                 <div className="flex items-center gap-2 text-destructive">
                   <AlertTriangle className="h-5 w-5" />
@@ -1165,67 +1201,39 @@ const Budget = () => {
               </div>
             )}
                     
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={400}>
                 <BarChart 
-                  data={dataComparaison}
-                  layout="horizontal"
-                  margin={{ top: 20, right: 30, left: 150, bottom: 20 }}
+                  data={dataRetraiteProjection}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
-                    type="number" 
-                    tickFormatter={(value) => `${value.toLocaleString('fr-CH')}`}
+                    dataKey="age"
+                    label={{ value: 'Âge', position: 'insideBottom', offset: -10 }}
                   />
                   <YAxis 
-                    type="category" 
-                    dataKey="periode"
-                    width={140}
+                    tickFormatter={(value) => `${value.toLocaleString('fr-CH')}`}
+                    label={{ value: 'Montant (CHF)', angle: -90, position: 'insideLeft' }}
                   />
                   <Tooltip 
                     formatter={(value: number) => `CHF ${value.toLocaleString('fr-CH')}`}
-                    cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+                    labelFormatter={(label) => `Âge ${label} ans`}
                   />
                   <Legend />
                   
-                  <Bar 
-                    dataKey="revenu" 
-                    stackId="a" 
-                    fill="hsl(200 70% 50%)" 
-                    name="Revenu actuel"
-                  />
-                  <Bar 
-                    dataKey="avs" 
-                    stackId="a" 
-                    fill="hsl(142 76% 36%)" 
-                    name="1er Pilier AVS"
-                  />
-                  <Bar 
-                    dataKey="lpp" 
-                    stackId="a" 
-                    fill="hsl(221 83% 53%)" 
-                    name="2ème Pilier LPP"
-                  />
-                  <Bar 
-                    dataKey="pilier3" 
-                    stackId="a" 
-                    fill="hsl(262 83% 58%)" 
-                    name="3ème Pilier"
-                  />
-                  <Bar 
-                    dataKey="lacune" 
-                    stackId="a" 
-                    fill="hsl(0 84% 60%)" 
-                    name="Perte / Lacune"
-                    opacity={0.7}
-                  />
+                  <Bar dataKey="avs" stackId="a" fill="hsl(142 76% 36%)" name="1er Pilier AVS" />
+                  <Bar dataKey="lpp" stackId="a" fill="hsl(221 83% 53%)" name="2ème Pilier LPP" />
+                  <Bar dataKey="pilier3" stackId="a" fill="hsl(262 83% 58%)" name="3ème Pilier" />
+                  <Bar dataKey="lacune" stackId="a" fill="hsl(0 84% 60%)" name="Lacune de prévoyance" opacity={0.7} />
+                  
                   <ReferenceLine 
-                    x={besoinValue} 
+                    y={besoinValue} 
                     stroke="hsl(0 84% 60%)" 
                     strokeWidth={2}
                     strokeDasharray="5 5"
                     label={{ 
                       value: `Besoin (${besoinPourcentage}%)`, 
-                      position: 'top',
+                      position: 'right',
                       fill: 'hsl(0 84% 60%)',
                       fontSize: 12,
                       fontWeight: 'bold'
@@ -1235,26 +1243,13 @@ const Budget = () => {
               </ResponsiveContainer>
                     
                     {/* Légende avec montants */}
-                    <div className="mt-6 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 p-4 bg-muted rounded-lg">
+                    <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 bg-muted rounded-lg">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(200, 70%, 50%)' }} />
-                          <span className="text-sm font-medium">Revenu actuel</span>
-                        </div>
-                        <span className="text-lg font-bold">
-                          CHF {Math.round(revenuActuel).toLocaleString('fr-CH')}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(142, 76%, 36%)' }} />
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(142 76% 36%)' }} />
                           <span className="text-sm font-medium">1er Pilier AVS</span>
                         </div>
-                        <span className="text-lg font-bold">
+                        <span className="text-lg font-bold" style={{ color: 'hsl(142 76% 36%)' }}>
                           CHF {Math.round(avsValue).toLocaleString('fr-CH')}
                         </span>
                         <span className="text-xs text-muted-foreground">
@@ -1264,10 +1259,10 @@ const Budget = () => {
 
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(221, 83%, 53%)' }} />
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(221 83% 53%)' }} />
                           <span className="text-sm font-medium">2ème Pilier LPP</span>
                         </div>
-                        <span className="text-lg font-bold">
+                        <span className="text-lg font-bold" style={{ color: 'hsl(221 83% 53%)' }}>
                           CHF {Math.round(lppValue).toLocaleString('fr-CH')}
                         </span>
                         <span className="text-xs text-muted-foreground">
@@ -1277,10 +1272,10 @@ const Budget = () => {
 
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(262, 83%, 58%)' }} />
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(262 83% 58%)' }} />
                           <span className="text-sm font-medium">3ème Pilier (÷20)</span>
                         </div>
-                        <span className="text-lg font-bold">
+                        <span className="text-lg font-bold" style={{ color: 'hsl(262 83% 58%)' }}>
                           CHF {Math.round(pilier3Value).toLocaleString('fr-CH')}
                         </span>
                         <span className="text-xs text-muted-foreground">
@@ -1290,8 +1285,8 @@ const Budget = () => {
 
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(0, 84%, 60%)' }} />
-                          <span className="text-sm font-medium">Perte / Lacune</span>
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(0 84% 60%)' }} />
+                          <span className="text-sm font-medium">Lacune</span>
                         </div>
                         <span className="text-lg font-bold text-destructive">
                           CHF {Math.round(lacune).toLocaleString('fr-CH')}
@@ -1300,35 +1295,38 @@ const Budget = () => {
                           {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
                         </span>
                       </div>
-                    </div>
                     
-                    <div className="mt-4 p-4 bg-primary/10 rounded-lg border-2 border-primary/20">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-sm font-medium text-muted-foreground">Besoin à la retraite ({besoinPourcentage}% du revenu)</span>
-                          <span className="text-2xl font-bold text-primary">
-                            CHF {Math.round(besoinValue).toLocaleString('fr-CH')}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
-                          </span>
+                      <div className="flex flex-col gap-1 border-l-2 border-destructive pl-4">
+                        <div className="flex items-center gap-2">
+                          <div className="h-1 w-8 bg-destructive" />
+                          <span className="text-sm font-medium">Besoin ({besoinPourcentage}%)</span>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <span className="text-sm font-medium text-muted-foreground">Total revenus retraite</span>
-                          <span className="text-2xl font-bold text-primary">
-                            CHF {Math.round(totalRetraite).toLocaleString('fr-CH')}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
-                          </span>
-                        </div>
+                        <span className="text-lg font-bold">
+                          CHF {Math.round(besoinValue).toLocaleString('fr-CH')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <span className="text-sm font-medium text-muted-foreground">Total retraite</span>
+                        <span className="text-lg font-bold">
+                          CHF {Math.round(totalRetraite).toLocaleString('fr-CH')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                        </span>
                       </div>
                     </div>
                     
                     <p className="text-xs text-muted-foreground mt-4">
-                      * Comparaison entre le revenu actuel et les revenus projetés à la retraite (65 ans). 
+                      * Projection des revenus de prévoyance de 65 à 85 ans. 
                       Le 3ème pilier est divisé par 20 ans pour calculer le revenu annuel disponible.
                     </p>
+                        </>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
 
