@@ -11,8 +11,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ChevronDown } from "lucide-react";
+import { Save, ChevronDown, Calculator } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { calculateAllAVSPensions, formatCHF } from "@/lib/avsCalculations";
 
 const Budget = () => {
   const { user } = useAuth();
@@ -35,6 +36,8 @@ const Budget = () => {
   const [pilier3a, setPilier3a] = useState("");
   const [pilier3b, setPilier3b] = useState("");
   const [besoinPourcentage, setBesoinPourcentage] = useState("80");
+  const [isCalculatingAVS, setIsCalculatingAVS] = useState(false);
+  const [renteMensuelleAVS, setRenteMensuelleAVS] = useState<number | null>(null);
 
   // Collapsible states for mobile
   const [revenusOpen, setRevenusOpen] = useState(true);
@@ -254,6 +257,76 @@ const Budget = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCalculateAVS = async () => {
+    if (!user) return;
+
+    setIsCalculatingAVS(true);
+    try {
+      // Récupérer le revenu annuel brut depuis les données du budget
+      const revenuAnnuel = periodType === "annuel" 
+        ? parseFloat(revenuBrut) || 0 
+        : (parseFloat(revenuBrut) || 0) * 12;
+
+      if (revenuAnnuel === 0) {
+        toast({
+          title: "Attention",
+          description: "Veuillez d'abord renseigner votre revenu brut",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Calculer les rentes AVS
+      const avsCalculations = calculateAllAVSPensions(revenuAnnuel);
+
+      // Mettre à jour les états locaux
+      setAvs1erPilier(avsCalculations.rente_vieillesse_annuelle.toString());
+      setRenteMensuelleAVS(avsCalculations.rente_vieillesse_mensuelle);
+
+      // Sauvegarder dans prevoyance_data
+      const { data: existingPrevoyance } = await supabase
+        .from("prevoyance_data")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const prevoyanceData = {
+        user_id: user.id,
+        revenu_annuel_determinant: avsCalculations.revenu_annuel_determinant,
+        rente_vieillesse_mensuelle: avsCalculations.rente_vieillesse_mensuelle,
+        rente_vieillesse_annuelle: avsCalculations.rente_vieillesse_annuelle,
+        rente_invalidite_mensuelle: avsCalculations.rente_invalidite_mensuelle,
+        rente_invalidite_annuelle: avsCalculations.rente_invalidite_annuelle,
+        avs_1er_pilier: avsCalculations.rente_vieillesse_annuelle,
+      };
+
+      if (existingPrevoyance) {
+        await supabase
+          .from("prevoyance_data")
+          .update(prevoyanceData)
+          .eq("user_id", user.id);
+      } else {
+        await supabase
+          .from("prevoyance_data")
+          .insert(prevoyanceData);
+      }
+
+      toast({
+        title: "Succès",
+        description: "Rentes AVS calculées selon l'Echelle 44 2025",
+      });
+    } catch (error: any) {
+      console.error("Erreur lors du calcul AVS:", error);
+      toast({
+        title: "Erreur",
+        description: "Erreur lors du calcul des rentes AVS",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCalculatingAVS(false);
     }
   };
 
@@ -574,21 +647,38 @@ const Budget = () => {
 
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-4">
-                        <div>
+                        <div className="space-y-2">
                           <Label htmlFor="avs1erPilier">1er Pilier - AVS (rente annuelle CHF)</Label>
-                          <Input
-                            id="avs1erPilier"
-                            type="number"
-                            step="1"
-                            placeholder="28'680"
-                            value={avs1erPilier}
-                            onChange={(e) => {
-                              let value = e.target.value;
-                              value = value.replace(/^0+(?=\d)/, '');
-                              setAvs1erPilier(value);
-                            }}
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">Rente AVS estimée</p>
+                          <div className="flex gap-2">
+                            <Input
+                              id="avs1erPilier"
+                              type="number"
+                              step="1"
+                              placeholder="28'680"
+                              value={avs1erPilier}
+                              onChange={(e) => {
+                                let value = e.target.value;
+                                value = value.replace(/^0+(?=\d)/, '');
+                                setAvs1erPilier(value);
+                                setRenteMensuelleAVS(null);
+                              }}
+                            />
+                            <Button 
+                              onClick={handleCalculateAVS} 
+                              disabled={isCalculatingAVS}
+                              variant="outline"
+                              size="icon"
+                              title="Calculer selon l'Echelle 44 2025"
+                            >
+                              <Calculator className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          {renteMensuelleAVS !== null && (
+                            <p className="text-sm font-semibold text-primary">
+                              Rente mensuelle: {formatCHF(renteMensuelleAVS)}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground">Rente AVS estimée (Echelle 44 2025)</p>
                         </div>
                         <div>
                           <Label htmlFor="lpp2emePilier">2ème Pilier - LPP (avoir total CHF)</Label>
