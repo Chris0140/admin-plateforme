@@ -1287,7 +1287,7 @@ const Budget = () => {
                             <text 
                               x={(x || 0) + (width || 0) / 2} 
                               y={(y || 0) + (height || 0) / 2}
-                              fill="hsl(0 0% 100%)"
+                              fill="hsl(0 0% 0%)"
                               textAnchor="middle"
                               dominantBaseline="middle"
                               fontSize="13"
@@ -1312,7 +1312,7 @@ const Budget = () => {
                             <text 
                               x={(x || 0) + (width || 0) / 2} 
                               y={(y || 0) + (height || 0) / 2}
-                              fill="hsl(0 84% 40%)"
+                              fill="hsl(0 0% 100%)"
                               textAnchor="middle"
                               dominantBaseline="middle"
                               fontSize="13"
