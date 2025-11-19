@@ -31,13 +31,32 @@ const Budget = () => {
   const [autresDepenses, setAutresDepenses] = useState("");
 
   // Prévoyance Retraite State
-  const [avs1erPilier, setAvs1erPilier] = useState("");
-  const [lpp2emePilier, setLpp2emePilier] = useState("");
+  const [besoinPourcentage, setBesoinPourcentage] = useState("80");
+  
+  // 1er Pilier AVS States
+  const [avsRevenuDeterminant, setAvsRevenuDeterminant] = useState("");
+  const [avsRenteMensuelle, setAvsRenteMensuelle] = useState("");
+  const [avsRenteAnnuelle, setAvsRenteAnnuelle] = useState("");
+  const [avsInvaliditeMensuelle, setAvsInvaliditeMensuelle] = useState("");
+  const [avsInvaliditeAnnuelle, setAvsInvaliditeAnnuelle] = useState("");
+  const [isCalculatingAVS, setIsCalculatingAVS] = useState(false);
+  
+  // 2ème Pilier LPP States
+  const [lppAvoirVieillesse, setLppAvoirVieillesse] = useState("");
+  const [lppDerniereMaj, setLppDerniereMaj] = useState("");
+  const [lppCapitalProjete65, setLppCapitalProjete65] = useState("");
+  const [lppRenteMensuelleProjetee, setLppRenteMensuelleProjetee] = useState("");
+  const [lppRenteAnnuelleProjetee, setLppRenteAnnuelleProjetee] = useState("");
+  const [lppRenteInvaliditeMensuelle, setLppRenteInvaliditeMensuelle] = useState("");
+  const [lppRenteInvaliditeAnnuelle, setLppRenteInvaliditeAnnuelle] = useState("");
+  const [lppCapitalInvalidite, setLppCapitalInvalidite] = useState("");
+  const [lppRenteConjointSurvivant, setLppRenteConjointSurvivant] = useState("");
+  const [lppRenteOrphelins, setLppRenteOrphelins] = useState("");
+  const [lppCapitalDeces, setLppCapitalDeces] = useState("");
+  
+  // 3ème Pilier States
   const [pilier3a, setPilier3a] = useState("");
   const [pilier3b, setPilier3b] = useState("");
-  const [besoinPourcentage, setBesoinPourcentage] = useState("80");
-  const [isCalculatingAVS, setIsCalculatingAVS] = useState(false);
-  const [renteMensuelleAVS, setRenteMensuelleAVS] = useState<number | null>(null);
 
   // Collapsible states for mobile
   const [revenusOpen, setRevenusOpen] = useState(true);
@@ -130,15 +149,29 @@ const Budget = () => {
       if (prevoyanceError) throw prevoyanceError;
 
       if (prevoyanceData) {
-        setAvs1erPilier(prevoyanceData.avs_1er_pilier?.toString() || "");
-        setLpp2emePilier(prevoyanceData.lpp_2eme_pilier?.toString() || "");
+        // Charger les données AVS
+        setAvsRevenuDeterminant(prevoyanceData.revenu_annuel_determinant?.toString() || "");
+        setAvsRenteMensuelle(prevoyanceData.rente_vieillesse_mensuelle?.toString() || "");
+        setAvsRenteAnnuelle(prevoyanceData.rente_vieillesse_annuelle?.toString() || "");
+        setAvsInvaliditeMensuelle(prevoyanceData.rente_invalidite_mensuelle?.toString() || "");
+        setAvsInvaliditeAnnuelle(prevoyanceData.rente_invalidite_annuelle?.toString() || "");
+        
+        // Charger les données LPP
+        setLppAvoirVieillesse(prevoyanceData.lpp_avoir_vieillesse?.toString() || "");
+        setLppDerniereMaj(prevoyanceData.lpp_derniere_maj || "");
+        setLppCapitalProjete65(prevoyanceData.lpp_capital_projete_65?.toString() || "");
+        setLppRenteMensuelleProjetee(prevoyanceData.lpp_rente_mensuelle_projetee?.toString() || "");
+        setLppRenteAnnuelleProjetee(prevoyanceData.lpp_rente_annuelle_projetee?.toString() || "");
+        setLppRenteInvaliditeMensuelle(prevoyanceData.lpp_rente_invalidite_mensuelle?.toString() || "");
+        setLppRenteInvaliditeAnnuelle(prevoyanceData.lpp_rente_invalidite_annuelle?.toString() || "");
+        setLppCapitalInvalidite(prevoyanceData.lpp_capital_invalidite?.toString() || "");
+        setLppRenteConjointSurvivant(prevoyanceData.lpp_rente_conjoint_survivant?.toString() || "");
+        setLppRenteOrphelins(prevoyanceData.lpp_rente_orphelins?.toString() || "");
+        setLppCapitalDeces(prevoyanceData.lpp_capital_deces?.toString() || "");
+        
+        // Charger les données 3ème pilier
         setPilier3a(prevoyanceData.pilier_3a?.toString() || "");
         setPilier3b(prevoyanceData.pilier_3b?.toString() || "");
-        
-        // Charger les nouvelles données LPP pour l'affichage
-        if (prevoyanceData.lpp_avoir_vieillesse) {
-          // Ces données seront utilisées dans l'affichage de la section prévoyance
-        }
       }
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);
@@ -232,8 +265,25 @@ const Budget = () => {
 
       const prevoyanceDataToSave = {
         user_id: user.id,
-        avs_1er_pilier: parseFloat(avs1erPilier) || 0,
-        lpp_2eme_pilier: parseFloat(lpp2emePilier) || 0,
+        // AVS 1er Pilier
+        revenu_annuel_determinant: parseFloat(avsRevenuDeterminant) || 0,
+        rente_vieillesse_mensuelle: parseFloat(avsRenteMensuelle) || 0,
+        rente_vieillesse_annuelle: parseFloat(avsRenteAnnuelle) || 0,
+        rente_invalidite_mensuelle: parseFloat(avsInvaliditeMensuelle) || 0,
+        rente_invalidite_annuelle: parseFloat(avsInvaliditeAnnuelle) || 0,
+        // LPP 2ème Pilier
+        lpp_avoir_vieillesse: parseFloat(lppAvoirVieillesse) || 0,
+        lpp_derniere_maj: lppDerniereMaj || null,
+        lpp_capital_projete_65: parseFloat(lppCapitalProjete65) || 0,
+        lpp_rente_mensuelle_projetee: parseFloat(lppRenteMensuelleProjetee) || 0,
+        lpp_rente_annuelle_projetee: parseFloat(lppRenteAnnuelleProjetee) || 0,
+        lpp_rente_invalidite_mensuelle: parseFloat(lppRenteInvaliditeMensuelle) || 0,
+        lpp_rente_invalidite_annuelle: parseFloat(lppRenteInvaliditeAnnuelle) || 0,
+        lpp_capital_invalidite: parseFloat(lppCapitalInvalidite) || 0,
+        lpp_rente_conjoint_survivant: parseFloat(lppRenteConjointSurvivant) || 0,
+        lpp_rente_orphelins: parseFloat(lppRenteOrphelins) || 0,
+        lpp_capital_deces: parseFloat(lppCapitalDeces) || 0,
+        // 3ème Pilier
         pilier_3a: parseFloat(pilier3a) || 0,
         pilier_3b: parseFloat(pilier3b) || 0,
       };
@@ -266,72 +316,96 @@ const Budget = () => {
   };
 
   const handleCalculateAVS = async () => {
-    if (!user) return;
+    const revenuDeterminant = parseFloat(avsRevenuDeterminant) || 0;
+
+    if (revenuDeterminant <= 0) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Veuillez entrer un revenu déterminant valide",
+      });
+      return;
+    }
 
     setIsCalculatingAVS(true);
-    try {
-      // Récupérer le revenu annuel brut depuis les données du budget
-      const revenuAnnuel = periodType === "annuel" 
-        ? parseFloat(revenuBrut) || 0 
-        : (parseFloat(revenuBrut) || 0) * 12;
 
-      if (revenuAnnuel === 0) {
+    try {
+      const avsData = calculateAllAVSPensions(revenuDeterminant);
+      
+      setAvsRenteMensuelle(avsData.rente_vieillesse_mensuelle.toString());
+      setAvsRenteAnnuelle(avsData.rente_vieillesse_annuelle.toString());
+      setAvsInvaliditeMensuelle(avsData.rente_invalidite_mensuelle.toString());
+      setAvsInvaliditeAnnuelle(avsData.rente_invalidite_annuelle.toString());
+
+      toast({
+        title: "Calcul AVS effectué",
+        description: `Rente AVS calculée selon l'Echelle 44 2025: ${formatCHF(avsData.rente_vieillesse_mensuelle)}/mois`,
+      });
+
+    } catch (error) {
+      console.error("Erreur lors du calcul AVS:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors du calcul AVS",
+      });
+    } finally {
+      setIsCalculatingAVS(false);
+    }
+  };
+
+  const handleImportLppData = async () => {
+    if (!user) return;
+
+    try {
+      const { data: documents, error } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("category", "assurance")
+        .eq("subcategory", "lpp")
+        .eq("extraction_status", "completed")
+        .order("uploaded_at", { ascending: false })
+        .limit(1);
+
+      if (error) throw error;
+
+      if (!documents || documents.length === 0) {
         toast({
-          title: "Attention",
-          description: "Veuillez d'abord renseigner votre revenu brut",
           variant: "destructive",
+          title: "Aucun certificat LPP",
+          description: "Veuillez d'abord uploader et analyser un certificat LPP",
         });
         return;
       }
 
-      // Calculer les rentes AVS
-      const avsCalculations = calculateAllAVSPensions(revenuAnnuel);
+      const lppData = documents[0].extracted_data as any;
+      
+      if (lppData) {
+        setLppAvoirVieillesse(lppData.avoir_vieillesse?.toString() || "");
+        setLppDerniereMaj(lppData.date_derniere_maj || "");
+        setLppCapitalProjete65(lppData.capital_projete_65?.toString() || "");
+        setLppRenteMensuelleProjetee(lppData.rente_mensuelle_projetee?.toString() || "");
+        setLppRenteAnnuelleProjetee(lppData.rente_annuelle_projetee?.toString() || "");
+        setLppRenteInvaliditeMensuelle(lppData.rente_invalidite_mensuelle?.toString() || "");
+        setLppRenteInvaliditeAnnuelle(lppData.rente_invalidite_annuelle?.toString() || "");
+        setLppCapitalInvalidite(lppData.capital_invalidite?.toString() || "");
+        setLppRenteConjointSurvivant(lppData.rente_conjoint_survivant?.toString() || "");
+        setLppRenteOrphelins(lppData.rente_orphelins?.toString() || "");
+        setLppCapitalDeces(lppData.capital_deces?.toString() || "");
 
-      // Mettre à jour les états locaux
-      setAvs1erPilier(avsCalculations.rente_vieillesse_annuelle.toString());
-      setRenteMensuelleAVS(avsCalculations.rente_vieillesse_mensuelle);
-
-      // Sauvegarder dans prevoyance_data
-      const { data: existingPrevoyance } = await supabase
-        .from("prevoyance_data")
-        .select("id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      const prevoyanceData = {
-        user_id: user.id,
-        revenu_annuel_determinant: avsCalculations.revenu_annuel_determinant,
-        rente_vieillesse_mensuelle: avsCalculations.rente_vieillesse_mensuelle,
-        rente_vieillesse_annuelle: avsCalculations.rente_vieillesse_annuelle,
-        rente_invalidite_mensuelle: avsCalculations.rente_invalidite_mensuelle,
-        rente_invalidite_annuelle: avsCalculations.rente_invalidite_annuelle,
-        avs_1er_pilier: avsCalculations.rente_vieillesse_annuelle,
-      };
-
-      if (existingPrevoyance) {
-        await supabase
-          .from("prevoyance_data")
-          .update(prevoyanceData)
-          .eq("user_id", user.id);
-      } else {
-        await supabase
-          .from("prevoyance_data")
-          .insert(prevoyanceData);
+        toast({
+          title: "Données LPP importées",
+          description: "Les données du certificat LPP ont été importées avec succès",
+        });
       }
-
+    } catch (error) {
+      console.error("Erreur lors de l'import LPP:", error);
       toast({
-        title: "Succès",
-        description: "Rentes AVS calculées selon l'Echelle 44 2025",
-      });
-    } catch (error: any) {
-      console.error("Erreur lors du calcul AVS:", error);
-      toast({
-        title: "Erreur",
-        description: "Erreur lors du calcul des rentes AVS",
         variant: "destructive",
+        title: "Erreur",
+        description: "Une erreur est survenue lors de l'import des données LPP",
       });
-    } finally {
-      setIsCalculatingAVS(false);
     }
   };
 
@@ -358,8 +432,8 @@ const Budget = () => {
   const soldeAffiche = solde;
 
   // Calculs Prévoyance Retraite
-  const total1erPilier = parseFloat(avs1erPilier || "0");
-  const total2emePilier = parseFloat(lpp2emePilier || "0");
+  const total1erPilier = parseFloat(avsRenteAnnuelle || "0");
+  const total2emePilier = parseFloat(lppAvoirVieillesse || "0");
   const total3emePilier = parseFloat(pilier3a || "0") + parseFloat(pilier3b || "0");
   const totalPrevoyance = total1erPilier + total2emePilier + total3emePilier;
 
@@ -609,152 +683,385 @@ const Budget = () => {
             {/* Prévoyance Retraite */}
             <TabsContent value="prevoyance">
               <div className="space-y-6">
+                {/* Vue d'ensemble */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Avoirs de Prévoyance</CardTitle>
-                    <CardDescription>Cumulez vos avoirs des trois piliers</CardDescription>
+                    <CardTitle>Vue d'ensemble de la Prévoyance</CardTitle>
+                    <CardDescription>Vos besoins et votre couverture retraite</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {/* Revenu Net et Besoin */}
-                    <div className="mb-6 p-4 bg-muted/50 rounded-lg space-y-4">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-1">Revenu brut {periodType === "mensuel" ? "mensuel" : "annuel"}</p>
-                          <p className="text-2xl font-bold text-foreground">{formatCurrency(parseFloat(revenuBrut) || 0)}</p>
-                        </div>
-                        <div>
-                          <Label htmlFor="besoinPourcentage">Besoin en retraite %</Label>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Input
-                              id="besoinPourcentage"
-                              type="number"
-                              step="1"
-                              min="0"
-                              max="100"
-                              placeholder="80"
-                              value={besoinPourcentage}
-                              onChange={(e) => {
-                                let value = e.target.value;
-                                value = value.replace(/^0+(?=\d)/, '');
-                                setBesoinPourcentage(value);
-                              }}
-                              className="w-24"
-                            />
-                            <span className="text-muted-foreground">%</span>
-                          </div>
-                          <p className="text-sm font-semibold text-primary mt-2">
-                            = {formatCurrency((parseFloat(revenuBrut) || 0) * (parseFloat(besoinPourcentage) || 0) / 100)}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">Montant estimé nécessaire à la retraite</p>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="text-center p-4 bg-muted/50 rounded-lg">
+                        <p className="text-sm text-muted-foreground mb-1">Revenu brut actuel</p>
+                        <p className="text-2xl font-bold text-foreground">{formatCurrency(parseFloat(revenuBrut) || 0)}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{periodType}</p>
+                      </div>
+                      <div className="text-center p-4 bg-muted/50 rounded-lg">
+                        <p className="text-sm text-muted-foreground mb-1">Besoin retraite ({besoinPourcentage}%)</p>
+                        <p className="text-2xl font-bold text-primary">
+                          {formatCurrency((parseFloat(revenuBrut) || 0) * (parseFloat(besoinPourcentage) || 0) / 100)}
+                        </p>
+                        <div className="flex items-center justify-center gap-2 mt-2">
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={besoinPourcentage}
+                            onChange={(e) => setBesoinPourcentage(e.target.value.replace(/^0+(?=\d)/, ''))}
+                            className="w-16 h-7 text-xs"
+                          />
+                          <span className="text-xs">%</span>
                         </div>
                       </div>
+                      <div className="text-center p-4 bg-primary/10 rounded-lg">
+                        <p className="text-sm text-muted-foreground mb-1">Total Prévoyance</p>
+                        <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
+                      </div>
                     </div>
+                  </CardContent>
+                </Card>
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="avs1erPilier">1er Pilier - AVS (rente annuelle CHF)</Label>
+                {/* 1er Pilier AVS */}
+                <Collapsible defaultOpen>
+                  <Card>
+                    <CollapsibleTrigger className="w-full">
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <div className="text-left">
+                          <CardTitle className="flex items-center gap-2">
+                            💰 1er Pilier - AVS
+                            <span className="text-lg font-normal text-muted-foreground">
+                              {parseFloat(avsRenteAnnuelle) > 0 && `${formatCurrency(parseFloat(avsRenteAnnuelle))} / an`}
+                            </span>
+                          </CardTitle>
+                          <CardDescription>Assurance Vieillesse et Survivants</CardDescription>
+                        </div>
+                        <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform duration-200" />
+                      </CardHeader>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <CardContent className="space-y-4">
+                        <div>
+                          <Label htmlFor="avsRevenuDeterminant">Revenu annuel déterminant (CHF)</Label>
                           <div className="flex gap-2">
                             <Input
-                              id="avs1erPilier"
+                              id="avsRevenuDeterminant"
                               type="number"
                               step="1"
-                              placeholder="28'680"
-                              value={avs1erPilier}
-                              onChange={(e) => {
-                                let value = e.target.value;
-                                value = value.replace(/^0+(?=\d)/, '');
-                                setAvs1erPilier(value);
-                                setRenteMensuelleAVS(null);
-                              }}
+                              placeholder="96000"
+                              value={avsRevenuDeterminant}
+                              onChange={(e) => setAvsRevenuDeterminant(e.target.value.replace(/^0+(?=\d)/, ''))}
                             />
                             <Button 
                               onClick={handleCalculateAVS} 
                               disabled={isCalculatingAVS}
                               variant="outline"
-                              size="icon"
-                              title="Calculer selon l'Echelle 44 2025"
+                              className="gap-2"
                             >
                               <Calculator className="h-4 w-4" />
+                              Calculer
                             </Button>
                           </div>
-                          {renteMensuelleAVS !== null && (
-                            <p className="text-sm font-semibold text-primary">
-                              Rente mensuelle: {formatCHF(renteMensuelleAVS)}
-                            </p>
-                          )}
-                          <p className="text-xs text-muted-foreground">Rente AVS estimée (Echelle 44 2025)</p>
+                          <p className="text-xs text-muted-foreground mt-1">Selon l'Echelle 44 2025</p>
                         </div>
-                        <div>
-                          <Label htmlFor="lpp2emePilier">2ème Pilier - LPP (avoir total CHF)</Label>
-                          <Input
-                            id="lpp2emePilier"
-                            type="number"
-                            step="1"
-                            placeholder="350'000"
-                            value={lpp2emePilier}
-                            onChange={(e) => {
-                              let value = e.target.value;
-                              value = value.replace(/^0+(?=\d)/, '');
-                              setLpp2emePilier(value);
-                            }}
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">Capital accumulé dans la LPP</p>
+
+                        <div className="grid md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Rente vieillesse mensuelle</Label>
+                            <Input
+                              type="number"
+                              value={avsRenteMensuelle}
+                              onChange={(e) => setAvsRenteMensuelle(e.target.value.replace(/^0+(?=\d)/, ''))}
+                              placeholder="2390"
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Rente vieillesse annuelle</Label>
+                            <Input
+                              type="number"
+                              value={avsRenteAnnuelle}
+                              onChange={(e) => setAvsRenteAnnuelle(e.target.value.replace(/^0+(?=\d)/, ''))}
+                              placeholder="28680"
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Rente invalidité mensuelle</Label>
+                            <Input
+                              type="number"
+                              value={avsInvaliditeMensuelle}
+                              onChange={(e) => setAvsInvaliditeMensuelle(e.target.value.replace(/^0+(?=\d)/, ''))}
+                              placeholder="2390"
+                              className="mt-1"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Rente invalidité annuelle</Label>
+                            <Input
+                              type="number"
+                              value={avsInvaliditeAnnuelle}
+                              onChange={(e) => setAvsInvaliditeAnnuelle(e.target.value.replace(/^0+(?=\d)/, ''))}
+                              placeholder="28680"
+                              className="mt-1"
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div className="space-y-4">
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
+
+                {/* 2ème Pilier LPP */}
+                <Collapsible defaultOpen>
+                  <Card>
+                    <CollapsibleTrigger className="w-full">
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <div className="text-left">
+                          <CardTitle className="flex items-center gap-2">
+                            🏦 2ème Pilier - LPP
+                            <span className="text-lg font-normal text-muted-foreground">
+                              {parseFloat(lppAvoirVieillesse) > 0 && `${formatCurrency(parseFloat(lppAvoirVieillesse))}`}
+                            </span>
+                          </CardTitle>
+                          <CardDescription>Prévoyance Professionnelle</CardDescription>
+                        </div>
+                        <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform duration-200" />
+                      </CardHeader>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <CardContent>
+                        <Tabs defaultValue="avoir" className="w-full">
+                          <TabsList className="grid w-full grid-cols-4">
+                            <TabsTrigger value="avoir">Avoir actuel</TabsTrigger>
+                            <TabsTrigger value="vieillesse">Vieillesse</TabsTrigger>
+                            <TabsTrigger value="invalidite">Invalidité</TabsTrigger>
+                            <TabsTrigger value="deces">Décès</TabsTrigger>
+                          </TabsList>
+                          
+                          <TabsContent value="avoir" className="space-y-4 mt-4">
+                            <div>
+                              <Label htmlFor="lppAvoirVieillesse">Avoir de vieillesse (CHF)</Label>
+                              <Input
+                                id="lppAvoirVieillesse"
+                                type="number"
+                                value={lppAvoirVieillesse}
+                                onChange={(e) => setLppAvoirVieillesse(e.target.value.replace(/^0+(?=\d)/, ''))}
+                                placeholder="350000"
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="lppDerniereMaj">Dernière mise à jour</Label>
+                              <Input
+                                id="lppDerniereMaj"
+                                type="date"
+                                value={lppDerniereMaj}
+                                onChange={(e) => setLppDerniereMaj(e.target.value)}
+                                className="mt-1"
+                              />
+                            </div>
+                            <Button onClick={handleImportLppData} variant="outline" className="w-full gap-2">
+                              📄 Importer depuis certificat LPP
+                            </Button>
+                          </TabsContent>
+
+                          <TabsContent value="vieillesse" className="space-y-4 mt-4">
+                            <div>
+                              <Label htmlFor="lppCapitalProjete65">Capital projeté à 65 ans (CHF)</Label>
+                              <Input
+                                id="lppCapitalProjete65"
+                                type="number"
+                                value={lppCapitalProjete65}
+                                onChange={(e) => setLppCapitalProjete65(e.target.value.replace(/^0+(?=\d)/, ''))}
+                                placeholder="580000"
+                                className="mt-1"
+                              />
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor="lppRenteMensuelleProjetee">Rente mensuelle projetée (CHF)</Label>
+                                <Input
+                                  id="lppRenteMensuelleProjetee"
+                                  type="number"
+                                  value={lppRenteMensuelleProjetee}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(/^0+(?=\d)/, '');
+                                    setLppRenteMensuelleProjetee(val);
+                                    setLppRenteAnnuelleProjetee(val ? (parseFloat(val) * 12).toString() : '');
+                                  }}
+                                  placeholder="3250"
+                                  className="mt-1"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="lppRenteAnnuelleProjetee">Rente annuelle projetée (CHF)</Label>
+                                <Input
+                                  id="lppRenteAnnuelleProjetee"
+                                  type="number"
+                                  value={lppRenteAnnuelleProjetee}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(/^0+(?=\d)/, '');
+                                    setLppRenteAnnuelleProjetee(val);
+                                    setLppRenteMensuelleProjetee(val ? (parseFloat(val) / 12).toFixed(0) : '');
+                                  }}
+                                  placeholder="39000"
+                                  className="mt-1"
+                                />
+                              </div>
+                            </div>
+                          </TabsContent>
+
+                          <TabsContent value="invalidite" className="space-y-4 mt-4">
+                            <div className="grid md:grid-cols-2 gap-4">
+                              <div>
+                                <Label htmlFor="lppRenteInvaliditeMensuelle">Rente invalidité mensuelle (CHF)</Label>
+                                <Input
+                                  id="lppRenteInvaliditeMensuelle"
+                                  type="number"
+                                  value={lppRenteInvaliditeMensuelle}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(/^0+(?=\d)/, '');
+                                    setLppRenteInvaliditeMensuelle(val);
+                                    setLppRenteInvaliditeAnnuelle(val ? (parseFloat(val) * 12).toString() : '');
+                                  }}
+                                  placeholder="2800"
+                                  className="mt-1"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="lppRenteInvaliditeAnnuelle">Rente invalidité annuelle (CHF)</Label>
+                                <Input
+                                  id="lppRenteInvaliditeAnnuelle"
+                                  type="number"
+                                  value={lppRenteInvaliditeAnnuelle}
+                                  onChange={(e) => {
+                                    const val = e.target.value.replace(/^0+(?=\d)/, '');
+                                    setLppRenteInvaliditeAnnuelle(val);
+                                    setLppRenteInvaliditeMensuelle(val ? (parseFloat(val) / 12).toFixed(0) : '');
+                                  }}
+                                  placeholder="33600"
+                                  className="mt-1"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label htmlFor="lppCapitalInvalidite">Capital invalidité (CHF)</Label>
+                              <Input
+                                id="lppCapitalInvalidite"
+                                type="number"
+                                value={lppCapitalInvalidite}
+                                onChange={(e) => setLppCapitalInvalidite(e.target.value.replace(/^0+(?=\d)/, ''))}
+                                placeholder="180000"
+                                className="mt-1"
+                              />
+                            </div>
+                          </TabsContent>
+
+                          <TabsContent value="deces" className="space-y-4 mt-4">
+                            <div>
+                              <Label htmlFor="lppRenteConjointSurvivant">Rente conjoint survivant (CHF/mois)</Label>
+                              <Input
+                                id="lppRenteConjointSurvivant"
+                                type="number"
+                                value={lppRenteConjointSurvivant}
+                                onChange={(e) => setLppRenteConjointSurvivant(e.target.value.replace(/^0+(?=\d)/, ''))}
+                                placeholder="2100"
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="lppRenteOrphelins">Rente orphelins (CHF/mois)</Label>
+                              <Input
+                                id="lppRenteOrphelins"
+                                type="number"
+                                value={lppRenteOrphelins}
+                                onChange={(e) => setLppRenteOrphelins(e.target.value.replace(/^0+(?=\d)/, ''))}
+                                placeholder="700"
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="lppCapitalDeces">Capital décès (CHF)</Label>
+                              <Input
+                                id="lppCapitalDeces"
+                                type="number"
+                                value={lppCapitalDeces}
+                                onChange={(e) => setLppCapitalDeces(e.target.value.replace(/^0+(?=\d)/, ''))}
+                                placeholder="100000"
+                                className="mt-1"
+                              />
+                            </div>
+                          </TabsContent>
+                        </Tabs>
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
+
+                {/* 3ème Pilier */}
+                <Collapsible defaultOpen>
+                  <Card>
+                    <CollapsibleTrigger className="w-full">
+                      <CardHeader className="flex flex-row items-center justify-between">
+                        <div className="text-left">
+                          <CardTitle className="flex items-center gap-2">
+                            🎯 3ème Pilier - Prévoyance Individuelle
+                            <span className="text-lg font-normal text-muted-foreground">
+                              {(parseFloat(pilier3a) + parseFloat(pilier3b)) > 0 && 
+                                `${formatCurrency((parseFloat(pilier3a) || 0) + (parseFloat(pilier3b) || 0))}`
+                              }
+                            </span>
+                          </CardTitle>
+                          <CardDescription>Prévoyance liée et libre</CardDescription>
+                        </div>
+                        <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform duration-200" />
+                      </CardHeader>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <CardContent className="space-y-4">
                         <div>
-                          <Label htmlFor="pilier3a">3ème Pilier A (avoir CHF)</Label>
+                          <Label htmlFor="pilier3a">Pilier 3a - Prévoyance liée (CHF)</Label>
                           <Input
                             id="pilier3a"
                             type="number"
-                            step="1"
-                            placeholder="50'000"
                             value={pilier3a}
-                            onChange={(e) => {
-                              let value = e.target.value;
-                              value = value.replace(/^0+(?=\d)/, '');
-                              setPilier3a(value);
-                            }}
+                            onChange={(e) => setPilier3a(e.target.value.replace(/^0+(?=\d)/, ''))}
+                            placeholder="50000"
+                            className="mt-1"
                           />
-                          <p className="text-xs text-muted-foreground mt-1">Prévoyance liée</p>
+                          <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950 rounded text-xs text-blue-900 dark:text-blue-100">
+                            💡 Limite de cotisation 2025: CHF 7'056 (employé) / CHF 35'280 (indépendant)
+                          </div>
                         </div>
                         <div>
-                          <Label htmlFor="pilier3b">3ème Pilier B (avoir CHF)</Label>
+                          <Label htmlFor="pilier3b">Pilier 3b - Prévoyance libre (CHF)</Label>
                           <Input
                             id="pilier3b"
                             type="number"
-                            step="1"
-                            placeholder="25'000"
                             value={pilier3b}
-                            onChange={(e) => {
-                              let value = e.target.value;
-                              value = value.replace(/^0+(?=\d)/, '');
-                              setPilier3b(value);
-                            }}
+                            onChange={(e) => setPilier3b(e.target.value.replace(/^0+(?=\d)/, ''))}
+                            placeholder="25000"
+                            className="mt-1"
                           />
-                          <p className="text-xs text-muted-foreground mt-1">Prévoyance libre</p>
                         </div>
-                      </div>
-                    </div>
-                    <div className="mt-6 p-4 bg-primary/10 rounded-lg">
-                      <p className="text-sm text-muted-foreground mb-1">Total Prévoyance</p>
-                      <p className="text-3xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
-                    </div>
-                    {user && (
-                      <div className="flex justify-end mt-6">
-                        <Button 
-                          onClick={saveAllData} 
-                          disabled={isLoading}
-                          className="gap-2"
-                        >
-                          <Save className="h-4 w-4" />
-                          Enregistrer le budget
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
+
+                {user && (
+                  <div className="flex justify-center">
+                    <Button 
+                      onClick={saveAllData} 
+                      disabled={isLoading}
+                      className="gap-2"
+                      size="lg"
+                    >
+                      <Save className="h-4 w-4" />
+                      Enregistrer toutes les données
+                    </Button>
+                  </div>
+                )}
 
                 {/* Graphique Retraite */}
                 <Card>
