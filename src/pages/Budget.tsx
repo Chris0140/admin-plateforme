@@ -534,8 +534,8 @@ const Budget = () => {
                     <div className="mb-6 p-4 bg-muted/50 rounded-lg space-y-4">
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <p className="text-sm text-muted-foreground mb-1">Revenu net {periodType === "mensuel" ? "mensuel" : "annuel"}</p>
-                          <p className="text-2xl font-bold text-foreground">{formatCurrency(revenuNet)}</p>
+                          <p className="text-sm text-muted-foreground mb-1">Revenu brut {periodType === "mensuel" ? "mensuel" : "annuel"}</p>
+                          <p className="text-2xl font-bold text-foreground">{formatCurrency(parseFloat(revenuBrut) || 0)}</p>
                         </div>
                         <div>
                           <Label htmlFor="besoinPourcentage">Besoin en retraite (% du revenu net)</Label>
