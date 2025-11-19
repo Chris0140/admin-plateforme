@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { ArrowLeft, Upload, FileText, Trash2, Download, Eye } from "lucide-react";
+import { ArrowLeft, Upload, FileText, Trash2, Download, Eye, Search, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,9 @@ interface Document {
   uploaded_at: string;
   category: string;
   subcategory: string | null;
+  extracted_data?: any;
+  extraction_status?: string;
+  extraction_date?: string;
 }
 
 type Category = 'assurance' | 'prevoyance_retraite' | 'impots' | 'autres';
@@ -89,6 +92,7 @@ const AccountDocuments = () => {
     notes: "",
   });
   const [openSubcategories, setOpenSubcategories] = useState<Record<string, boolean>>({});
+  const [analyzingDocuments, setAnalyzingDocuments] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (user) {
@@ -249,6 +253,36 @@ const AccountDocuments = () => {
     URL.revokeObjectURL(url);
   };
 
+  const handleAnalyzeCertificate = async (doc: Document) => {
+    if (!user) return;
+
+    setAnalyzingDocuments(prev => ({ ...prev, [doc.id]: true }));
+
+    try {
+      const { data, error } = await supabase.functions.invoke('parse-lpp-certificate', {
+        body: { documentId: doc.id }
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "✅ Analyse terminée !",
+        description: "Les données ont été extraites avec succès",
+      });
+
+      fetchDocuments();
+    } catch (error: any) {
+      console.error('Analyze error:', error);
+      toast({
+        variant: "destructive",
+        title: "Erreur d'analyse",
+        description: error.message || "Impossible d'analyser le document",
+      });
+    } finally {
+      setAnalyzingDocuments(prev => ({ ...prev, [doc.id]: false }));
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer ce document ?")) return;
 
@@ -325,55 +359,147 @@ const AccountDocuments = () => {
               </h3>
             )}
             <div className="space-y-2">
-              {docs.map((doc) => (
-                <div
-                  key={doc.id}
-                  className="bg-card rounded-lg border p-4 flex items-center justify-between hover:bg-accent/50 transition-colors"
-                >
-                  <div 
-                    className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
-                    onClick={() => handleView(doc)}
+              {docs.map((doc) => {
+                const isLppCertificate = doc.subcategory === '2eme_pilier_lpp';
+                const isAnalyzing = analyzingDocuments[doc.id];
+                const hasExtractedData = doc.extraction_status === 'completed' && doc.extracted_data;
+
+                return (
+                  <div
+                    key={doc.id}
+                    className="bg-card rounded-lg border p-4"
                   >
-                    <FileText className="h-5 w-5 text-primary flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-foreground truncate hover:underline">
-                        {doc.file_name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {formatFileSize(doc.file_size)} •{" "}
-                        {new Date(doc.uploaded_at).toLocaleDateString("fr-FR")}
-                      </p>
+                    <div className="flex items-center justify-between">
+                      <div 
+                        className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                        onClick={() => handleView(doc)}
+                      >
+                        <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-foreground truncate hover:underline">
+                            {doc.file_name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {formatFileSize(doc.file_size)} •{" "}
+                            {new Date(doc.uploaded_at).toLocaleDateString("fr-FR")}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 flex-shrink-0">
+                        {isLppCertificate && !hasExtractedData && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleAnalyzeCertificate(doc)}
+                            disabled={isAnalyzing}
+                            title="Analyser le certificat"
+                          >
+                            {isAnalyzing ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Search className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleView(doc)}
+                          title="Visualiser"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownload(doc)}
+                          title="Télécharger"
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(doc.id)}
+                          className="text-destructive hover:text-destructive"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
+
+                    {/* Extraction status and data display for LPP certificates */}
+                    {isLppCertificate && (
+                      <div className="mt-3 pt-3 border-t">
+                        {doc.extraction_status === 'pending' && (
+                          <p className="text-sm text-muted-foreground">
+                            ⚙️ Pas encore analysé
+                          </p>
+                        )}
+                        {doc.extraction_status === 'processing' && (
+                          <p className="text-sm text-muted-foreground flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Analyse en cours...
+                          </p>
+                        )}
+                        {doc.extraction_status === 'failed' && (
+                          <p className="text-sm text-destructive">
+                            ⚠️ Échec de l'extraction - Réessayez ou complétez manuellement
+                          </p>
+                        )}
+                        {hasExtractedData && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                              <p className="text-sm font-medium text-green-600">
+                                Données extraites le {new Date(doc.extraction_date!).toLocaleDateString("fr-FR")}
+                              </p>
+                            </div>
+                            <div className="bg-muted/50 rounded-md p-3 space-y-1 text-sm">
+                              <p className="font-semibold text-foreground mb-2">📊 Données détectées:</p>
+                              {doc.extracted_data.avoir_vieillesse && (
+                                <p className="text-muted-foreground">
+                                  • Avoir vieillesse: CHF {doc.extracted_data.avoir_vieillesse?.toLocaleString('fr-CH')}
+                                </p>
+                              )}
+                              {doc.extracted_data.rente_mensuelle_projetee && (
+                                <p className="text-muted-foreground">
+                                  • Rente projetée: CHF {doc.extracted_data.rente_mensuelle_projetee?.toLocaleString('fr-CH')}/mois
+                                </p>
+                              )}
+                              {doc.extracted_data.capital_invalidite && (
+                                <p className="text-muted-foreground">
+                                  • Capital invalidité: CHF {doc.extracted_data.capital_invalidite?.toLocaleString('fr-CH')}
+                                </p>
+                              )}
+                              {Object.keys(doc.extracted_data).filter(k => doc.extracted_data[k] !== null).length > 3 && (
+                                <p className="text-muted-foreground">
+                                  ... et {Object.keys(doc.extracted_data).filter(k => doc.extracted_data[k] !== null).length - 3} autres valeurs
+                                </p>
+                              )}
+                            </div>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="mt-2"
+                              onClick={() => {
+                                navigate('/profil');
+                                toast({
+                                  title: "Redirection",
+                                  description: "Ouvrez la section 2ème pilier pour importer les données",
+                                });
+                              }}
+                            >
+                              📋 Importer dans mon profil
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleView(doc)}
-                      title="Visualiser"
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownload(doc)}
-                      title="Télécharger"
-                    >
-                      <Download className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(doc.id)}
-                      className="text-destructive hover:text-destructive"
-                      title="Supprimer"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         ))}

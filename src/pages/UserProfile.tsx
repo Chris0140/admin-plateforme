@@ -10,6 +10,7 @@ import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Wallet, Calculator, FileText, Loader2, Edit, Save, X, ChevronDown, Shield } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -258,6 +259,8 @@ const UserProfile = () => {
     revenu_annuel_determinant: 0,
   });
   const [isCalculatingAVS, setIsCalculatingAVS] = useState(false);
+  const [lppCertificate, setLppCertificate] = useState<any | null>(null);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
 
   const profileForm = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -311,6 +314,7 @@ const UserProfile = () => {
   useEffect(() => {
     if (user) {
       fetchUserData();
+      fetchLppCertificate();
     }
   }, [user]);
 
@@ -434,6 +438,57 @@ const UserProfile = () => {
     } finally {
       setLoadingData(false);
     }
+  };
+
+  const fetchLppCertificate = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('category', 'prevoyance_retraite')
+        .eq('subcategory', '2eme_pilier_lpp')
+        .eq('extraction_status', 'completed')
+        .not('extracted_data', 'is', null)
+        .order('uploaded_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        setLppCertificate(data);
+      }
+    } catch (error) {
+      console.error('Error fetching LPP certificate:', error);
+    }
+  };
+
+  const handleImportLppData = () => {
+    if (!lppCertificate?.extracted_data) return;
+
+    const data = lppCertificate.extracted_data;
+    
+    // Pre-fill form with extracted data
+    prevoyanceForm.setValue('lpp_avoir_vieillesse', data.avoir_vieillesse || 0);
+    prevoyanceForm.setValue('lpp_capital_projete_65', data.capital_projete_65 || 0);
+    prevoyanceForm.setValue('lpp_rente_mensuelle_projetee', data.rente_mensuelle_projetee || 0);
+    prevoyanceForm.setValue('lpp_rente_annuelle_projetee', data.rente_annuelle_projetee || 0);
+    prevoyanceForm.setValue('lpp_rente_invalidite_mensuelle', data.rente_invalidite_mensuelle || 0);
+    prevoyanceForm.setValue('lpp_rente_invalidite_annuelle', data.rente_invalidite_annuelle || 0);
+    prevoyanceForm.setValue('lpp_capital_invalidite', data.capital_invalidite || 0);
+    prevoyanceForm.setValue('lpp_rente_conjoint_survivant', data.rente_conjoint_survivant || 0);
+    prevoyanceForm.setValue('lpp_rente_orphelins', data.rente_orphelins || 0);
+    prevoyanceForm.setValue('lpp_capital_deces', data.capital_deces || 0);
+    prevoyanceForm.setValue('lpp_derniere_maj', data.date_certificat || new Date().toISOString().split('T')[0]);
+
+    setEditingPrevoyanceCategory("2eme_pilier");
+    setShowImportConfirm(false);
+    
+    toast({
+      title: "Données importées !",
+      description: "Les données du certificat LPP ont été pré-remplies. Vérifiez et sauvegardez.",
+    });
   };
 
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
@@ -2256,6 +2311,40 @@ const UserProfile = () => {
                     </CardHeader>
                     <CollapsibleContent>
                       <CardContent>
+                        {/* LPP Certificate Import Banner */}
+                        {lppCertificate && lppCertificate.extracted_data && editingPrevoyanceCategory !== "2eme_pilier" && (
+                          <div className="mb-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0">
+                                <FileText className="h-5 w-5 text-primary mt-0.5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm mb-1">💡 Certificat LPP détecté !</p>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  Un certificat de prévoyance a été analysé dans vos documents ({lppCertificate.file_name} du{" "}
+                                  {new Date(lppCertificate.uploaded_at).toLocaleDateString("fr-FR")}).
+                                </p>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={() => setShowImportConfirm(true)}
+                                    size="sm"
+                                    variant="default"
+                                  >
+                                    📋 Importer ces données
+                                  </Button>
+                                  <Button
+                                    onClick={() => navigate('/documents')}
+                                    size="sm"
+                                    variant="outline"
+                                  >
+                                    👁️ Voir le certificat
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {editingPrevoyanceCategory === "2eme_pilier" ? (
                           <Form {...prevoyanceForm}>
                             <form onSubmit={prevoyanceForm.handleSubmit(onSubmitPrevoyance)} className="space-y-6">
@@ -3351,6 +3440,80 @@ const UserProfile = () => {
           </Tabs>
         </div>
       </main>
+
+      {/* Import Confirmation Dialog */}
+      <Dialog open={showImportConfirm} onOpenChange={setShowImportConfirm}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Importer les données du certificat LPP ?</DialogTitle>
+            <DialogDescription>
+              Les données suivantes seront importées dans votre profil
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {lppCertificate?.extracted_data && (
+              <div className="space-y-2 text-sm">
+                {lppCertificate.extracted_data.avoir_vieillesse && (
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Avoir vieillesse:</span>
+                    <span className="font-semibold">CHF {lppCertificate.extracted_data.avoir_vieillesse.toLocaleString('fr-CH')}</span>
+                  </div>
+                )}
+                {lppCertificate.extracted_data.capital_projete_65 && (
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Capital projeté 65 ans:</span>
+                    <span className="font-semibold">CHF {lppCertificate.extracted_data.capital_projete_65.toLocaleString('fr-CH')}</span>
+                  </div>
+                )}
+                {lppCertificate.extracted_data.rente_mensuelle_projetee && (
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Rente mensuelle projetée:</span>
+                    <span className="font-semibold">CHF {lppCertificate.extracted_data.rente_mensuelle_projetee.toLocaleString('fr-CH')}/mois</span>
+                  </div>
+                )}
+                {lppCertificate.extracted_data.rente_invalidite_mensuelle && (
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Rente invalidité mensuelle:</span>
+                    <span className="font-semibold">CHF {lppCertificate.extracted_data.rente_invalidite_mensuelle.toLocaleString('fr-CH')}/mois</span>
+                  </div>
+                )}
+                {lppCertificate.extracted_data.capital_invalidite && (
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Capital invalidité:</span>
+                    <span className="font-semibold">CHF {lppCertificate.extracted_data.capital_invalidite.toLocaleString('fr-CH')}</span>
+                  </div>
+                )}
+                {lppCertificate.extracted_data.capital_deces && (
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Capital décès:</span>
+                    <span className="font-semibold">CHF {lppCertificate.extracted_data.capital_deces.toLocaleString('fr-CH')}</span>
+                  </div>
+                )}
+                {lppCertificate.extracted_data.date_certificat && (
+                  <div className="flex justify-between py-2 border-b">
+                    <span className="text-muted-foreground">Date du certificat:</span>
+                    <span className="font-semibold">{new Date(lppCertificate.extracted_data.date_certificat).toLocaleDateString('fr-FR')}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="mt-4 p-3 bg-muted/50 rounded-md">
+              <p className="text-sm text-muted-foreground">
+                ⚠️ Cela remplacera vos données actuelles du 2ème pilier. Vous pourrez les vérifier et les modifier avant de sauvegarder.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowImportConfirm(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleImportLppData}>
+              Confirmer l'import
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );

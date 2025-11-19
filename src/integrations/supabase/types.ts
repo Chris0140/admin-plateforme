@@ -104,6 +104,9 @@ export type Database = {
       documents: {
         Row: {
           category: string
+          extracted_data: Json | null
+          extraction_date: string | null
+          extraction_status: string | null
           file_name: string
           file_path: string
           file_size: number
@@ -114,6 +117,9 @@ export type Database = {
         }
         Insert: {
           category?: string
+          extracted_data?: Json | null
+          extraction_date?: string | null
+          extraction_status?: string | null
           file_name: string
           file_path: string
           file_size: number
@@ -124,6 +130,9 @@ export type Database = {
         }
         Update: {
           category?: string
+          extracted_data?: Json | null
+          extraction_date?: string | null
+          extraction_status?: string | null
           file_name?: string
           file_path?: string
           file_size?: number

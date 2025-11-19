@@ -1,1 +1,4 @@
 project_id = "voiouhphmnhloyxegewf"
+
+[functions.parse-lpp-certificate]
+verify_jwt = false
