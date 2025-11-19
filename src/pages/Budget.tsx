@@ -115,11 +115,22 @@ const Budget = () => {
         };
         
         loadValues(periodType);
-        
-        setAvs1erPilier(data.avs_1er_pilier?.toString() || "");
-        setLpp2emePilier(data.lpp_2eme_pilier?.toString() || "");
-        setPilier3a(data.pilier_3a?.toString() || "");
-        setPilier3b(data.pilier_3b?.toString() || "");
+      }
+
+      // Charger les données de prévoyance depuis prevoyance_data
+      const { data: prevoyanceData, error: prevoyanceError } = await supabase
+        .from("prevoyance_data")
+        .select("*")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (prevoyanceError) throw prevoyanceError;
+
+      if (prevoyanceData) {
+        setAvs1erPilier(prevoyanceData.avs_1er_pilier?.toString() || "");
+        setLpp2emePilier(prevoyanceData.lpp_2eme_pilier?.toString() || "");
+        setPilier3a(prevoyanceData.pilier_3a?.toString() || "");
+        setPilier3b(prevoyanceData.pilier_3b?.toString() || "");
       }
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);
@@ -187,10 +198,6 @@ const Budget = () => {
         depenses_alimentation_annuel,
         autres_depenses_mensuel,
         autres_depenses_annuel,
-        avs_1er_pilier: parseFloat(avs1erPilier) || 0,
-        lpp_2eme_pilier: parseFloat(lpp2emePilier) || 0,
-        pilier_3a: parseFloat(pilier3a) || 0,
-        pilier_3b: parseFloat(pilier3b) || 0,
       };
 
       if (existingData) {
@@ -208,7 +215,7 @@ const Budget = () => {
         if (error) throw error;
       }
 
-      // Synchroniser les données de prévoyance vers prevoyance_data
+      // Sauvegarder les données de prévoyance dans prevoyance_data (source unique de vérité)
       const { data: existingPrevoyance } = await supabase
         .from("prevoyance_data")
         .select("id")
