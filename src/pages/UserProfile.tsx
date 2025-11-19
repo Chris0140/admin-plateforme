@@ -110,6 +110,8 @@ const profileSchema = z.object({
   localite: z.string().trim().min(1, "La localité est requise").max(100, "La localité doit faire moins de 100 caractères"),
   adresse: z.string().trim().max(255, "L'adresse doit faire moins de 255 caractères").optional(),
   telephone: z.string().trim().max(20, "Le téléphone doit faire moins de 20 caractères").optional(),
+  etat_civil: z.string().optional(),
+  nombre_enfants: z.number().min(0, "Le nombre doit être positif").optional(),
 });
 
 const budgetSchema = z.object({
@@ -379,6 +381,14 @@ const UserProfile = () => {
       
       if (profileData) {
         setProfile(profileData);
+        
+        // Charger aussi les données de prévoyance pour état civil et nombre d'enfants
+        const { data: prevoyanceDataForProfile } = await supabase
+          .from("prevoyance_data")
+          .select("etat_civil, nombre_enfants")
+          .eq("user_id", user?.id)
+          .maybeSingle();
+        
         profileForm.reset({
           appellation: profileData.appellation,
           nom: profileData.nom,
@@ -388,6 +398,8 @@ const UserProfile = () => {
           localite: profileData.localite,
           adresse: profileData.adresse || "",
           telephone: profileData.telephone || "",
+          etat_civil: prevoyanceDataForProfile?.etat_civil || "",
+          nombre_enfants: prevoyanceDataForProfile?.nombre_enfants || 0,
         });
       }
 
@@ -553,10 +565,38 @@ const UserProfile = () => {
           localite: values.localite,
           adresse: values.adresse || null,
           telephone: values.telephone || null,
+          etat_civil: values.etat_civil || null,
+          nombre_enfants: values.nombre_enfants || 0,
         })
         .eq("user_id", user?.id);
 
       if (error) throw error;
+
+      // Synchroniser avec prevoyance_data
+      await supabase
+        .from("prevoyance_data")
+        .upsert({
+          user_id: user?.id,
+          etat_civil: values.etat_civil || null,
+          nombre_enfants: values.nombre_enfants || 0,
+        });
+
+      // Synchroniser avec tax_data si existe
+      const { data: existingTaxData } = await supabase
+        .from("tax_data")
+        .select("id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (existingTaxData) {
+        await supabase
+          .from("tax_data")
+          .update({
+            etat_civil: values.etat_civil || "",
+            nombre_enfants: values.nombre_enfants || 0,
+          })
+          .eq("user_id", user?.id);
+      }
 
       toast({
         title: "Profil mis à jour",
@@ -1086,6 +1126,48 @@ const UserProfile = () => {
                               </FormItem>
                             )}
                           />
+                          <FormField
+                            control={profileForm.control}
+                            name="etat_civil"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>État civil</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Sélectionner" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="celibataire">Célibataire</SelectItem>
+                                    <SelectItem value="marie">Marié(e)</SelectItem>
+                                    <SelectItem value="divorce">Divorcé(e)</SelectItem>
+                                    <SelectItem value="veuf">Veuf/Veuve</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="nombre_enfants"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nombre d'enfants</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    {...field} 
+                                    type="number" 
+                                    min="0"
+                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                    value={field.value}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                           <Button type="submit" className="w-full">
                             <Save className="h-4 w-4 mr-2" />
                             Enregistrer
@@ -1608,6 +1690,48 @@ const UserProfile = () => {
                                 <FormLabel>Téléphone</FormLabel>
                                 <FormControl>
                                   <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="etat_civil"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>État civil</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Sélectionner" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="celibataire">Célibataire</SelectItem>
+                                    <SelectItem value="marie">Marié(e)</SelectItem>
+                                    <SelectItem value="divorce">Divorcé(e)</SelectItem>
+                                    <SelectItem value="veuf">Veuf/Veuve</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="nombre_enfants"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nombre d'enfants</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    {...field} 
+                                    type="number" 
+                                    min="0"
+                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                    value={field.value}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

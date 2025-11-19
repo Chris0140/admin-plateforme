@@ -98,6 +98,24 @@ const Budget = () => {
           fetchBudgetData();
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'prevoyance_data',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('Changement détecté dans prevoyance_data:', payload);
+          // Mettre à jour les états locaux depuis prevoyance_data
+          if (payload.new) {
+            setEtatCivil(payload.new.etat_civil || "");
+            setNombreEnfants(payload.new.nombre_enfants?.toString() || "0");
+            setBesoinPourcentage(payload.new.besoin_pourcentage?.toString() || "80");
+          }
+        }
+      )
       .subscribe();
 
     return () => {
