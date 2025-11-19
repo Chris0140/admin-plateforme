@@ -1203,8 +1203,8 @@ const Budget = () => {
               <ResponsiveContainer width="100%" height={450}>
                 <BarChart 
                   data={dataRetraiteProjection}
-                  margin={{ top: 20, right: 10, left: 0, bottom: 5 }}
-                  barCategoryGap="20%"
+                  margin={{ top: 20, right: 10, left: -10, bottom: 5 }}
+                  barCategoryGap="5%"
                 >
                   <defs>
                     <pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="8" height="8">
