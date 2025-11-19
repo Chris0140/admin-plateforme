@@ -2366,68 +2366,67 @@ const UserProfile = () => {
                                         />
                                       </div>
                                     </div>
+
+                                    {/* Rente d'enfant invalide - visible seulement si enfants */}
+                                    {prevoyanceData.nombre_enfants && prevoyanceData.nombre_enfants > 0 && (
+                                      <div className="space-y-2">
+                                        <h5 className="text-sm font-medium text-muted-foreground">
+                                          Rente d'enfant invalide
+                                          <span className="text-xs ml-2">({prevoyanceData.nombre_enfants} enfant{prevoyanceData.nombre_enfants > 1 ? 's' : ''})</span>
+                                        </h5>
+                                        <div className="grid grid-cols-2 gap-4">
+                                          <FormField
+                                            control={prevoyanceForm.control}
+                                            name="avs_rente_enfant_mensuelle"
+                                            render={({ field }) => (
+                                              <FormItem>
+                                                <FormLabel className="text-xs">Mensuelle</FormLabel>
+                                                <FormControl>
+                                                  <Input
+                                                    type="number"
+                                                    step="1"
+                                                    placeholder="0"
+                                                    {...field}
+                                                    value={field.value || 0}
+                                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                                    onFocus={(e) => e.target.select()}
+                                                  />
+                                                </FormControl>
+                                                <FormMessage />
+                                              </FormItem>
+                                            )}
+                                          />
+                                          <FormField
+                                            control={prevoyanceForm.control}
+                                            name="avs_rente_enfant_annuelle"
+                                            render={({ field }) => (
+                                              <FormItem>
+                                                <FormLabel className="text-xs">Annuelle</FormLabel>
+                                                <FormControl>
+                                                  <Input
+                                                    type="number"
+                                                    step="1"
+                                                    placeholder="0"
+                                                    {...field}
+                                                    value={field.value || 0}
+                                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                                    onFocus={(e) => e.target.select()}
+                                                  />
+                                                </FormControl>
+                                                <FormMessage />
+                                              </FormItem>
+                                            )}
+                                          />
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
 
-                                  {/* Rente d'enfant invalide - visible seulement si enfants */}
-                                  {prevoyanceData.nombre_enfants && prevoyanceData.nombre_enfants > 0 && (
-                                    <div className="space-y-2">
-                                      <h5 className="text-sm font-medium text-muted-foreground">
-                                        Rente d'enfant invalide
-                                        <span className="text-xs ml-2">({prevoyanceData.nombre_enfants} enfant{prevoyanceData.nombre_enfants > 1 ? 's' : ''})</span>
-                                      </h5>
-                                      <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                          control={prevoyanceForm.control}
-                                          name="avs_rente_enfant_mensuelle"
-                                          render={({ field }) => (
-                                            <FormItem>
-                                              <FormLabel className="text-xs">Mensuelle</FormLabel>
-                                              <FormControl>
-                                                <Input
-                                                  type="number"
-                                                  step="1"
-                                                  placeholder="0"
-                                                  {...field}
-                                                  value={field.value || 0}
-                                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                                  onFocus={(e) => e.target.select()}
-                                                />
-                                              </FormControl>
-                                              <FormMessage />
-                                            </FormItem>
-                                          )}
-                                        />
-                                        <FormField
-                                          control={prevoyanceForm.control}
-                                          name="avs_rente_enfant_annuelle"
-                                          render={({ field }) => (
-                                            <FormItem>
-                                              <FormLabel className="text-xs">Annuelle</FormLabel>
-                                              <FormControl>
-                                                <Input
-                                                  type="number"
-                                                  step="1"
-                                                  placeholder="0"
-                                                  {...field}
-                                                  value={field.value || 0}
-                                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                                  onFocus={(e) => e.target.select()}
-                                                />
-                                              </FormControl>
-                                              <FormMessage />
-                                            </FormItem>
-                                          )}
-                                        />
-                                      </div>
-                                    </div>
-                                  )}
+                                  <p className="text-xs text-muted-foreground">
+                                    💡 Ces montants sont calculés automatiquement selon l'Échelle 44 2025. 
+                                    Vous pouvez les modifier manuellement si nécessaire.
+                                  </p>
                                 </div>
-
-                                <p className="text-xs text-muted-foreground">
-                                  💡 Ces montants sont calculés automatiquement selon l'Échelle 44 2025. 
-                                  Vous pouvez les modifier manuellement si nécessaire.
-                                </p>
-                              </div>
 
                                 <Separator />
 
