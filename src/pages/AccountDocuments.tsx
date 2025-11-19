@@ -128,6 +128,20 @@ const AccountDocuments = () => {
     document.getElementById('file-upload')?.click();
   };
 
+  const handleAddDocumentToSubcategory = (subcategoryValue: string) => {
+    if (!user) {
+      setShowAuthAlert(true);
+      return;
+    }
+    setSelectedCategory(activeTab);
+    setSelectedSubcategory(subcategoryValue);
+    setUploadSectionOpen(true);
+    // Scroll to upload section
+    setTimeout(() => {
+      document.getElementById('upload-section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+  };
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
@@ -516,7 +530,20 @@ const AccountDocuments = () => {
                         <CollapsibleContent>
                           <CardContent>
                             {subcategoryDocs.length === 0 ? (
-                              <p className="text-muted-foreground">Aucun document uploadé</p>
+                              <div className="flex flex-col items-center justify-center py-8 px-4">
+                                <FileText className="h-12 w-12 text-muted-foreground mb-3" />
+                                <p className="text-muted-foreground mb-4 text-center">
+                                  Aucun document dans cette catégorie
+                                </p>
+                                <Button
+                                  onClick={() => handleAddDocumentToSubcategory(subcategory.value)}
+                                  variant="default"
+                                  className="gap-2"
+                                >
+                                  <Upload className="h-4 w-4" />
+                                  Ajouter un document
+                                </Button>
+                              </div>
                             ) : (
                               <div className="space-y-2">
                                 {subcategoryDocs.map((doc) => (
@@ -586,7 +613,7 @@ const AccountDocuments = () => {
           </Tabs>
 
           <Collapsible open={uploadSectionOpen} onOpenChange={setUploadSectionOpen} className="mt-6">
-            <Card>
+            <Card id="upload-section">
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors rounded-t-lg">
                   <div className="flex items-center justify-between">
