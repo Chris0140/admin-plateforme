@@ -142,6 +142,11 @@ export type Database = {
           lpp_2eme_pilier: number | null
           pilier_3a: number | null
           pilier_3b: number | null
+          rente_invalidite_annuelle: number | null
+          rente_invalidite_mensuelle: number | null
+          rente_vieillesse_annuelle: number | null
+          rente_vieillesse_mensuelle: number | null
+          revenu_annuel_determinant: number | null
           updated_at: string
           user_id: string
         }
@@ -152,6 +157,11 @@ export type Database = {
           lpp_2eme_pilier?: number | null
           pilier_3a?: number | null
           pilier_3b?: number | null
+          rente_invalidite_annuelle?: number | null
+          rente_invalidite_mensuelle?: number | null
+          rente_vieillesse_annuelle?: number | null
+          rente_vieillesse_mensuelle?: number | null
+          revenu_annuel_determinant?: number | null
           updated_at?: string
           user_id: string
         }
@@ -162,6 +172,11 @@ export type Database = {
           lpp_2eme_pilier?: number | null
           pilier_3a?: number | null
           pilier_3b?: number | null
+          rente_invalidite_annuelle?: number | null
+          rente_invalidite_mensuelle?: number | null
+          rente_vieillesse_annuelle?: number | null
+          rente_vieillesse_mensuelle?: number | null
+          revenu_annuel_determinant?: number | null
           updated_at?: string
           user_id?: string
         }
