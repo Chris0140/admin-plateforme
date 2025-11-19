@@ -1173,17 +1173,16 @@ const Budget = () => {
                       const totalRetraite = avsValue + lppValue + pilier3Value;
                       const lacune = Math.max(0, besoinValue - totalRetraite);
 
-                      // Données pour graphique vertical avec période 65-85 ans
-                      const dataRetraiteProjection = Array.from({ length: 21 }, (_, i) => {
-                        const age = 65 + i;
-                        return {
-                          age: age.toString(),
+                      // Données pour graphique avec un seul bloc empilé
+                      const dataRetraiteProjection = [
+                        {
+                          periode: "Retraite 65-85 ans",
                           avs: avsValue,
                           lpp: lppValue,
                           pilier3: pilier3Value,
                           lacune: lacune,
-                        };
-                      });
+                        }
+                      ];
 
                       return (
                         <>
@@ -1201,15 +1200,15 @@ const Budget = () => {
               </div>
             )}
                     
-              <ResponsiveContainer width="100%" height={400}>
+              <ResponsiveContainer width="100%" height={450}>
                 <BarChart 
                   data={dataRetraiteProjection}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
-                    dataKey="age"
-                    label={{ value: 'Âge', position: 'insideBottom', offset: -10 }}
+                    dataKey="periode"
+                    tick={{ fontSize: 14, fontWeight: 500 }}
                   />
                   <YAxis 
                     tickFormatter={(value) => `${value.toLocaleString('fr-CH')}`}
@@ -1217,7 +1216,6 @@ const Budget = () => {
                   />
                   <Tooltip 
                     formatter={(value: number) => `CHF ${value.toLocaleString('fr-CH')}`}
-                    labelFormatter={(label) => `Âge ${label} ans`}
                   />
                   <Legend />
                   
