@@ -62,6 +62,8 @@ interface PrevoyanceData {
   rente_vieillesse_annuelle?: number;
   rente_invalidite_mensuelle?: number;
   rente_invalidite_annuelle?: number;
+  avs_rente_enfant_mensuelle?: number;
+  avs_rente_enfant_annuelle?: number;
   revenu_annuel_determinant?: number;
   // Nouveaux champs LPP depuis certificat
   lpp_avoir_vieillesse?: number;
@@ -135,6 +137,8 @@ const prevoyanceSchema = z.object({
   rente_vieillesse_annuelle: z.number().min(0).optional(),
   rente_invalidite_mensuelle: z.number().min(0).optional(),
   rente_invalidite_annuelle: z.number().min(0).optional(),
+  avs_rente_enfant_mensuelle: z.number().min(0).optional(),
+  avs_rente_enfant_annuelle: z.number().min(0).optional(),
   revenu_annuel_determinant: z.number().min(0).optional(),
   // Nouveaux champs LPP depuis certificat
   lpp_avoir_vieillesse: z.number().min(0).optional(),
@@ -263,6 +267,8 @@ const UserProfile = () => {
     rente_vieillesse_annuelle: 0,
     rente_invalidite_mensuelle: 0,
     rente_invalidite_annuelle: 0,
+    avs_rente_enfant_mensuelle: 0,
+    avs_rente_enfant_annuelle: 0,
     revenu_annuel_determinant: 0,
     etat_civil: "",
     nombre_enfants: 0,
@@ -836,7 +842,10 @@ const UserProfile = () => {
       }
 
       // 2. Calculer les rentes avec la fonction utilitaire
-      const calculatedPensions = calculateAllAVSPensions(budgetData.revenu_brut_annuel);
+      const calculatedPensions = calculateAllAVSPensions(
+        budgetData.revenu_brut_annuel,
+        prevoyanceData.nombre_enfants || 0
+      );
 
       // 3. Vérifier si des données de prévoyance existent déjà
       const { data: existingPrevoyance } = await supabase
@@ -2359,11 +2368,66 @@ const UserProfile = () => {
                                     </div>
                                   </div>
 
-                                  <p className="text-xs text-muted-foreground">
-                                    💡 Ces montants sont calculés automatiquement selon l'Échelle 44 2025. 
-                                    Vous pouvez les modifier manuellement si nécessaire.
-                                  </p>
+                                  {/* Rente d'enfant invalide - visible seulement si enfants */}
+                                  {prevoyanceData.nombre_enfants && prevoyanceData.nombre_enfants > 0 && (
+                                    <div className="space-y-2">
+                                      <h5 className="text-sm font-medium text-muted-foreground">
+                                        Rente d'enfant invalide
+                                        <span className="text-xs ml-2">({prevoyanceData.nombre_enfants} enfant{prevoyanceData.nombre_enfants > 1 ? 's' : ''})</span>
+                                      </h5>
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                          control={prevoyanceForm.control}
+                                          name="avs_rente_enfant_mensuelle"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs">Mensuelle</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  type="number"
+                                                  step="1"
+                                                  placeholder="0"
+                                                  {...field}
+                                                  value={field.value || 0}
+                                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                                  onFocus={(e) => e.target.select()}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                        <FormField
+                                          control={prevoyanceForm.control}
+                                          name="avs_rente_enfant_annuelle"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs">Annuelle</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  type="number"
+                                                  step="1"
+                                                  placeholder="0"
+                                                  {...field}
+                                                  value={field.value || 0}
+                                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                                  onFocus={(e) => e.target.select()}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
+
+                                <p className="text-xs text-muted-foreground">
+                                  💡 Ces montants sont calculés automatiquement selon l'Échelle 44 2025. 
+                                  Vous pouvez les modifier manuellement si nécessaire.
+                                </p>
+                              </div>
 
                                 <Separator />
 
@@ -2510,6 +2574,36 @@ const UserProfile = () => {
                                   </div>
                                 </div>
                               </div>
+
+                              {/* Rente d'enfant invalide - visible seulement si enfants */}
+                              {prevoyanceData.nombre_enfants && prevoyanceData.nombre_enfants > 0 && (
+                                <div className="space-y-3">
+                                  <h4 className="font-semibold flex items-center gap-2">
+                                    Rente d'enfant invalide
+                                    <span className="text-xs text-muted-foreground font-normal">
+                                      ({prevoyanceData.nombre_enfants} enfant{prevoyanceData.nombre_enfants > 1 ? 's' : ''})
+                                    </span>
+                                  </h4>
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="p-3 bg-background border rounded-lg">
+                                      <p className="text-xs text-muted-foreground mb-1">Mensuelle</p>
+                                      <p className="text-xl font-bold">
+                                        {prevoyanceData.avs_rente_enfant_mensuelle
+                                          ? formatCHF(prevoyanceData.avs_rente_enfant_mensuelle)
+                                          : "—"}
+                                      </p>
+                                    </div>
+                                    <div className="p-3 bg-background border rounded-lg">
+                                      <p className="text-xs text-muted-foreground mb-1">Annuelle</p>
+                                      <p className="text-xl font-bold">
+                                        {prevoyanceData.avs_rente_enfant_annuelle
+                                          ? formatCHF(prevoyanceData.avs_rente_enfant_annuelle)
+                                          : "—"}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </div>
 
                             <Separator />
