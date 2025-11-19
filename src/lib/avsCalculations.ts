@@ -105,20 +105,47 @@ export function calculateAVSPension(annualIncome: number): number {
 }
 
 /**
+ * Calculate AVS child pension
+ * According to Echelle 44: child pension is 30% of base pension per child
+ * 
+ * @param basePension - Base monthly pension amount in CHF
+ * @param numberOfChildren - Number of children
+ * @returns Object with monthly and annual child pension
+ */
+export function calculateAVSChildPension(basePension: number, numberOfChildren: number) {
+  const childPensionPerChild = basePension * 0.30; // 30% of base pension
+  const totalMonthly = childPensionPerChild * numberOfChildren;
+  const totalAnnual = totalMonthly * 12;
+
+  return {
+    monthly: Math.round(totalMonthly),
+    annual: Math.round(totalAnnual),
+  };
+}
+
+/**
  * Calculate all AVS pension values (monthly and annual, old-age and disability)
  * 
  * @param annualIncome - Annual determining income in CHF
+ * @param numberOfChildren - Number of children (optional, default 0)
  * @returns Object containing all pension calculations
  */
-export function calculateAllAVSPensions(annualIncome: number) {
+export function calculateAllAVSPensions(annualIncome: number, numberOfChildren: number = 0) {
   const monthlyPension = calculateAVSPension(annualIncome);
   const annualPension = monthlyPension * 12;
+
+  // Calculate child pension if there are children
+  const childPension = numberOfChildren > 0 
+    ? calculateAVSChildPension(monthlyPension, numberOfChildren)
+    : { monthly: 0, annual: 0 };
 
   return {
     rente_vieillesse_mensuelle: monthlyPension,
     rente_vieillesse_annuelle: annualPension,
     rente_invalidite_mensuelle: monthlyPension, // Same as old-age for AVS
     rente_invalidite_annuelle: annualPension,
+    avs_rente_enfant_mensuelle: childPension.monthly,
+    avs_rente_enfant_annuelle: childPension.annual,
     revenu_annuel_determinant: annualIncome,
   };
 }

@@ -146,6 +146,8 @@ export type Database = {
       prevoyance_data: {
         Row: {
           avs_1er_pilier: number | null
+          avs_rente_enfant_annuelle: number | null
+          avs_rente_enfant_mensuelle: number | null
           besoin_pourcentage: number | null
           created_at: string
           etat_civil: string | null
@@ -177,6 +179,8 @@ export type Database = {
         }
         Insert: {
           avs_1er_pilier?: number | null
+          avs_rente_enfant_annuelle?: number | null
+          avs_rente_enfant_mensuelle?: number | null
           besoin_pourcentage?: number | null
           created_at?: string
           etat_civil?: string | null
@@ -208,6 +212,8 @@ export type Database = {
         }
         Update: {
           avs_1er_pilier?: number | null
+          avs_rente_enfant_annuelle?: number | null
+          avs_rente_enfant_mensuelle?: number | null
           besoin_pourcentage?: number | null
           created_at?: string
           etat_civil?: string | null
