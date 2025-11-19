@@ -58,6 +58,7 @@ const Budget = () => {
   // 3ème Pilier States
   const [pilier3a, setPilier3a] = useState("");
   const [pilier3b, setPilier3b] = useState("");
+  const [graphDisplayMode, setGraphDisplayMode] = useState<"mensuel" | "annuel">("mensuel");
 
   // Collapsible states for mobile
   const [revenusOpen, setRevenusOpen] = useState(true);
@@ -435,17 +436,36 @@ const Budget = () => {
   const totalDepensesAffiche = totalDepenses;
   const soldeAffiche = solde;
 
-  // Calculs Prévoyance Retraite
-  const total1erPilier = parseFloat(avsRenteAnnuelle || "0");
+  // Calculs Prévoyance Retraite - Revenus annuels à la retraite
+  const avsRenteRetraite = parseFloat(avsRenteAnnuelle || "0");
+  const lppRenteRetraite = parseFloat(lppRenteAnnuelleProjetee || "0");
+  const pilier3TotalCapital = parseFloat(pilier3a || "0") + parseFloat(pilier3b || "0");
+  const pilier3RenteAnnuelle = pilier3TotalCapital / 20; // Divisé par 20 ans
+  const totalRevenuRetraiteAnnuel = avsRenteRetraite + lppRenteRetraite + pilier3RenteAnnuelle;
+
+  // Variables pour compatibilité avec les autres graphiques
+  const total1erPilier = avsRenteRetraite;
   const total2emePilier = parseFloat(lppAvoirVieillesse || "0");
-  const total3emePilier = parseFloat(pilier3a || "0") + parseFloat(pilier3b || "0");
+  const total3emePilier = pilier3TotalCapital;
   const totalPrevoyance = total1erPilier + total2emePilier + total3emePilier;
 
-  // Données pour les graphiques de prévoyance
+  // Données pour le graphique de projection retraite (65-85 ans)
+  const dataRetraiteProjection = Array.from({ length: 21 }, (_, i) => {
+    const age = 65 + i;
+    return {
+      age: `${age}`,
+      ageLabel: `${age} ans`,
+      avs: graphDisplayMode === "mensuel" ? Math.round(avsRenteRetraite / 12) : Math.round(avsRenteRetraite),
+      lpp: graphDisplayMode === "mensuel" ? Math.round(lppRenteRetraite / 12) : Math.round(lppRenteRetraite),
+      pilier3: graphDisplayMode === "mensuel" ? Math.round(pilier3RenteAnnuelle / 12) : Math.round(pilier3RenteAnnuelle),
+    };
+  });
+
+  // Données pour les graphiques de prévoyance (montants capitaux)
   const dataRetraite = [
-    { name: "1er Pilier (AVS)", montant: total1erPilier },
-    { name: "2ème Pilier (LPP)", montant: total2emePilier },
-    { name: "3ème Pilier", montant: total3emePilier },
+    { name: "1er Pilier (AVS)", montant: avsRenteRetraite },
+    { name: "2ème Pilier (LPP)", montant: parseFloat(lppAvoirVieillesse || "0") },
+    { name: "3ème Pilier", montant: pilier3TotalCapital },
   ];
 
   // Estimations pour invalidité et décès (pourcentages typiques)
@@ -1078,23 +1098,139 @@ const Budget = () => {
                   </div>
                 )}
 
-                {/* Graphique Retraite */}
+                {/* Graphique Projection Retraite 65-85 ans */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Situation à la Retraite</CardTitle>
-                    <CardDescription>Répartition de vos avoirs de prévoyance</CardDescription>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div>
+                        <CardTitle>Revenus à la Retraite (65-85 ans)</CardTitle>
+                        <CardDescription>Projection des revenus de prévoyance sur 20 ans</CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant={graphDisplayMode === "mensuel" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setGraphDisplayMode("mensuel")}
+                        >
+                          Mensuel
+                        </Button>
+                        <Button
+                          variant={graphDisplayMode === "annuel" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setGraphDisplayMode("annuel")}
+                        >
+                          Annuel
+                        </Button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={dataRetraite}>
+                    <ResponsiveContainer width="100%" height={400}>
+                      <BarChart data={dataRetraiteProjection}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                        <Legend />
-                        <Bar dataKey="montant" fill="hsl(var(--primary))" name="Montant (CHF)" />
+                        <XAxis 
+                          dataKey="age" 
+                          angle={-45}
+                          textAnchor="end"
+                          height={70}
+                          interval={0}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis 
+                          label={{ 
+                            value: graphDisplayMode === "mensuel" ? 'CHF/mois' : 'CHF/an', 
+                            angle: -90, 
+                            position: 'insideLeft',
+                            style: { textAnchor: 'middle' }
+                          }}
+                          tick={{ fontSize: 12 }}
+                          tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                        />
+                        <Tooltip 
+                          formatter={(value: number) => `CHF ${value.toLocaleString('fr-CH')}`}
+                          labelFormatter={(label) => `${label} ans`}
+                        />
+                        <Legend 
+                          wrapperStyle={{ paddingTop: '20px' }}
+                          iconType="rect"
+                        />
+                        <Bar 
+                          dataKey="avs" 
+                          stackId="a" 
+                          fill="hsl(var(--chart-1))" 
+                          name="1er Pilier AVS"
+                        />
+                        <Bar 
+                          dataKey="lpp" 
+                          stackId="a" 
+                          fill="hsl(var(--chart-2))" 
+                          name="2ème Pilier LPP"
+                        />
+                        <Bar 
+                          dataKey="pilier3" 
+                          stackId="a" 
+                          fill="hsl(var(--chart-3))" 
+                          name="3ème Pilier (÷20 ans)"
+                        />
                       </BarChart>
                     </ResponsiveContainer>
+                    
+                    {/* Légende avec montants */}
+                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted rounded-lg">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--chart-1))' }} />
+                          <span className="text-sm font-medium">1er Pilier AVS</span>
+                        </div>
+                        <span className="text-lg font-bold">
+                          CHF {(graphDisplayMode === "mensuel" 
+                            ? Math.round(avsRenteRetraite / 12) 
+                            : Math.round(avsRenteRetraite)
+                          ).toLocaleString('fr-CH')}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--chart-2))' }} />
+                          <span className="text-sm font-medium">2ème Pilier LPP</span>
+                        </div>
+                        <span className="text-lg font-bold">
+                          CHF {(graphDisplayMode === "mensuel"
+                            ? Math.round(lppRenteRetraite / 12)
+                            : Math.round(lppRenteRetraite)
+                          ).toLocaleString('fr-CH')}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--chart-3))' }} />
+                          <span className="text-sm font-medium">3ème Pilier (÷20)</span>
+                        </div>
+                        <span className="text-lg font-bold">
+                          CHF {(graphDisplayMode === "mensuel"
+                            ? Math.round(pilier3RenteAnnuelle / 12)
+                            : Math.round(pilier3RenteAnnuelle)
+                          ).toLocaleString('fr-CH')}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-sm bg-primary" />
+                          <span className="text-sm font-medium">Total</span>
+                        </div>
+                        <span className="text-lg font-bold text-primary">
+                          CHF {(graphDisplayMode === "mensuel"
+                            ? Math.round(totalRevenuRetraiteAnnuel / 12)
+                            : Math.round(totalRevenuRetraiteAnnuel)
+                          ).toLocaleString('fr-CH')}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs text-muted-foreground mt-4">
+                      * Projection basée sur une retraite à 65 ans avec une durée de 20 ans jusqu'à 85 ans. 
+                      Le 3ème pilier est divisé par 20 ans pour calculer le revenu annuel disponible.
+                    </p>
                   </CardContent>
                 </Card>
 
