@@ -565,6 +565,8 @@ const UserProfile = () => {
 
   const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
     try {
+      console.log('Sauvegarde profil - valeurs:', values);
+      
       const { error } = await supabase
         .from("profiles")
         .update({
@@ -582,15 +584,52 @@ const UserProfile = () => {
         .eq("user_id", user?.id);
 
       if (error) throw error;
+      console.log('Profiles update réussi');
 
-      // Synchroniser avec prevoyance_data
-      await supabase
+      // Synchroniser avec prevoyance_data - vérifier si l'entrée existe d'abord
+      const { data: existingPrevoyance } = await supabase
         .from("prevoyance_data")
-        .upsert({
-          user_id: user?.id,
-          etat_civil: values.etat_civil || null,
-          nombre_enfants: values.nombre_enfants || 0,
-        });
+        .select("id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      console.log('Prevoyance existante:', existingPrevoyance);
+
+      if (existingPrevoyance) {
+        // Update si existe
+        const { error: prevoyanceError } = await supabase
+          .from("prevoyance_data")
+          .update({
+            etat_civil: values.etat_civil || null,
+            nombre_enfants: values.nombre_enfants || 0,
+          })
+          .eq("user_id", user?.id);
+        
+        if (prevoyanceError) {
+          console.error('Erreur update prevoyance:', prevoyanceError);
+          throw prevoyanceError;
+        }
+        console.log('Prevoyance update réussi');
+      } else {
+        // Insert si n'existe pas
+        const { error: prevoyanceError } = await supabase
+          .from("prevoyance_data")
+          .insert({
+            user_id: user?.id,
+            etat_civil: values.etat_civil || null,
+            nombre_enfants: values.nombre_enfants || 0,
+            avs_1er_pilier: 0,
+            lpp_2eme_pilier: 0,
+            pilier_3a: 0,
+            pilier_3b: 0,
+          });
+        
+        if (prevoyanceError) {
+          console.error('Erreur insert prevoyance:', prevoyanceError);
+          throw prevoyanceError;
+        }
+        console.log('Prevoyance insert réussi');
+      }
 
       // Synchroniser avec tax_data si existe
       const { data: existingTaxData } = await supabase
@@ -600,13 +639,19 @@ const UserProfile = () => {
         .maybeSingle();
 
       if (existingTaxData) {
-        await supabase
+        const { error: taxError } = await supabase
           .from("tax_data")
           .update({
             etat_civil: values.etat_civil || "",
             nombre_enfants: values.nombre_enfants || 0,
           })
           .eq("user_id", user?.id);
+        
+        if (taxError) {
+          console.error('Erreur update tax:', taxError);
+        } else {
+          console.log('Tax update réussi');
+        }
       }
 
       toast({
@@ -615,8 +660,9 @@ const UserProfile = () => {
       });
 
       setEditingProfile(false);
-      fetchUserData();
+      await fetchUserData();
     } catch (error) {
+      console.error('Erreur complète:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
