@@ -19,7 +19,6 @@ export type Database = {
           autres_depenses: number | null
           autres_depenses_annuel: number | null
           autres_depenses_mensuel: number | null
-          avs_1er_pilier: number | null
           charges_sociales: number | null
           charges_sociales_1er_pilier: number | null
           charges_sociales_2eme_pilier: number | null
@@ -37,10 +36,7 @@ export type Database = {
           depenses_transport_annuel: number | null
           depenses_transport_mensuel: number | null
           id: string
-          lpp_2eme_pilier: number | null
           period_type: string
-          pilier_3a: number | null
-          pilier_3b: number | null
           revenu_brut: number | null
           revenu_brut_annuel: number | null
           revenu_brut_mensuel: number | null
@@ -51,7 +47,6 @@ export type Database = {
           autres_depenses?: number | null
           autres_depenses_annuel?: number | null
           autres_depenses_mensuel?: number | null
-          avs_1er_pilier?: number | null
           charges_sociales?: number | null
           charges_sociales_1er_pilier?: number | null
           charges_sociales_2eme_pilier?: number | null
@@ -69,10 +64,7 @@ export type Database = {
           depenses_transport_annuel?: number | null
           depenses_transport_mensuel?: number | null
           id?: string
-          lpp_2eme_pilier?: number | null
           period_type?: string
-          pilier_3a?: number | null
-          pilier_3b?: number | null
           revenu_brut?: number | null
           revenu_brut_annuel?: number | null
           revenu_brut_mensuel?: number | null
@@ -83,7 +75,6 @@ export type Database = {
           autres_depenses?: number | null
           autres_depenses_annuel?: number | null
           autres_depenses_mensuel?: number | null
-          avs_1er_pilier?: number | null
           charges_sociales?: number | null
           charges_sociales_1er_pilier?: number | null
           charges_sociales_2eme_pilier?: number | null
@@ -101,10 +92,7 @@ export type Database = {
           depenses_transport_annuel?: number | null
           depenses_transport_mensuel?: number | null
           id?: string
-          lpp_2eme_pilier?: number | null
           period_type?: string
-          pilier_3a?: number | null
-          pilier_3b?: number | null
           revenu_brut?: number | null
           revenu_brut_annuel?: number | null
           revenu_brut_mensuel?: number | null

@@ -182,6 +182,12 @@ const UserProfile = () => {
   const [editingTax, setEditingTax] = useState(false);
   const [displayPeriodType, setDisplayPeriodType] = useState<"mensuel" | "annuel">("mensuel");
   const [communesDisponibles, setCommunesDisponibles] = useState<Array<{ value: string; label: string; coefficientCommunal: number }>>([]);
+  const [openPrevoyanceCategories, setOpenPrevoyanceCategories] = useState<Record<string, boolean>>({
+    "1er_pilier": true,
+    "2eme_pilier": true,
+    "3eme_pilier": true,
+  });
+  const [editingPrevoyanceCategory, setEditingPrevoyanceCategory] = useState<string | null>(null);
   
   // Collapsible states
   const [revenusOpen, setRevenusOpen] = useState(true);
@@ -488,32 +494,6 @@ const UserProfile = () => {
         .eq("user_id", user.id)
         .single();
 
-      if (budgetWithPrevoyance) {
-        const { data: existingPrevoyance } = await supabase
-          .from("prevoyance_data")
-          .select("id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        const prevoyanceDataToSave = {
-          user_id: user.id,
-          avs_1er_pilier: budgetWithPrevoyance.avs_1er_pilier || 0,
-          lpp_2eme_pilier: budgetWithPrevoyance.lpp_2eme_pilier || 0,
-          pilier_3a: budgetWithPrevoyance.pilier_3a || 0,
-          pilier_3b: budgetWithPrevoyance.pilier_3b || 0,
-        };
-
-        if (existingPrevoyance) {
-          await supabase
-            .from("prevoyance_data")
-            .update(prevoyanceDataToSave)
-            .eq("user_id", user.id);
-        } else {
-          await supabase
-            .from("prevoyance_data")
-            .insert(prevoyanceDataToSave);
-        }
-      }
 
       toast({
         title: "Budget mis à jour",
@@ -562,31 +542,13 @@ const UserProfile = () => {
         if (error) throw error;
       }
 
-      // Synchroniser les données vers budget_data
-      const { data: existingBudget } = await supabase
-        .from("budget_data")
-        .select("id")
-        .eq("user_id", user?.id)
-        .maybeSingle();
-
-      if (existingBudget) {
-        await supabase
-          .from("budget_data")
-          .update({
-            avs_1er_pilier: values.avs_1er_pilier,
-            lpp_2eme_pilier: values.lpp_2eme_pilier,
-            pilier_3a: values.pilier_3a,
-            pilier_3b: values.pilier_3b,
-          })
-          .eq("user_id", user?.id);
-      }
 
       toast({
         title: "Prévoyance mise à jour",
         description: "Vos informations de prévoyance ont été enregistrées avec succès",
       });
 
-      setEditingPrevoyance(false);
+      setEditingPrevoyanceCategory(null);
       setPrevoyanceData(values as PrevoyanceData);
       fetchUserData();
     } catch (error) {
@@ -1768,156 +1730,353 @@ const UserProfile = () => {
 
             {/* Prévoyance & Retraite */}
             <TabsContent value="prevoyance">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Prévoyance & Retraite</CardTitle>
-                    <CardDescription>
-                      Vos cotisations et piliers de prévoyance
-                    </CardDescription>
-                  </div>
-                  {!editingPrevoyance && (
-                    <Button onClick={() => setEditingPrevoyance(true)} variant="outline" size="sm">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Modifier
-                    </Button>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  {editingPrevoyance ? (
-                    <Form {...prevoyanceForm}>
-                      <form onSubmit={prevoyanceForm.handleSubmit(onSubmitPrevoyance)} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={prevoyanceForm.control}
-                            name="avs_1er_pilier"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>AVS (1er pilier)</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="1"
-                                    {...field}
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                    onFocus={(e) => e.target.select()}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
+              <div className="space-y-4">
+                {/* 1er Pilier AVS-AI */}
+                <Card>
+                  <Collapsible
+                    open={openPrevoyanceCategories["1er_pilier"]}
+                    onOpenChange={(open) =>
+                      setOpenPrevoyanceCategories((prev) => ({ ...prev, "1er_pilier": open }))
+                    }
+                  >
+                    <CardHeader>
+                      <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                        <div className="flex items-center gap-3">
+                          <ChevronDown
+                            className={`h-5 w-5 transition-transform ${
+                              openPrevoyanceCategories["1er_pilier"] ? "rotate-0" : "-rotate-90"
+                            }`}
                           />
-                          <FormField
-                            control={prevoyanceForm.control}
-                            name="lpp_2eme_pilier"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>LPP (2ème pilier)</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="1"
-                                    {...field}
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                    onFocus={(e) => e.target.select()}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={prevoyanceForm.control}
-                            name="pilier_3a"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>3ème Pilier A</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="1"
-                                    {...field}
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                    onFocus={(e) => e.target.select()}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={prevoyanceForm.control}
-                            name="pilier_3b"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>3ème Pilier B</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    type="number"
-                                    step="1"
-                                    {...field}
-                                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                    onFocus={(e) => e.target.select()}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                          <div className="text-left">
+                            <CardTitle>1er pilier AVS-AI</CardTitle>
+                            <CardDescription>Assurance-vieillesse et survivants</CardDescription>
+                          </div>
                         </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-2xl font-bold">
+                            {formatCurrency(prevoyanceData.avs_1er_pilier)}
+                          </span>
+                          {editingPrevoyanceCategory !== "1er_pilier" && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingPrevoyanceCategory("1er_pilier");
+                              }}
+                              variant="outline"
+                              size="sm"
+                            >
+                              Modifier
+                            </Button>
+                          )}
+                        </div>
+                      </CollapsibleTrigger>
+                    </CardHeader>
+                    <CollapsibleContent>
+                      <CardContent>
+                        {editingPrevoyanceCategory === "1er_pilier" ? (
+                          <Form {...prevoyanceForm}>
+                            <form onSubmit={prevoyanceForm.handleSubmit(onSubmitPrevoyance)} className="space-y-4">
+                              <FormField
+                                control={prevoyanceForm.control}
+                                name="avs_1er_pilier"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Cotisation AVS (1er pilier)</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="1"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                        onFocus={(e) => e.target.select()}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => {
+                                    setEditingPrevoyanceCategory(null);
+                                    prevoyanceForm.reset(prevoyanceData);
+                                  }}
+                                  variant="outline"
+                                  className="flex-1"
+                                  type="button"
+                                >
+                                  Annuler
+                                </Button>
+                                <Button
+                                  type="submit"
+                                  className="flex-1"
+                                  disabled={prevoyanceForm.formState.isSubmitting}
+                                >
+                                  {prevoyanceForm.formState.isSubmitting ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Save className="mr-2 h-4 w-4" />
+                                  )}
+                                  Enregistrer
+                                </Button>
+                              </div>
+                            </form>
+                          </Form>
+                        ) : (
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">
+                              Montant cotisé annuellement au 1er pilier (AVS-AI)
+                            </p>
+                            <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.avs_1er_pilier)}</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </Card>
 
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => setEditingPrevoyance(false)}
-                            variant="outline"
-                            className="flex-1"
-                          >
-                            <X className="mr-2 h-4 w-4" />
-                            Annuler
-                          </Button>
-                          <Button
-                            type="submit"
-                            className="flex-1"
-                            disabled={prevoyanceForm.formState.isSubmitting}
-                          >
-                            {prevoyanceForm.formState.isSubmitting ? (
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                              <Save className="mr-2 h-4 w-4" />
-                            )}
-                            Enregistrer
-                          </Button>
+                {/* 2ème Pilier LPP */}
+                <Card>
+                  <Collapsible
+                    open={openPrevoyanceCategories["2eme_pilier"]}
+                    onOpenChange={(open) =>
+                      setOpenPrevoyanceCategories((prev) => ({ ...prev, "2eme_pilier": open }))
+                    }
+                  >
+                    <CardHeader>
+                      <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                        <div className="flex items-center gap-3">
+                          <ChevronDown
+                            className={`h-5 w-5 transition-transform ${
+                              openPrevoyanceCategories["2eme_pilier"] ? "rotate-0" : "-rotate-90"
+                            }`}
+                          />
+                          <div className="text-left">
+                            <CardTitle>2ème pilier LPP</CardTitle>
+                            <CardDescription>Prévoyance professionnelle</CardDescription>
+                          </div>
                         </div>
-                      </form>
-                    </Form>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-muted-foreground">AVS (1er pilier)</p>
-                          <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.avs_1er_pilier)}</p>
+                        <div className="flex items-center gap-4">
+                          <span className="text-2xl font-bold">
+                            {formatCurrency(prevoyanceData.lpp_2eme_pilier)}
+                          </span>
+                          {editingPrevoyanceCategory !== "2eme_pilier" && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingPrevoyanceCategory("2eme_pilier");
+                              }}
+                              variant="outline"
+                              size="sm"
+                            >
+                              Modifier
+                            </Button>
+                          )}
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">LPP (2ème pilier)</p>
-                          <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_2eme_pilier)}</p>
+                      </CollapsibleTrigger>
+                    </CardHeader>
+                    <CollapsibleContent>
+                      <CardContent>
+                        {editingPrevoyanceCategory === "2eme_pilier" ? (
+                          <Form {...prevoyanceForm}>
+                            <form onSubmit={prevoyanceForm.handleSubmit(onSubmitPrevoyance)} className="space-y-4">
+                              <FormField
+                                control={prevoyanceForm.control}
+                                name="lpp_2eme_pilier"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Cotisation LPP (2ème pilier)</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="1"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                        onFocus={(e) => e.target.select()}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => {
+                                    setEditingPrevoyanceCategory(null);
+                                    prevoyanceForm.reset(prevoyanceData);
+                                  }}
+                                  variant="outline"
+                                  className="flex-1"
+                                  type="button"
+                                >
+                                  Annuler
+                                </Button>
+                                <Button
+                                  type="submit"
+                                  className="flex-1"
+                                  disabled={prevoyanceForm.formState.isSubmitting}
+                                >
+                                  {prevoyanceForm.formState.isSubmitting ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Save className="mr-2 h-4 w-4" />
+                                  )}
+                                  Enregistrer
+                                </Button>
+                              </div>
+                            </form>
+                          </Form>
+                        ) : (
+                          <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">
+                              Montant cotisé annuellement au 2ème pilier (LPP)
+                            </p>
+                            <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.lpp_2eme_pilier)}</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </Card>
+
+                {/* 3ème Pilier A/B */}
+                <Card>
+                  <Collapsible
+                    open={openPrevoyanceCategories["3eme_pilier"]}
+                    onOpenChange={(open) =>
+                      setOpenPrevoyanceCategories((prev) => ({ ...prev, "3eme_pilier": open }))
+                    }
+                  >
+                    <CardHeader>
+                      <CollapsibleTrigger className="flex items-center justify-between w-full hover:opacity-80 transition-opacity">
+                        <div className="flex items-center gap-3">
+                          <ChevronDown
+                            className={`h-5 w-5 transition-transform ${
+                              openPrevoyanceCategories["3eme_pilier"] ? "rotate-0" : "-rotate-90"
+                            }`}
+                          />
+                          <div className="text-left">
+                            <CardTitle>3ème pilier A/B</CardTitle>
+                            <CardDescription>Prévoyance privée</CardDescription>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">3ème Pilier A</p>
-                          <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.pilier_3a)}</p>
+                        <div className="flex items-center gap-4">
+                          <span className="text-2xl font-bold">
+                            {formatCurrency(prevoyanceData.pilier_3a + prevoyanceData.pilier_3b)}
+                          </span>
+                          {editingPrevoyanceCategory !== "3eme_pilier" && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingPrevoyanceCategory("3eme_pilier");
+                              }}
+                              variant="outline"
+                              size="sm"
+                            >
+                              Modifier
+                            </Button>
+                          )}
                         </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">3ème Pilier B</p>
-                          <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.pilier_3b)}</p>
-                        </div>
-                        <div className="md:col-span-2">
-                          <p className="text-sm text-muted-foreground">Total prévoyance</p>
-                          <p className="text-2xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                      </CollapsibleTrigger>
+                    </CardHeader>
+                    <CollapsibleContent>
+                      <CardContent>
+                        {editingPrevoyanceCategory === "3eme_pilier" ? (
+                          <Form {...prevoyanceForm}>
+                            <form onSubmit={prevoyanceForm.handleSubmit(onSubmitPrevoyance)} className="space-y-4">
+                              <FormField
+                                control={prevoyanceForm.control}
+                                name="pilier_3a"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>3ème Pilier A</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="1"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                        onFocus={(e) => e.target.select()}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={prevoyanceForm.control}
+                                name="pilier_3b"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>3ème Pilier B</FormLabel>
+                                    <FormControl>
+                                      <Input
+                                        type="number"
+                                        step="1"
+                                        {...field}
+                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                        onFocus={(e) => e.target.select()}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => {
+                                    setEditingPrevoyanceCategory(null);
+                                    prevoyanceForm.reset(prevoyanceData);
+                                  }}
+                                  variant="outline"
+                                  className="flex-1"
+                                  type="button"
+                                >
+                                  Annuler
+                                </Button>
+                                <Button
+                                  type="submit"
+                                  className="flex-1"
+                                  disabled={prevoyanceForm.formState.isSubmitting}
+                                >
+                                  {prevoyanceForm.formState.isSubmitting ? (
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Save className="mr-2 h-4 w-4" />
+                                  )}
+                                  Enregistrer
+                                </Button>
+                              </div>
+                            </form>
+                          </Form>
+                        ) : (
+                          <div className="space-y-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground">3ème Pilier A</p>
+                              <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.pilier_3a)}</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-muted-foreground">3ème Pilier B</p>
+                              <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.pilier_3b)}</p>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Collapsible>
+                </Card>
+
+                {/* Total Prévoyance Card */}
+                <Card className="border-2 border-primary/20 bg-primary/5">
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Total prévoyance</CardTitle>
+                    <CardDescription>Somme de tous les piliers</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-4xl font-bold text-primary">{formatCurrency(totalPrevoyance)}</p>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
 
             {/* Impôts */}
