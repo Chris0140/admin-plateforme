@@ -46,9 +46,9 @@ const categories: Record<Category, { label: string; subcategories: { value: stri
   prevoyance_retraite: {
     label: "Prévoyance Retraite",
     subcategories: [
-      { value: "1er_pilier", label: "1er Pilier (AVS)" },
-      { value: "2eme_pilier", label: "2ème Pilier (LPP)" },
-      { value: "3eme_pilier", label: "3ème Pilier (3a/3b)" },
+      { value: "1er_pilier_avs_ai", label: "1er pilier AVS-AI" },
+      { value: "2eme_pilier_lpp", label: "2ème pilier LPP" },
+      { value: "3eme_pilier_ab", label: "3ème pilier A/B" },
     ],
   },
   impots: {
@@ -80,6 +80,7 @@ const AccountDocuments = () => {
   const [uploadSectionOpen, setUploadSectionOpen] = useState(false);
   const [showAuthAlert, setShowAuthAlert] = useState(false);
   const [verifyDataOpen, setVerifyDataOpen] = useState(false);
+  const [currentSubcategory, setCurrentSubcategory] = useState<string>('');
   const [prevoyanceData, setPrevoyanceData] = useState({
     avs1erPilier: "",
     lpp2emePilier: "",
@@ -89,6 +90,7 @@ const AccountDocuments = () => {
     numeroAffilie: "",
     notes: "",
   });
+  const [openSubcategories, setOpenSubcategories] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (user) {
@@ -468,17 +470,110 @@ const AccountDocuments = () => {
             </TabsContent>
 
             <TabsContent value="prevoyance_retraite" className="space-y-4">
-              <div className="flex justify-end">
-                <Button 
-                  onClick={() => setVerifyDataOpen(true)}
-                  className="gap-2"
-                  variant="outline"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  Vérifier les données
-                </Button>
+              <div className="space-y-4">
+                {categories.prevoyance_retraite.subcategories.map((subcategory) => {
+                  const subcategoryDocs = documents.filter(
+                    doc => doc.category === 'prevoyance_retraite' && doc.subcategory === subcategory.value
+                  );
+                  const isOpen = openSubcategories[subcategory.value] || false;
+
+                  return (
+                    <Card key={subcategory.value}>
+                      <Collapsible 
+                        open={isOpen}
+                        onOpenChange={(open) => setOpenSubcategories(prev => ({ ...prev, [subcategory.value]: open }))}
+                      >
+                        <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+                          <CollapsibleTrigger className="w-full">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <ChevronDown 
+                                  className={`h-5 w-5 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+                                />
+                                <div className="text-left">
+                                  <CardTitle className="text-lg">{subcategory.label}</CardTitle>
+                                  <CardDescription>
+                                    {subcategoryDocs.length} document{subcategoryDocs.length !== 1 ? 's' : ''}
+                                  </CardDescription>
+                                </div>
+                              </div>
+                              <Button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCurrentSubcategory(subcategory.value);
+                                  setVerifyDataOpen(true);
+                                }}
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center gap-2"
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                                Vérifier les données
+                              </Button>
+                            </div>
+                          </CollapsibleTrigger>
+                        </CardHeader>
+                        <CollapsibleContent>
+                          <CardContent>
+                            {subcategoryDocs.length === 0 ? (
+                              <p className="text-muted-foreground">Aucun document uploadé</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {subcategoryDocs.map((doc) => (
+                                  <div
+                                    key={doc.id}
+                                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/50 transition-colors"
+                                  >
+                                    <div 
+                                      className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer"
+                                      onClick={() => handleView(doc)}
+                                    >
+                                      <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                                      <div className="min-w-0 flex-1">
+                                        <p className="font-medium truncate hover:underline">{doc.file_name}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {new Date(doc.uploaded_at).toLocaleDateString('fr-FR')} • {formatFileSize(doc.file_size)}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <div className="flex gap-2">
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleView(doc)}
+                                        title="Visualiser"
+                                      >
+                                        <Eye className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleDownload(doc)}
+                                        title="Télécharger"
+                                      >
+                                        <Download className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleDelete(doc.id)}
+                                        className="text-destructive hover:text-destructive"
+                                        title="Supprimer"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </CardContent>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    </Card>
+                  );
+                })}
               </div>
-              {renderDocumentsList(getDocumentsByCategory('prevoyance_retraite'))}
             </TabsContent>
 
             <TabsContent value="impots">
