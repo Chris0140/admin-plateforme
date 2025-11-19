@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine, LabelList, Cell } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -1203,12 +1203,20 @@ const Budget = () => {
               <ResponsiveContainer width="100%" height={450}>
                 <BarChart 
                   data={dataRetraiteProjection}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                  margin={{ top: 20, right: 10, left: 0, bottom: 5 }}
+                  barSize={150}
                 >
+                  <defs>
+                    <pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="8" height="8">
+                      <path d="M-2,2 l4,-4 M0,8 l8,-8 M6,10 l4,-4" 
+                            style={{ stroke: 'hsl(0 84% 60%)', strokeWidth: 2 }} />
+                    </pattern>
+                  </defs>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="periode"
                     tick={{ fontSize: 14, fontWeight: 500 }}
+                    axisLine={false}
                   />
                   <YAxis 
                     tickFormatter={(value) => `${value.toLocaleString('fr-CH')}`}
@@ -1219,10 +1227,106 @@ const Budget = () => {
                   />
                   <Legend />
                   
-                  <Bar dataKey="avs" stackId="a" fill="hsl(142 76% 36%)" name="1er Pilier AVS" />
-                  <Bar dataKey="lpp" stackId="a" fill="hsl(221 83% 53%)" name="2ème Pilier LPP" />
-                  <Bar dataKey="pilier3" stackId="a" fill="hsl(262 83% 58%)" name="3ème Pilier" />
-                  <Bar dataKey="lacune" stackId="a" fill="hsl(0 84% 60%)" name="Lacune de prévoyance" opacity={0.7} />
+                  <Bar dataKey="avs" stackId="a" fill="hsl(48 96% 53%)" name="1er Pilier AVS">
+                    <LabelList 
+                      dataKey="avs" 
+                      position="center"
+                      content={({ x, y, width, height, value }: any) => {
+                        if (value && value > 500) {
+                          return (
+                            <text 
+                              x={(x || 0) + (width || 0) / 2} 
+                              y={(y || 0) + (height || 0) / 2}
+                              fill="hsl(0 0% 10%)"
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              fontSize="13"
+                              fontWeight="600"
+                            >
+                              <tspan x={(x || 0) + (width || 0) / 2} dy="-0.6em">1er Pilier AVS</tspan>
+                              <tspan x={(x || 0) + (width || 0) / 2} dy="1.4em">CHF {Math.round(value).toLocaleString('fr-CH')}</tspan>
+                            </text>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </Bar>
+                  <Bar dataKey="lpp" stackId="a" fill="hsl(25 95% 53%)" name="2ème Pilier LPP">
+                    <LabelList 
+                      dataKey="lpp" 
+                      position="center"
+                      content={({ x, y, width, height, value }: any) => {
+                        if (value && value > 500) {
+                          return (
+                            <text 
+                              x={(x || 0) + (width || 0) / 2} 
+                              y={(y || 0) + (height || 0) / 2}
+                              fill="hsl(0 0% 10%)"
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              fontSize="13"
+                              fontWeight="600"
+                            >
+                              <tspan x={(x || 0) + (width || 0) / 2} dy="-0.6em">2ème Pilier LPP</tspan>
+                              <tspan x={(x || 0) + (width || 0) / 2} dy="1.4em">CHF {Math.round(value).toLocaleString('fr-CH')}</tspan>
+                            </text>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </Bar>
+                  <Bar dataKey="pilier3" stackId="a" fill="hsl(199 89% 48%)" name="3ème Pilier">
+                    <LabelList 
+                      dataKey="pilier3" 
+                      position="center"
+                      content={({ x, y, width, height, value }: any) => {
+                        if (value && value > 500) {
+                          return (
+                            <text 
+                              x={(x || 0) + (width || 0) / 2} 
+                              y={(y || 0) + (height || 0) / 2}
+                              fill="hsl(0 0% 100%)"
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              fontSize="13"
+                              fontWeight="600"
+                            >
+                              <tspan x={(x || 0) + (width || 0) / 2} dy="-0.6em">3ème Pilier</tspan>
+                              <tspan x={(x || 0) + (width || 0) / 2} dy="1.4em">CHF {Math.round(value).toLocaleString('fr-CH')}</tspan>
+                            </text>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </Bar>
+                  <Bar dataKey="lacune" stackId="a" fill="url(#diagonalHatch)" stroke="hsl(0 84% 60%)" strokeWidth={2} name="Lacune de prévoyance">
+                    <LabelList 
+                      dataKey="lacune" 
+                      position="center"
+                      content={({ x, y, width, height, value }: any) => {
+                        if (value && value > 500) {
+                          return (
+                            <text 
+                              x={(x || 0) + (width || 0) / 2} 
+                              y={(y || 0) + (height || 0) / 2}
+                              fill="hsl(0 84% 40%)"
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                              fontSize="13"
+                              fontWeight="700"
+                            >
+                              <tspan x={(x || 0) + (width || 0) / 2} dy="-0.6em">Lacune</tspan>
+                              <tspan x={(x || 0) + (width || 0) / 2} dy="1.4em">CHF {Math.round(value).toLocaleString('fr-CH')}</tspan>
+                            </text>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </Bar>
                   
                   <ReferenceLine 
                     y={besoinValue} 
@@ -1244,10 +1348,10 @@ const Budget = () => {
                     <div className="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-4 bg-muted rounded-lg">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(142 76% 36%)' }} />
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(48 96% 53%)' }} />
                           <span className="text-sm font-medium">1er Pilier AVS</span>
                         </div>
-                        <span className="text-lg font-bold" style={{ color: 'hsl(142 76% 36%)' }}>
+                        <span className="text-lg font-bold" style={{ color: 'hsl(48 96% 53%)' }}>
                           CHF {Math.round(avsValue).toLocaleString('fr-CH')}
                         </span>
                         <span className="text-xs text-muted-foreground">
@@ -1257,10 +1361,10 @@ const Budget = () => {
 
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(221 83% 53%)' }} />
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(25 95% 53%)' }} />
                           <span className="text-sm font-medium">2ème Pilier LPP</span>
                         </div>
-                        <span className="text-lg font-bold" style={{ color: 'hsl(221 83% 53%)' }}>
+                        <span className="text-lg font-bold" style={{ color: 'hsl(25 95% 53%)' }}>
                           CHF {Math.round(lppValue).toLocaleString('fr-CH')}
                         </span>
                         <span className="text-xs text-muted-foreground">
@@ -1270,10 +1374,10 @@ const Budget = () => {
 
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(262 83% 58%)' }} />
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(199 89% 48%)' }} />
                           <span className="text-sm font-medium">3ème Pilier (÷20)</span>
                         </div>
-                        <span className="text-lg font-bold" style={{ color: 'hsl(262 83% 58%)' }}>
+                        <span className="text-lg font-bold" style={{ color: 'hsl(199 89% 48%)' }}>
                           CHF {Math.round(pilier3Value).toLocaleString('fr-CH')}
                         </span>
                         <span className="text-xs text-muted-foreground">
@@ -1283,7 +1387,9 @@ const Budget = () => {
 
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(0 84% 60%)' }} />
+                          <div className="h-3 w-3 rounded-sm border-2 border-destructive bg-white" style={{ 
+                            backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, hsl(0 84% 60%) 2px, hsl(0 84% 60%) 4px)' 
+                          }} />
                           <span className="text-sm font-medium">Lacune</span>
                         </div>
                         <span className="text-lg font-bold text-destructive">
