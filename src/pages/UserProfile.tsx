@@ -18,6 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
+import { calculateAllAVSPensions, formatCHF } from "@/lib/avsCalculations";
 
 interface Profile {
   nom: string;
@@ -54,6 +55,11 @@ interface PrevoyanceData {
   lpp_2eme_pilier: number;
   pilier_3a: number;
   pilier_3b: number;
+  rente_vieillesse_mensuelle?: number;
+  rente_vieillesse_annuelle?: number;
+  rente_invalidite_mensuelle?: number;
+  rente_invalidite_annuelle?: number;
+  revenu_annuel_determinant?: number;
 }
 
 interface TaxData {
@@ -105,6 +111,11 @@ const prevoyanceSchema = z.object({
   lpp_2eme_pilier: z.number().min(0, "Le montant doit être positif"),
   pilier_3a: z.number().min(0, "Le montant doit être positif"),
   pilier_3b: z.number().min(0, "Le montant doit être positif"),
+  rente_vieillesse_mensuelle: z.number().min(0).optional(),
+  rente_vieillesse_annuelle: z.number().min(0).optional(),
+  rente_invalidite_mensuelle: z.number().min(0).optional(),
+  rente_invalidite_annuelle: z.number().min(0).optional(),
+  revenu_annuel_determinant: z.number().min(0).optional(),
 });
 
 const taxSchema = z.object({
@@ -216,7 +227,13 @@ const UserProfile = () => {
     lpp_2eme_pilier: 0,
     pilier_3a: 0,
     pilier_3b: 0,
+    rente_vieillesse_mensuelle: 0,
+    rente_vieillesse_annuelle: 0,
+    rente_invalidite_mensuelle: 0,
+    rente_invalidite_annuelle: 0,
+    revenu_annuel_determinant: 0,
   });
+  const [isCalculatingAVS, setIsCalculatingAVS] = useState(false);
 
   const profileForm = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -336,6 +353,11 @@ const UserProfile = () => {
           lpp_2eme_pilier: Number(prevoyanceDataResult.lpp_2eme_pilier),
           pilier_3a: Number(prevoyanceDataResult.pilier_3a),
           pilier_3b: Number(prevoyanceDataResult.pilier_3b),
+          rente_vieillesse_mensuelle: Number(prevoyanceDataResult.rente_vieillesse_mensuelle || 0),
+          rente_vieillesse_annuelle: Number(prevoyanceDataResult.rente_vieillesse_annuelle || 0),
+          rente_invalidite_mensuelle: Number(prevoyanceDataResult.rente_invalidite_mensuelle || 0),
+          rente_invalidite_annuelle: Number(prevoyanceDataResult.rente_invalidite_annuelle || 0),
+          revenu_annuel_determinant: Number(prevoyanceDataResult.revenu_annuel_determinant || 0),
         };
         setPrevoyanceData(prevoyance);
         prevoyanceForm.reset(prevoyance);
@@ -525,6 +547,11 @@ const UserProfile = () => {
         lpp_2eme_pilier: values.lpp_2eme_pilier,
         pilier_3a: values.pilier_3a,
         pilier_3b: values.pilier_3b,
+        rente_vieillesse_mensuelle: values.rente_vieillesse_mensuelle || 0,
+        rente_vieillesse_annuelle: values.rente_vieillesse_annuelle || 0,
+        rente_invalidite_mensuelle: values.rente_invalidite_mensuelle || 0,
+        rente_invalidite_annuelle: values.rente_invalidite_annuelle || 0,
+        revenu_annuel_determinant: values.revenu_annuel_determinant || 0,
       };
 
       if (existingPrevoyance) {
@@ -557,6 +584,83 @@ const UserProfile = () => {
         title: "Erreur",
         description: "Impossible de mettre à jour les données de prévoyance",
       });
+    }
+  };
+
+  const handleCalculateAVS = async () => {
+    try {
+      setIsCalculatingAVS(true);
+
+      // 1. Récupérer le revenu annuel de budget_data
+      const { data: budgetData, error: budgetError } = await supabase
+        .from("budget_data")
+        .select("revenu_brut_annuel")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (budgetError) throw budgetError;
+
+      if (!budgetData?.revenu_brut_annuel || budgetData.revenu_brut_annuel <= 0) {
+        toast({
+          variant: "destructive",
+          title: "Revenu manquant",
+          description: "Veuillez d'abord renseigner votre revenu annuel dans la section Budget",
+        });
+        setIsCalculatingAVS(false);
+        return;
+      }
+
+      // 2. Calculer les rentes avec la fonction utilitaire
+      const calculatedPensions = calculateAllAVSPensions(budgetData.revenu_brut_annuel);
+
+      // 3. Vérifier si des données de prévoyance existent déjà
+      const { data: existingPrevoyance } = await supabase
+        .from("prevoyance_data")
+        .select("id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      // 4. Sauvegarder dans prevoyance_data
+      const dataToSave = {
+        user_id: user?.id,
+        ...calculatedPensions,
+        avs_1er_pilier: prevoyanceData.avs_1er_pilier, // Conserver la cotisation existante
+        lpp_2eme_pilier: prevoyanceData.lpp_2eme_pilier,
+        pilier_3a: prevoyanceData.pilier_3a,
+        pilier_3b: prevoyanceData.pilier_3b,
+      };
+
+      if (existingPrevoyance) {
+        const { error } = await supabase
+          .from("prevoyance_data")
+          .update(dataToSave)
+          .eq("user_id", user?.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("prevoyance_data")
+          .insert(dataToSave);
+
+        if (error) throw error;
+      }
+
+      toast({
+        title: "Rentes AVS calculées",
+        description: "Vos rentes de vieillesse et d'invalidité ont été calculées selon l'Échelle 44 2025",
+      });
+
+      // Rafraîchir les données
+      await fetchUserData();
+    } catch (error) {
+      console.error("Error calculating AVS:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de calculer les rentes AVS",
+      });
+    } finally {
+      setIsCalculatingAVS(false);
     }
   };
 
@@ -1749,13 +1853,10 @@ const UserProfile = () => {
                           />
                           <div className="text-left">
                             <CardTitle>1er pilier AVS-AI</CardTitle>
-                            <CardDescription>Assurance-vieillesse et survivants</CardDescription>
+                            <CardDescription>Assurance-vieillesse et survivants - Rentes calculées</CardDescription>
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
-                          <span className="text-2xl font-bold">
-                            {formatCurrency(prevoyanceData.avs_1er_pilier)}
-                          </span>
                           {editingPrevoyanceCategory !== "1er_pilier" && (
                             <Button
                               onClick={(e) => {
@@ -1775,26 +1876,178 @@ const UserProfile = () => {
                       <CardContent>
                         {editingPrevoyanceCategory === "1er_pilier" ? (
                           <Form {...prevoyanceForm}>
-                            <form onSubmit={prevoyanceForm.handleSubmit(onSubmitPrevoyance)} className="space-y-4">
-                              <FormField
-                                control={prevoyanceForm.control}
-                                name="avs_1er_pilier"
-                                render={({ field }) => (
-                                  <FormItem>
-                                    <FormLabel>Cotisation AVS (1er pilier)</FormLabel>
-                                    <FormControl>
-                                      <Input
-                                        type="number"
-                                        step="1"
-                                        {...field}
-                                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                                        onFocus={(e) => e.target.select()}
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
+                            <form onSubmit={prevoyanceForm.handleSubmit(onSubmitPrevoyance)} className="space-y-6">
+                              <div className="space-y-4">
+                                <div className="p-4 bg-muted/50 rounded-lg space-y-4">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <h4 className="font-semibold text-sm">Revenu annuel déterminant</h4>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        Utilisé pour le calcul des rentes AVS (Échelle 44 2025)
+                                      </p>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="text-lg font-bold">
+                                        {prevoyanceData.revenu_annuel_determinant
+                                          ? formatCHF(prevoyanceData.revenu_annuel_determinant)
+                                          : "Non calculé"}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    onClick={handleCalculateAVS}
+                                    disabled={isCalculatingAVS}
+                                    variant="secondary"
+                                    className="w-full"
+                                  >
+                                    {isCalculatingAVS ? (
+                                      <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Calcul en cours...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Calculator className="mr-2 h-4 w-4" />
+                                        Calculer mes rentes AVS
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+
+                                <Separator />
+
+                                <div className="space-y-4">
+                                  <h4 className="font-semibold">Rentes calculées</h4>
+                                  
+                                  <div className="grid gap-4">
+                                    <div className="space-y-2">
+                                      <h5 className="text-sm font-medium text-muted-foreground">Rente de vieillesse</h5>
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                          control={prevoyanceForm.control}
+                                          name="rente_vieillesse_mensuelle"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs">Mensuelle</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  type="number"
+                                                  step="1"
+                                                  placeholder="0"
+                                                  {...field}
+                                                  value={field.value || 0}
+                                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                                  onFocus={(e) => e.target.select()}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                        <FormField
+                                          control={prevoyanceForm.control}
+                                          name="rente_vieillesse_annuelle"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs">Annuelle</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  type="number"
+                                                  step="1"
+                                                  placeholder="0"
+                                                  {...field}
+                                                  value={field.value || 0}
+                                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                                  onFocus={(e) => e.target.select()}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                      <h5 className="text-sm font-medium text-muted-foreground">Rente d'invalidité</h5>
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <FormField
+                                          control={prevoyanceForm.control}
+                                          name="rente_invalidite_mensuelle"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs">Mensuelle</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  type="number"
+                                                  step="1"
+                                                  placeholder="0"
+                                                  {...field}
+                                                  value={field.value || 0}
+                                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                                  onFocus={(e) => e.target.select()}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                        <FormField
+                                          control={prevoyanceForm.control}
+                                          name="rente_invalidite_annuelle"
+                                          render={({ field }) => (
+                                            <FormItem>
+                                              <FormLabel className="text-xs">Annuelle</FormLabel>
+                                              <FormControl>
+                                                <Input
+                                                  type="number"
+                                                  step="1"
+                                                  placeholder="0"
+                                                  {...field}
+                                                  value={field.value || 0}
+                                                  onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                                  onFocus={(e) => e.target.select()}
+                                                />
+                                              </FormControl>
+                                              <FormMessage />
+                                            </FormItem>
+                                          )}
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <p className="text-xs text-muted-foreground">
+                                    💡 Ces montants sont calculés automatiquement selon l'Échelle 44 2025. 
+                                    Vous pouvez les modifier manuellement si nécessaire.
+                                  </p>
+                                </div>
+
+                                <Separator />
+
+                                <FormField
+                                  control={prevoyanceForm.control}
+                                  name="avs_1er_pilier"
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>Cotisation AVS annuelle</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type="number"
+                                          step="1"
+                                          placeholder="0"
+                                          {...field}
+                                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                          onFocus={(e) => e.target.select()}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+
                               <div className="flex gap-2">
                                 <Button
                                   onClick={() => {
@@ -1823,11 +2076,116 @@ const UserProfile = () => {
                             </form>
                           </Form>
                         ) : (
-                          <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground">
-                              Montant cotisé annuellement au 1er pilier (AVS-AI)
-                            </p>
-                            <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.avs_1er_pilier)}</p>
+                          <div className="space-y-6">
+                            <div className="p-4 bg-muted/50 rounded-lg">
+                              <div className="flex items-center justify-between mb-4">
+                                <div>
+                                  <h4 className="font-semibold text-sm">Revenu annuel déterminant</h4>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Base de calcul (Échelle 44 2025)
+                                  </p>
+                                </div>
+                                <p className="text-lg font-bold">
+                                  {prevoyanceData.revenu_annuel_determinant
+                                    ? formatCHF(prevoyanceData.revenu_annuel_determinant)
+                                    : "—"}
+                                </p>
+                              </div>
+                              {!prevoyanceData.revenu_annuel_determinant && (
+                                <Button
+                                  type="button"
+                                  onClick={handleCalculateAVS}
+                                  disabled={isCalculatingAVS}
+                                  variant="secondary"
+                                  size="sm"
+                                  className="w-full"
+                                >
+                                  {isCalculatingAVS ? (
+                                    <>
+                                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                      Calcul en cours...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Calculator className="mr-2 h-4 w-4" />
+                                      Calculer mes rentes AVS
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                            </div>
+
+                            <div className="grid gap-6">
+                              <div className="space-y-3">
+                                <h4 className="font-semibold flex items-center gap-2">
+                                  Rente de vieillesse
+                                  {prevoyanceData.rente_vieillesse_mensuelle && prevoyanceData.rente_vieillesse_mensuelle > 0 ? (
+                                    <span className="text-xs text-muted-foreground font-normal">(à l'âge de la retraite)</span>
+                                  ) : null}
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="p-3 bg-background border rounded-lg">
+                                    <p className="text-xs text-muted-foreground mb-1">Mensuelle</p>
+                                    <p className="text-xl font-bold">
+                                      {prevoyanceData.rente_vieillesse_mensuelle
+                                        ? formatCHF(prevoyanceData.rente_vieillesse_mensuelle)
+                                        : "—"}
+                                    </p>
+                                  </div>
+                                  <div className="p-3 bg-background border rounded-lg">
+                                    <p className="text-xs text-muted-foreground mb-1">Annuelle</p>
+                                    <p className="text-xl font-bold">
+                                      {prevoyanceData.rente_vieillesse_annuelle
+                                        ? formatCHF(prevoyanceData.rente_vieillesse_annuelle)
+                                        : "—"}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-3">
+                                <h4 className="font-semibold flex items-center gap-2">
+                                  Rente d'invalidité
+                                  {prevoyanceData.rente_invalidite_mensuelle && prevoyanceData.rente_invalidite_mensuelle > 0 ? (
+                                    <span className="text-xs text-muted-foreground font-normal">(en cas d'invalidité)</span>
+                                  ) : null}
+                                </h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="p-3 bg-background border rounded-lg">
+                                    <p className="text-xs text-muted-foreground mb-1">Mensuelle</p>
+                                    <p className="text-xl font-bold">
+                                      {prevoyanceData.rente_invalidite_mensuelle
+                                        ? formatCHF(prevoyanceData.rente_invalidite_mensuelle)
+                                        : "—"}
+                                    </p>
+                                  </div>
+                                  <div className="p-3 bg-background border rounded-lg">
+                                    <p className="text-xs text-muted-foreground mb-1">Annuelle</p>
+                                    <p className="text-xl font-bold">
+                                      {prevoyanceData.rente_invalidite_annuelle
+                                        ? formatCHF(prevoyanceData.rente_invalidite_annuelle)
+                                        : "—"}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <Separator />
+
+                            <div>
+                              <p className="text-sm text-muted-foreground mb-2">Cotisation AVS annuelle</p>
+                              <p className="text-xl font-semibold">{formatCurrency(prevoyanceData.avs_1er_pilier)}</p>
+                            </div>
+
+                            {prevoyanceData.rente_vieillesse_mensuelle && prevoyanceData.rente_vieillesse_mensuelle > 0 && (
+                              <div className="p-3 bg-muted/30 rounded-lg">
+                                <p className="text-xs text-muted-foreground">
+                                  💡 Les rentes sont calculées selon l'Échelle 44 2025 pour une carrière complète. 
+                                  Les montants réels peuvent varier selon vos années de cotisation, splitting, etc.
+                                </p>
+                              </div>
+                            )}
                           </div>
                         )}
                       </CardContent>
