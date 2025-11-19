@@ -538,7 +538,7 @@ const Budget = () => {
                           <p className="text-2xl font-bold text-foreground">{formatCurrency(parseFloat(revenuBrut) || 0)}</p>
                         </div>
                         <div>
-                          <Label htmlFor="besoinPourcentage">Besoin en retraite (% du revenu net)</Label>
+                          <Label htmlFor="besoinPourcentage">Besoin en retraite %</Label>
                           <div className="flex items-center gap-2 mt-1">
                             <Input
                               id="besoinPourcentage"
