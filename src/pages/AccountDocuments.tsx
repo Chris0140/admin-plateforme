@@ -92,6 +92,10 @@ const AccountDocuments = () => {
     notes: "",
   });
   const [openSubcategories, setOpenSubcategories] = useState<Record<string, boolean>>({});
+  const [verifyingDocument, setVerifyingDocument] = useState<Document | null>(null);
+  const [editableData, setEditableData] = useState<any>(null);
+  const [savingData, setSavingData] = useState(false);
+  const [activeVerifyTab, setActiveVerifyTab] = useState<'avoir' | 'vieillesse' | 'invalidite' | 'deces'>('avoir');
   const [analyzingDocuments, setAnalyzingDocuments] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
@@ -280,6 +284,71 @@ const AccountDocuments = () => {
       });
     } finally {
       setAnalyzingDocuments(prev => ({ ...prev, [doc.id]: false }));
+    }
+  };
+
+  const handleFieldChange = (field: string, value: string) => {
+    const numValue = parseFloat(value.replace(/['\s]/g, '')) || 0;
+    const updates: any = { [field]: numValue };
+    
+    // Auto-calculs
+    if (field === 'rente_mensuelle_projetee') {
+      updates.rente_annuelle_projetee = numValue * 12;
+    } else if (field === 'rente_annuelle_projetee') {
+      updates.rente_mensuelle_projetee = numValue / 12;
+    } else if (field === 'rente_invalidite_mensuelle') {
+      updates.rente_invalidite_annuelle = numValue * 12;
+    } else if (field === 'rente_invalidite_annuelle') {
+      updates.rente_invalidite_mensuelle = numValue / 12;
+    }
+    
+    setEditableData(prev => ({ ...prev, ...updates }));
+  };
+
+  const handleSaveLppData = async () => {
+    if (!user || !verifyingDocument) return;
+    
+    setSavingData(true);
+    
+    try {
+      // Préparer les données à sauvegarder
+      const dataToSave = {
+        user_id: user.id,
+        lpp_avoir_vieillesse: editableData.avoir_vieillesse || 0,
+        lpp_capital_projete_65: editableData.capital_projete_65 || 0,
+        lpp_rente_mensuelle_projetee: editableData.rente_mensuelle_projetee || 0,
+        lpp_rente_annuelle_projetee: editableData.rente_annuelle_projetee || 0,
+        lpp_rente_invalidite_mensuelle: editableData.rente_invalidite_mensuelle || 0,
+        lpp_rente_invalidite_annuelle: editableData.rente_invalidite_annuelle || 0,
+        lpp_capital_invalidite: editableData.capital_invalidite || 0,
+        lpp_rente_conjoint_survivant: editableData.rente_conjoint_survivant || 0,
+        lpp_rente_orphelins: editableData.rente_orphelins || 0,
+        lpp_capital_deces: editableData.capital_deces || 0,
+        lpp_derniere_maj: editableData.date_certificat || new Date().toISOString().split('T')[0],
+      };
+      
+      // Upsert dans prevoyance_data
+      const { error } = await supabase
+        .from('prevoyance_data')
+        .upsert(dataToSave);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "✅ Données sauvegardées !",
+        description: "Les données LPP ont été enregistrées dans votre profil",
+      });
+      
+      setVerifyingDocument(null);
+      setEditableData(null);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erreur de sauvegarde",
+        description: error.message,
+      });
+    } finally {
+      setSavingData(false);
     }
   };
 
@@ -484,14 +553,12 @@ const AccountDocuments = () => {
                               size="sm"
                               className="mt-2"
                               onClick={() => {
-                                navigate('/profil');
-                                toast({
-                                  title: "Redirection",
-                                  description: "Ouvrez la section 2ème pilier pour importer les données",
-                                });
+                                setVerifyingDocument(doc);
+                                setEditableData({ ...doc.extracted_data });
+                                setActiveVerifyTab('avoir');
                               }}
                             >
-                              📋 Importer dans mon profil
+                              🔍 Vérifier les données
                             </Button>
                           </div>
                         )}
@@ -847,6 +914,194 @@ const AccountDocuments = () => {
                 Enregistrer
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!verifyingDocument} onOpenChange={() => {
+        setVerifyingDocument(null);
+        setEditableData(null);
+      }}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Vérifier et modifier les données LPP</DialogTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Certificat: {verifyingDocument?.file_name}
+            </p>
+          </DialogHeader>
+          
+          <Tabs value={activeVerifyTab} onValueChange={(v) => setActiveVerifyTab(v as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="avoir">Avoir actuel</TabsTrigger>
+              <TabsTrigger value="vieillesse">Vieillesse</TabsTrigger>
+              <TabsTrigger value="invalidite">Invalidité</TabsTrigger>
+              <TabsTrigger value="deces">Décès</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="avoir" className="space-y-4 mt-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="avoir_vieillesse">Avoir de vieillesse (CHF)</Label>
+                  <Input
+                    id="avoir_vieillesse"
+                    type="text"
+                    value={editableData?.avoir_vieillesse?.toLocaleString('fr-CH') || ''}
+                    onChange={(e) => handleFieldChange('avoir_vieillesse', e.target.value)}
+                    placeholder="125'000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date_certificat">Date du certificat</Label>
+                  <Input
+                    id="date_certificat"
+                    type="date"
+                    value={editableData?.date_certificat || ''}
+                    onChange={(e) => setEditableData(prev => ({ ...prev, date_certificat: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="vieillesse" className="space-y-4 mt-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="capital_projete_65">Capital projeté à 65 ans (CHF)</Label>
+                  <Input
+                    id="capital_projete_65"
+                    type="text"
+                    value={editableData?.capital_projete_65?.toLocaleString('fr-CH') || ''}
+                    onChange={(e) => handleFieldChange('capital_projete_65', e.target.value)}
+                    placeholder="450'000"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="rente_mensuelle_projetee">Rente mensuelle (CHF/mois)</Label>
+                    <Input
+                      id="rente_mensuelle_projetee"
+                      type="text"
+                      value={editableData?.rente_mensuelle_projetee?.toLocaleString('fr-CH') || ''}
+                      onChange={(e) => handleFieldChange('rente_mensuelle_projetee', e.target.value)}
+                      placeholder="2'500"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="rente_annuelle_projetee">Rente annuelle (CHF/an)</Label>
+                    <Input
+                      id="rente_annuelle_projetee"
+                      type="text"
+                      value={editableData?.rente_annuelle_projetee?.toLocaleString('fr-CH') || ''}
+                      onChange={(e) => handleFieldChange('rente_annuelle_projetee', e.target.value)}
+                      placeholder="30'000"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  💡 Les montants mensuels et annuels sont automatiquement synchronisés
+                </p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="invalidite" className="space-y-4 mt-4">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="rente_invalidite_mensuelle">Rente mensuelle (CHF/mois)</Label>
+                    <Input
+                      id="rente_invalidite_mensuelle"
+                      type="text"
+                      value={editableData?.rente_invalidite_mensuelle?.toLocaleString('fr-CH') || ''}
+                      onChange={(e) => handleFieldChange('rente_invalidite_mensuelle', e.target.value)}
+                      placeholder="3'200"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="rente_invalidite_annuelle">Rente annuelle (CHF/an)</Label>
+                    <Input
+                      id="rente_invalidite_annuelle"
+                      type="text"
+                      value={editableData?.rente_invalidite_annuelle?.toLocaleString('fr-CH') || ''}
+                      onChange={(e) => handleFieldChange('rente_invalidite_annuelle', e.target.value)}
+                      placeholder="38'400"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="capital_invalidite">Capital invalidité (CHF)</Label>
+                  <Input
+                    id="capital_invalidite"
+                    type="text"
+                    value={editableData?.capital_invalidite?.toLocaleString('fr-CH') || ''}
+                    onChange={(e) => handleFieldChange('capital_invalidite', e.target.value)}
+                    placeholder="180'000"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  💡 Les montants mensuels et annuels sont automatiquement synchronisés
+                </p>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="deces" className="space-y-4 mt-4">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="rente_conjoint_survivant">Rente conjoint survivant (CHF/mois)</Label>
+                  <Input
+                    id="rente_conjoint_survivant"
+                    type="text"
+                    value={editableData?.rente_conjoint_survivant?.toLocaleString('fr-CH') || ''}
+                    onChange={(e) => handleFieldChange('rente_conjoint_survivant', e.target.value)}
+                    placeholder="2'000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rente_orphelins">Rente orphelins (CHF/mois)</Label>
+                  <Input
+                    id="rente_orphelins"
+                    type="text"
+                    value={editableData?.rente_orphelins?.toLocaleString('fr-CH') || ''}
+                    onChange={(e) => handleFieldChange('rente_orphelins', e.target.value)}
+                    placeholder="800"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="capital_deces">Capital décès (CHF)</Label>
+                  <Input
+                    id="capital_deces"
+                    type="text"
+                    value={editableData?.capital_deces?.toLocaleString('fr-CH') || ''}
+                    onChange={(e) => handleFieldChange('capital_deces', e.target.value)}
+                    placeholder="180'000"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setVerifyingDocument(null);
+                setEditableData(null);
+              }}
+              disabled={savingData}
+            >
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleSaveLppData}
+              disabled={savingData}
+            >
+              {savingData ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sauvegarde...
+                </>
+              ) : (
+                '💾 Sauvegarder dans mon profil'
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
