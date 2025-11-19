@@ -384,32 +384,79 @@ const Budget = () => {
       const revenu_brut_mensuel = periodType === "mensuel" ? revenuBrutNum : Math.round(revenuBrutNum / 12);
       const revenu_brut_annuel = periodType === "annuel" ? revenuBrutNum : revenuBrutNum * 12;
 
-      await supabase
+      // Vérifier si budget_data existe
+      const { data: existingBudget } = await supabase
         .from("budget_data")
-        .upsert({
-          user_id: user.id,
-          revenu_brut: revenuBrutNum,
-          revenu_brut_mensuel,
-          revenu_brut_annuel,
-          period_type: periodType,
-        });
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      // Sauvegarder les paramètres de prévoyance dans prevoyance_data
-      const { error: prevoyanceError } = await supabase
-        .from("prevoyance_data")
-        .upsert({
-          user_id: user.id,
-          besoin_pourcentage: parseFloat(besoinPourcentage) || 80,
-          revenu_brut_reference: revenuBrutNum,
-          etat_civil: etatCivil || null,
-          nombre_enfants: parseInt(nombreEnfants) || 0,
-        });
-
-      if (prevoyanceError) {
-        console.error('Erreur prevoyance_data:', prevoyanceError);
-        throw prevoyanceError;
+      if (existingBudget) {
+        await supabase
+          .from("budget_data")
+          .update({
+            revenu_brut: revenuBrutNum,
+            revenu_brut_mensuel,
+            revenu_brut_annuel,
+            period_type: periodType,
+          })
+          .eq("user_id", user.id);
+      } else {
+        await supabase
+          .from("budget_data")
+          .insert({
+            user_id: user.id,
+            revenu_brut: revenuBrutNum,
+            revenu_brut_mensuel,
+            revenu_brut_annuel,
+            period_type: periodType,
+          });
       }
-      console.log('Prevoyance_data sauvegardé');
+
+      // Vérifier si prevoyance_data existe
+      const { data: existingPrevoyance } = await supabase
+        .from("prevoyance_data")
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (existingPrevoyance) {
+        const { error: prevoyanceError } = await supabase
+          .from("prevoyance_data")
+          .update({
+            besoin_pourcentage: parseFloat(besoinPourcentage) || 80,
+            revenu_brut_reference: revenuBrutNum,
+            etat_civil: etatCivil || null,
+            nombre_enfants: parseInt(nombreEnfants) || 0,
+          })
+          .eq("user_id", user.id);
+
+        if (prevoyanceError) {
+          console.error('Erreur prevoyance_data update:', prevoyanceError);
+          throw prevoyanceError;
+        }
+        console.log('Prevoyance_data mis à jour');
+      } else {
+        const { error: prevoyanceError } = await supabase
+          .from("prevoyance_data")
+          .insert({
+            user_id: user.id,
+            besoin_pourcentage: parseFloat(besoinPourcentage) || 80,
+            revenu_brut_reference: revenuBrutNum,
+            etat_civil: etatCivil || null,
+            nombre_enfants: parseInt(nombreEnfants) || 0,
+            avs_1er_pilier: 0,
+            lpp_2eme_pilier: 0,
+            pilier_3a: 0,
+            pilier_3b: 0,
+          });
+
+        if (prevoyanceError) {
+          console.error('Erreur prevoyance_data insert:', prevoyanceError);
+          throw prevoyanceError;
+        }
+        console.log('Prevoyance_data inséré');
+      }
 
       // Synchroniser avec profiles (informations personnelles)
       const { error: profileError } = await supabase
