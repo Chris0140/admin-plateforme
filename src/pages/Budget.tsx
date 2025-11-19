@@ -7,11 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ChevronDown, Calculator } from "lucide-react";
+import { Save, ChevronDown, Calculator, AlertTriangle } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { calculateAllAVSPensions, formatCHF } from "@/lib/avsCalculations";
 
@@ -449,15 +449,28 @@ const Budget = () => {
   const total3emePilier = pilier3TotalCapital;
   const totalPrevoyance = total1erPilier + total2emePilier + total3emePilier;
 
+  // Calcul du besoin selon le mode d'affichage
+  const revenuBrutValue = parseFloat(revenuBrut) || 0;
+  const besoinValue = graphDisplayMode === "mensuel" 
+    ? (periodType === "mensuel" ? revenuBrutValue : revenuBrutValue / 12) * (parseFloat(besoinPourcentage) / 100)
+    : (periodType === "annuel" ? revenuBrutValue : revenuBrutValue * 12) * (parseFloat(besoinPourcentage) / 100);
+
   // Données pour le graphique de projection retraite (65-85 ans)
   const dataRetraiteProjection = Array.from({ length: 21 }, (_, i) => {
     const age = 65 + i;
+    const avsValue = graphDisplayMode === "mensuel" ? Math.round(avsRenteRetraite / 12) : Math.round(avsRenteRetraite);
+    const lppValue = graphDisplayMode === "mensuel" ? Math.round(lppRenteRetraite / 12) : Math.round(lppRenteRetraite);
+    const pilier3Value = graphDisplayMode === "mensuel" ? Math.round(pilier3RenteAnnuelle / 12) : Math.round(pilier3RenteAnnuelle);
+    const totalPiliers = avsValue + lppValue + pilier3Value;
+    const lacune = Math.max(0, besoinValue - totalPiliers);
+    
     return {
       age: `${age}`,
       ageLabel: `${age} ans`,
-      avs: graphDisplayMode === "mensuel" ? Math.round(avsRenteRetraite / 12) : Math.round(avsRenteRetraite),
-      lpp: graphDisplayMode === "mensuel" ? Math.round(lppRenteRetraite / 12) : Math.round(lppRenteRetraite),
-      pilier3: graphDisplayMode === "mensuel" ? Math.round(pilier3RenteAnnuelle / 12) : Math.round(pilier3RenteAnnuelle),
+      avs: avsValue,
+      lpp: lppValue,
+      pilier3: pilier3Value,
+      lacune: lacune,
     };
   });
 
@@ -1125,6 +1138,25 @@ const Budget = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
+                    {/* Badge d'alerte si lacune existe */}
+                    {besoinValue > 0 && (
+                      (graphDisplayMode === "mensuel" 
+                        ? Math.round(avsRenteRetraite / 12) + Math.round(lppRenteRetraite / 12) + Math.round(pilier3RenteAnnuelle / 12)
+                        : Math.round(avsRenteRetraite) + Math.round(lppRenteRetraite) + Math.round(pilier3RenteAnnuelle)
+                      ) < besoinValue
+                    ) && (
+                      <div className="mb-4 p-4 bg-destructive/10 border-2 border-destructive/20 rounded-lg">
+                        <div className="flex items-center gap-2 text-destructive">
+                          <AlertTriangle className="h-5 w-5" />
+                          <span className="font-semibold">Attention : Lacune de prévoyance détectée</span>
+                        </div>
+                        <p className="text-sm text-destructive/90 mt-2">
+                          Vos revenus de retraite projetés ne couvrent pas vos besoins. 
+                          Considérez augmenter vos cotisations au 3ème pilier.
+                        </p>
+                      </div>
+                    )}
+                    
                     <ResponsiveContainer width="100%" height={400}>
                       <BarChart data={dataRetraiteProjection}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -1172,11 +1204,31 @@ const Budget = () => {
                           fill="hsl(var(--chart-3))" 
                           name="3ème Pilier (÷20 ans)"
                         />
+                        <Bar 
+                          dataKey="lacune" 
+                          stackId="a" 
+                          fill="hsl(0 84% 60%)" 
+                          name="Lacune de prévoyance"
+                          opacity={0.7}
+                        />
+                        <ReferenceLine 
+                          y={besoinValue} 
+                          stroke="hsl(0 84% 60%)"
+                          strokeWidth={2}
+                          strokeDasharray="5 5"
+                          label={{ 
+                            value: `Besoin (${besoinPourcentage}%)`, 
+                            position: 'right',
+                            fill: 'hsl(0 84% 60%)',
+                            fontSize: 12,
+                            fontWeight: 'bold'
+                          }}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                     
                     {/* Légende avec montants */}
-                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted rounded-lg">
+                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 p-4 bg-muted rounded-lg">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
                           <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--chart-1))' }} />
@@ -1223,6 +1275,35 @@ const Budget = () => {
                             ? Math.round(totalRevenuRetraiteAnnuel / 12)
                             : Math.round(totalRevenuRetraiteAnnuel)
                           ).toLocaleString('fr-CH')}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(0 84% 60%)' }} />
+                          <span className="text-sm font-medium">Lacune</span>
+                        </div>
+                        <span className="text-lg font-bold text-destructive">
+                          CHF {Math.max(0, Math.round(besoinValue - (
+                            (graphDisplayMode === "mensuel" 
+                              ? Math.round(avsRenteRetraite / 12) + Math.round(lppRenteRetraite / 12) + Math.round(pilier3RenteAnnuelle / 12)
+                              : Math.round(avsRenteRetraite) + Math.round(lppRenteRetraite) + Math.round(pilier3RenteAnnuelle)
+                            )
+                          ))).toLocaleString('fr-CH')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                        </span>
+                      </div>
+                      <div className="flex flex-col gap-1 border-l-2 border-destructive pl-4">
+                        <div className="flex items-center gap-2">
+                          <div className="h-1 w-8" style={{ backgroundColor: 'hsl(0 84% 60%)' }} />
+                          <span className="text-sm font-medium">Besoin ({besoinPourcentage}%)</span>
+                        </div>
+                        <span className="text-lg font-bold">
+                          CHF {Math.round(besoinValue).toLocaleString('fr-CH')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
                         </span>
                       </div>
                     </div>
