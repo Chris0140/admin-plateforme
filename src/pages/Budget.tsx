@@ -59,6 +59,9 @@ const Budget = () => {
   const [pilier3a, setPilier3a] = useState("");
   const [pilier3b, setPilier3b] = useState("");
   const [graphDisplayMode, setGraphDisplayMode] = useState<"mensuel" | "annuel">("mensuel");
+  
+  // Date de naissance pour calculer l'âge
+  const [dateNaissance, setDateNaissance] = useState<string>("");
 
   // Collapsible states for mobile
   const [revenusOpen, setRevenusOpen] = useState(true);
@@ -149,6 +152,19 @@ const Budget = () => {
         .maybeSingle();
 
       if (prevoyanceError) throw prevoyanceError;
+
+      // Charger le profil pour obtenir la date de naissance
+      const { data: profileData, error: profileError } = await supabase
+        .from("profiles")
+        .select("date_naissance")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+
+      if (profileData) {
+        setDateNaissance(profileData.date_naissance || "");
+      }
 
       if (prevoyanceData) {
         // Charger les données AVS
@@ -1437,23 +1453,281 @@ const Budget = () => {
                 {/* Graphique Invalidité */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Situation en cas d'Invalidité</CardTitle>
-                    <CardDescription>Prestations estimées en cas d'invalidité</CardDescription>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                      <div>
+                        <CardTitle>Situation en cas d'Invalidité</CardTitle>
+                        <CardDescription>Prestations estimées en cas d'invalidité</CardDescription>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant={graphDisplayMode === "mensuel" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setGraphDisplayMode("mensuel")}
+                        >
+                          Mensuel
+                        </Button>
+                        <Button
+                          variant={graphDisplayMode === "annuel" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setGraphDisplayMode("annuel")}
+                        >
+                          Annuel
+                        </Button>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={dataInvalidite}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                        <Legend />
-                        <Bar dataKey="montant" fill="hsl(var(--secondary))" name="Rente annuelle (CHF)" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                    <p className="text-xs text-muted-foreground mt-4">
-                      * Estimation basée sur 60% des avoirs (1er et 2ème pilier) et 50% du 3ème pilier
-                    </p>
+                    {(() => {
+                      // Calculer l'âge actuel
+                      const today = new Date();
+                      const birthDate = dateNaissance ? new Date(dateNaissance) : null;
+                      const ageActuel = birthDate 
+                        ? today.getFullYear() - birthDate.getFullYear() - 
+                          (today.getMonth() < birthDate.getMonth() || 
+                           (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate()) ? 1 : 0)
+                        : 0;
+                      
+                      const ageRetraite = 65;
+                      const periodeInvalidite = ageActuel > 0 && ageActuel < ageRetraite 
+                        ? `Aujourd'hui (${ageActuel} ans) - Retraite (${ageRetraite} ans)`
+                        : "Période d'invalidité";
+
+                      // Calculer le besoin selon le mode d'affichage
+                      const revenuBrutValue = parseFloat(revenuBrut) || 0;
+                      const revenuActuel = graphDisplayMode === "mensuel" 
+                        ? (periodType === "mensuel" ? revenuBrutValue : revenuBrutValue / 12)
+                        : (periodType === "annuel" ? revenuBrutValue : revenuBrutValue * 12);
+                      const besoinValue = revenuActuel * (parseFloat(besoinPourcentage) / 100);
+
+                      // Calculer les valeurs d'invalidité
+                      const avsInvaliditeValue = graphDisplayMode === "mensuel" 
+                        ? parseFloat(avsInvaliditeMensuelle) || 0
+                        : parseFloat(avsInvaliditeAnnuelle) || 0;
+                      const lppInvaliditeValue = graphDisplayMode === "mensuel"
+                        ? parseFloat(lppRenteInvaliditeMensuelle) || 0
+                        : parseFloat(lppRenteInvaliditeAnnuelle) || 0;
+                      
+                      const totalInvalidite = avsInvaliditeValue + lppInvaliditeValue;
+                      const lacuneInvalidite = Math.max(0, besoinValue - totalInvalidite);
+
+                      // Données pour le graphique
+                      const dataInvaliditeProjection = [
+                        {
+                          periode: periodeInvalidite,
+                          avs: avsInvaliditeValue,
+                          lpp: lppInvaliditeValue,
+                          lacune: lacuneInvalidite,
+                        }
+                      ];
+
+                      return (
+                        <>
+                          {/* Badge d'alerte si lacune existe */}
+                          {totalInvalidite < besoinValue && (
+                            <div className="mb-4 p-4 bg-destructive/10 border-2 border-destructive/20 rounded-lg">
+                              <div className="flex items-center gap-2 text-destructive">
+                                <AlertTriangle className="h-5 w-5" />
+                                <span className="font-semibold">Attention : Lacune en cas d'invalidité</span>
+                              </div>
+                              <p className="text-sm text-destructive/90 mt-2">
+                                Vos prestations d'invalidité ne couvrent pas vos besoins ({besoinPourcentage}% du revenu actuel). 
+                                Perte estimée: CHF {Math.round(lacuneInvalidite).toLocaleString('fr-CH')} {graphDisplayMode === "mensuel" ? "par mois" : "par an"}.
+                              </p>
+                            </div>
+                          )}
+                    
+                          <ResponsiveContainer width="100%" height={450}>
+                            <BarChart 
+                              data={dataInvaliditeProjection}
+                              margin={{ top: 20, right: 10, left: -10, bottom: 5 }}
+                              barCategoryGap="5%"
+                            >
+                              <defs>
+                                <pattern id="diagonalHatchInvalidite" patternUnits="userSpaceOnUse" width="8" height="8">
+                                  <path d="M-2,2 l4,-4 M0,8 l8,-8 M6,10 l4,-4" 
+                                        style={{ stroke: 'hsl(0 84% 60%)', strokeWidth: 2 }} />
+                                </pattern>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis 
+                                dataKey="periode"
+                                tick={{ fontSize: 14, fontWeight: 500 }}
+                                axisLine={false}
+                              />
+                              <YAxis 
+                                tickFormatter={(value) => `${value.toLocaleString('fr-CH')}`}
+                                label={{ value: 'Montant (CHF)', angle: -90, position: 'insideLeft' }}
+                              />
+                              <Tooltip 
+                                formatter={(value: number) => `CHF ${value.toLocaleString('fr-CH')}`}
+                              />
+                              <Legend />
+                              
+                              <Bar dataKey="avs" stackId="a" fill="hsl(48 96% 53%)" name="1er Pilier AVS">
+                                <LabelList 
+                                  dataKey="avs" 
+                                  position="center"
+                                  content={({ x, y, width, height, value }: any) => {
+                                    if (value && value > 500) {
+                                      return (
+                                        <text 
+                                          x={(x || 0) + (width || 0) / 2} 
+                                          y={(y || 0) + (height || 0) / 2}
+                                          fill="hsl(0 0% 10%)"
+                                          textAnchor="middle"
+                                          dominantBaseline="middle"
+                                          fontSize="13"
+                                          fontWeight="600"
+                                        >
+                                          <tspan x={(x || 0) + (width || 0) / 2} dy="-0.6em">1er Pilier AVS</tspan>
+                                          <tspan x={(x || 0) + (width || 0) / 2} dy="1.4em">CHF {Math.round(value).toLocaleString('fr-CH')}</tspan>
+                                        </text>
+                                      );
+                                    }
+                                    return null;
+                                  }}
+                                />
+                              </Bar>
+                              <Bar dataKey="lpp" stackId="a" fill="hsl(25 95% 53%)" name="2ème Pilier LPP">
+                                <LabelList 
+                                  dataKey="lpp" 
+                                  position="center"
+                                  content={({ x, y, width, height, value }: any) => {
+                                    if (value && value > 500) {
+                                      return (
+                                        <text 
+                                          x={(x || 0) + (width || 0) / 2} 
+                                          y={(y || 0) + (height || 0) / 2}
+                                          fill="hsl(0 0% 10%)"
+                                          textAnchor="middle"
+                                          dominantBaseline="middle"
+                                          fontSize="13"
+                                          fontWeight="600"
+                                        >
+                                          <tspan x={(x || 0) + (width || 0) / 2} dy="-0.6em">2ème Pilier LPP</tspan>
+                                          <tspan x={(x || 0) + (width || 0) / 2} dy="1.4em">CHF {Math.round(value).toLocaleString('fr-CH')}</tspan>
+                                        </text>
+                                      );
+                                    }
+                                    return null;
+                                  }}
+                                />
+                              </Bar>
+                              <Bar dataKey="lacune" stackId="a" fill="url(#diagonalHatchInvalidite)" stroke="hsl(0 84% 60%)" strokeWidth={2} name="Lacune">
+                                <LabelList 
+                                  dataKey="lacune" 
+                                  position="center"
+                                  content={({ x, y, width, height, value }: any) => {
+                                    if (value && value > 500) {
+                                      return (
+                                        <text 
+                                          x={(x || 0) + (width || 0) / 2} 
+                                          y={(y || 0) + (height || 0) / 2}
+                                          fill="hsl(0 0% 100%)"
+                                          textAnchor="middle"
+                                          dominantBaseline="middle"
+                                          fontSize="13"
+                                          fontWeight="700"
+                                        >
+                                          <tspan x={(x || 0) + (width || 0) / 2} dy="-0.6em">Lacune</tspan>
+                                          <tspan x={(x || 0) + (width || 0) / 2} dy="1.4em">CHF {Math.round(value).toLocaleString('fr-CH')}</tspan>
+                                        </text>
+                                      );
+                                    }
+                                    return null;
+                                  }}
+                                />
+                              </Bar>
+                              
+                              <ReferenceLine 
+                                y={besoinValue} 
+                                stroke="hsl(0 84% 60%)" 
+                                strokeWidth={2}
+                                strokeDasharray="5 5"
+                                label={{ 
+                                  value: `Besoin (${besoinPourcentage}%)`, 
+                                  position: 'right',
+                                  fill: 'hsl(0 84% 60%)',
+                                  fontSize: 12,
+                                  fontWeight: 'bold'
+                                }}
+                              />
+                            </BarChart>
+                          </ResponsiveContainer>
+                          
+                          {/* Légende avec montants */}
+                          <div className="mt-6 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-4 p-4 bg-muted rounded-lg">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(48 96% 53%)' }} />
+                                <span className="text-sm font-medium">1er Pilier AVS</span>
+                              </div>
+                              <span className="text-lg font-bold" style={{ color: 'hsl(48 96% 53%)' }}>
+                                CHF {Math.round(avsInvaliditeValue).toLocaleString('fr-CH')}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                              </span>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(25 95% 53%)' }} />
+                                <span className="text-sm font-medium">2ème Pilier LPP</span>
+                              </div>
+                              <span className="text-lg font-bold" style={{ color: 'hsl(25 95% 53%)' }}>
+                                CHF {Math.round(lppInvaliditeValue).toLocaleString('fr-CH')}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                              </span>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <div className="h-3 w-3 rounded-sm border-2 border-destructive bg-white" style={{ 
+                                  backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 2px, hsl(0 84% 60%) 2px, hsl(0 84% 60%) 4px)' 
+                                }} />
+                                <span className="text-sm font-medium">Lacune</span>
+                              </div>
+                              <span className="text-lg font-bold text-destructive">
+                                CHF {Math.round(lacuneInvalidite).toLocaleString('fr-CH')}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                              </span>
+                            </div>
+                          
+                            <div className="flex flex-col gap-1 border-l-2 border-destructive pl-4">
+                              <div className="flex items-center gap-2">
+                                <div className="h-1 w-8 bg-destructive" />
+                                <span className="text-sm font-medium">Besoin ({besoinPourcentage}%)</span>
+                              </div>
+                              <span className="text-lg font-bold">
+                                CHF {Math.round(besoinValue).toLocaleString('fr-CH')}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                              </span>
+                            </div>
+
+                            <div className="flex flex-col gap-1">
+                              <span className="text-sm font-medium text-muted-foreground">Total prestations</span>
+                              <span className="text-lg font-bold">
+                                CHF {Math.round(totalInvalidite).toLocaleString('fr-CH')}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <p className="text-xs text-muted-foreground mt-4">
+                            * Prestations en cas d'invalidité de {ageActuel > 0 ? `${ageActuel} ans` : "aujourd'hui"} jusqu'à la retraite à 65 ans.
+                          </p>
+                        </>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
 
