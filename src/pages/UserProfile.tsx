@@ -73,6 +73,9 @@ interface PrevoyanceData {
   lpp_rente_orphelins?: number;
   lpp_capital_deces?: number;
   lpp_derniere_maj?: string;
+  // Configuration prévoyance
+  etat_civil?: string;
+  nombre_enfants?: number;
 }
 
 interface TaxData {
@@ -257,6 +260,8 @@ const UserProfile = () => {
     rente_invalidite_mensuelle: 0,
     rente_invalidite_annuelle: 0,
     revenu_annuel_determinant: 0,
+    etat_civil: "",
+    nombre_enfants: 0,
   });
   const [isCalculatingAVS, setIsCalculatingAVS] = useState(false);
   const [lppCertificate, setLppCertificate] = useState<any | null>(null);
@@ -386,6 +391,8 @@ const UserProfile = () => {
           rente_invalidite_mensuelle: Number(prevoyanceDataResult.rente_invalidite_mensuelle || 0),
           rente_invalidite_annuelle: Number(prevoyanceDataResult.rente_invalidite_annuelle || 0),
           revenu_annuel_determinant: Number(prevoyanceDataResult.revenu_annuel_determinant || 0),
+          etat_civil: prevoyanceDataResult.etat_civil || "",
+          nombre_enfants: Number(prevoyanceDataResult.nombre_enfants || 0),
         };
         setPrevoyanceData(prevoyance);
         prevoyanceForm.reset(prevoyance);
@@ -1079,6 +1086,22 @@ const UserProfile = () => {
                               <h3 className="text-sm font-medium text-muted-foreground mb-1">Téléphone</h3>
                               <p className="text-foreground">{profile.telephone || "Non renseigné"}</p>
                             </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-muted-foreground mb-1">État civil</h3>
+                              <p className="text-foreground">
+                                {prevoyanceData.etat_civil 
+                                  ? prevoyanceData.etat_civil === "celibataire" ? "Célibataire"
+                                    : prevoyanceData.etat_civil === "marie" ? "Marié(e)"
+                                    : prevoyanceData.etat_civil === "divorce" ? "Divorcé(e)"
+                                    : prevoyanceData.etat_civil === "veuf" ? "Veuf/Veuve"
+                                    : prevoyanceData.etat_civil
+                                  : "Non renseigné"}
+                              </p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Nombre d'enfants</h3>
+                              <p className="text-foreground">{prevoyanceData.nombre_enfants || 0}</p>
+                            </div>
                           </>
                         )}
                       </div>
@@ -1590,6 +1613,22 @@ const UserProfile = () => {
                           <div>
                             <h3 className="text-sm font-medium text-muted-foreground mb-1">Téléphone</h3>
                             <p className="text-foreground">{profile.telephone || "Non renseigné"}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">État civil</h3>
+                            <p className="text-foreground">
+                              {prevoyanceData.etat_civil 
+                                ? prevoyanceData.etat_civil === "celibataire" ? "Célibataire"
+                                  : prevoyanceData.etat_civil === "marie" ? "Marié(e)"
+                                  : prevoyanceData.etat_civil === "divorce" ? "Divorcé(e)"
+                                  : prevoyanceData.etat_civil === "veuf" ? "Veuf/Veuve"
+                                  : prevoyanceData.etat_civil
+                                : "Non renseigné"}
+                            </p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Nombre d'enfants</h3>
+                            <p className="text-foreground">{prevoyanceData.nombre_enfants || 0}</p>
                           </div>
                         </>
                       )}
