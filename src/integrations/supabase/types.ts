@@ -246,9 +246,11 @@ export type Database = {
           created_at: string
           date_naissance: string
           email: string
+          etat_civil: string | null
           id: string
           localite: string
           nom: string
+          nombre_enfants: number | null
           prenom: string
           telephone: string | null
           updated_at: string
@@ -260,9 +262,11 @@ export type Database = {
           created_at?: string
           date_naissance: string
           email: string
+          etat_civil?: string | null
           id?: string
           localite: string
           nom: string
+          nombre_enfants?: number | null
           prenom: string
           telephone?: string | null
           updated_at?: string
@@ -274,9 +278,11 @@ export type Database = {
           created_at?: string
           date_naissance?: string
           email?: string
+          etat_civil?: string | null
           id?: string
           localite?: string
           nom?: string
+          nombre_enfants?: number | null
           prenom?: string
           telephone?: string | null
           updated_at?: string
