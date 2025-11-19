@@ -156,6 +156,7 @@ export type Database = {
           lpp_derniere_maj: string | null
           lpp_rente_annuelle_projetee: number | null
           lpp_rente_conjoint_survivant: number | null
+          lpp_rente_enfant_invalide: number | null
           lpp_rente_invalidite_annuelle: number | null
           lpp_rente_invalidite_mensuelle: number | null
           lpp_rente_mensuelle_projetee: number | null
@@ -182,6 +183,7 @@ export type Database = {
           lpp_derniere_maj?: string | null
           lpp_rente_annuelle_projetee?: number | null
           lpp_rente_conjoint_survivant?: number | null
+          lpp_rente_enfant_invalide?: number | null
           lpp_rente_invalidite_annuelle?: number | null
           lpp_rente_invalidite_mensuelle?: number | null
           lpp_rente_mensuelle_projetee?: number | null
@@ -208,6 +210,7 @@ export type Database = {
           lpp_derniere_maj?: string | null
           lpp_rente_annuelle_projetee?: number | null
           lpp_rente_conjoint_survivant?: number | null
+          lpp_rente_enfant_invalide?: number | null
           lpp_rente_invalidite_annuelle?: number | null
           lpp_rente_invalidite_mensuelle?: number | null
           lpp_rente_mensuelle_projetee?: number | null

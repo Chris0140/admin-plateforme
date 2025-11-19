@@ -50,6 +50,7 @@ const Budget = () => {
   const [lppRenteInvaliditeMensuelle, setLppRenteInvaliditeMensuelle] = useState("");
   const [lppRenteInvaliditeAnnuelle, setLppRenteInvaliditeAnnuelle] = useState("");
   const [lppCapitalInvalidite, setLppCapitalInvalidite] = useState("");
+  const [lppRenteEnfantInvalide, setLppRenteEnfantInvalide] = useState("");
   const [lppRenteConjointSurvivant, setLppRenteConjointSurvivant] = useState("");
   const [lppRenteOrphelins, setLppRenteOrphelins] = useState("");
   const [lppCapitalDeces, setLppCapitalDeces] = useState("");
@@ -165,6 +166,7 @@ const Budget = () => {
         setLppRenteInvaliditeMensuelle(prevoyanceData.lpp_rente_invalidite_mensuelle?.toString() || "");
         setLppRenteInvaliditeAnnuelle(prevoyanceData.lpp_rente_invalidite_annuelle?.toString() || "");
         setLppCapitalInvalidite(prevoyanceData.lpp_capital_invalidite?.toString() || "");
+        setLppRenteEnfantInvalide(prevoyanceData.lpp_rente_enfant_invalide?.toString() || "");
         setLppRenteConjointSurvivant(prevoyanceData.lpp_rente_conjoint_survivant?.toString() || "");
         setLppRenteOrphelins(prevoyanceData.lpp_rente_orphelins?.toString() || "");
         setLppCapitalDeces(prevoyanceData.lpp_capital_deces?.toString() || "");
@@ -280,6 +282,7 @@ const Budget = () => {
         lpp_rente_invalidite_mensuelle: parseFloat(lppRenteInvaliditeMensuelle) || 0,
         lpp_rente_invalidite_annuelle: parseFloat(lppRenteInvaliditeAnnuelle) || 0,
         lpp_capital_invalidite: parseFloat(lppCapitalInvalidite) || 0,
+        lpp_rente_enfant_invalide: parseFloat(lppRenteEnfantInvalide) || 0,
         lpp_rente_conjoint_survivant: parseFloat(lppRenteConjointSurvivant) || 0,
         lpp_rente_orphelins: parseFloat(lppRenteOrphelins) || 0,
         lpp_capital_deces: parseFloat(lppCapitalDeces) || 0,
@@ -390,6 +393,7 @@ const Budget = () => {
         setLppRenteInvaliditeMensuelle(lppData.rente_invalidite_mensuelle?.toString() || "");
         setLppRenteInvaliditeAnnuelle(lppData.rente_invalidite_annuelle?.toString() || "");
         setLppCapitalInvalidite(lppData.capital_invalidite?.toString() || "");
+        setLppRenteEnfantInvalide(lppData.rente_enfant_invalide?.toString() || "");
         setLppRenteConjointSurvivant(lppData.rente_conjoint_survivant?.toString() || "");
         setLppRenteOrphelins(lppData.rente_orphelins?.toString() || "");
         setLppCapitalDeces(lppData.capital_deces?.toString() || "");
@@ -952,6 +956,17 @@ const Budget = () => {
                                 value={lppCapitalInvalidite}
                                 onChange={(e) => setLppCapitalInvalidite(e.target.value.replace(/^0+(?=\d)/, ''))}
                                 placeholder="180000"
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="lppRenteEnfantInvalide">Rente d'enfant d'invalide (CHF/mois)</Label>
+                              <Input
+                                id="lppRenteEnfantInvalide"
+                                type="number"
+                                value={lppRenteEnfantInvalide}
+                                onChange={(e) => setLppRenteEnfantInvalide(e.target.value.replace(/^0+(?=\d)/, ''))}
+                                placeholder="700"
                                 className="mt-1"
                               />
                             </div>
