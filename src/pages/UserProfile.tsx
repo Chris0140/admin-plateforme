@@ -323,6 +323,48 @@ const UserProfile = () => {
     }
   }, [user]);
 
+  // Écouter les changements en temps réel sur prevoyance_data
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('prevoyance-profile-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'prevoyance_data',
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log('Changement détecté dans prevoyance_data:', payload);
+          // Recharger les données de prévoyance
+          if (payload.new) {
+            const updatedPrevoyance: PrevoyanceData = {
+              avs_1er_pilier: Number(payload.new.avs_1er_pilier),
+              lpp_2eme_pilier: Number(payload.new.lpp_2eme_pilier),
+              pilier_3a: Number(payload.new.pilier_3a),
+              pilier_3b: Number(payload.new.pilier_3b),
+              rente_vieillesse_mensuelle: Number(payload.new.rente_vieillesse_mensuelle || 0),
+              rente_vieillesse_annuelle: Number(payload.new.rente_vieillesse_annuelle || 0),
+              rente_invalidite_mensuelle: Number(payload.new.rente_invalidite_mensuelle || 0),
+              rente_invalidite_annuelle: Number(payload.new.rente_invalidite_annuelle || 0),
+              revenu_annuel_determinant: Number(payload.new.revenu_annuel_determinant || 0),
+              etat_civil: payload.new.etat_civil || "",
+              nombre_enfants: Number(payload.new.nombre_enfants || 0),
+            };
+            setPrevoyanceData(updatedPrevoyance);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const fetchUserData = async () => {
     try {
       setLoadingData(true);
