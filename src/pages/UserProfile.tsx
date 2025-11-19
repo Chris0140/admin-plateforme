@@ -30,6 +30,8 @@ interface Profile {
   localite: string;
   adresse: string | null;
   telephone: string | null;
+  etat_civil?: string | null;
+  nombre_enfants?: number | null;
 }
 
 interface Document {
@@ -388,6 +390,15 @@ const UserProfile = () => {
           .select("etat_civil, nombre_enfants")
           .eq("user_id", user?.id)
           .maybeSingle();
+        
+        // Mettre à jour prevoyanceData state avec les dernières valeurs
+        if (prevoyanceDataForProfile) {
+          setPrevoyanceData(prev => ({
+            ...prev,
+            etat_civil: prevoyanceDataForProfile.etat_civil || "",
+            nombre_enfants: prevoyanceDataForProfile.nombre_enfants || 0,
+          }));
+        }
         
         profileForm.reset({
           appellation: profileData.appellation,
