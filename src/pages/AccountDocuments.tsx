@@ -72,12 +72,10 @@ const AccountDocuments = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category>('assurance');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
   const [viewingDocument, setViewingDocument] = useState<Document | null>(null);
   const [documentUrl, setDocumentUrl] = useState<string>('');
   const [activeTab, setActiveTab] = useState<Category>('assurance');
-  const [uploadSectionOpen, setUploadSectionOpen] = useState(false);
   const [showAuthAlert, setShowAuthAlert] = useState(false);
   const [verifyDataOpen, setVerifyDataOpen] = useState(false);
   const [currentSubcategory, setCurrentSubcategory] = useState<string>('');
@@ -120,33 +118,24 @@ const AccountDocuments = () => {
     setLoading(false);
   };
 
-  const handleChooseFile = () => {
-    if (!user) {
-      setShowAuthAlert(true);
-      return;
-    }
-    document.getElementById('file-upload')?.click();
-  };
-
   const handleAddDocumentToSubcategory = (subcategoryValue: string) => {
     if (!user) {
       setShowAuthAlert(true);
       return;
     }
-    setSelectedCategory(activeTab);
     setSelectedSubcategory(subcategoryValue);
-    setUploadSectionOpen(true);
-    // Scroll to upload section
-    setTimeout(() => {
-      document.getElementById('upload-section')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 100);
+    // Trigger file input
+    const fileInput = document.getElementById('file-upload-direct') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.click();
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (!selectedCategory) {
+    if (!activeTab) {
       toast({
         variant: "destructive",
         title: "Catégorie requise",
@@ -192,7 +181,7 @@ const AccountDocuments = () => {
         file_name: file.name,
         file_path: filePath,
         file_size: file.size,
-        category: selectedCategory,
+        category: activeTab,
         subcategory: selectedSubcategory || null,
       });
 
@@ -611,86 +600,17 @@ const AccountDocuments = () => {
               {renderDocumentsList(getDocumentsByCategory('autres'))}
             </TabsContent>
           </Tabs>
-
-          <Collapsible open={uploadSectionOpen} onOpenChange={setUploadSectionOpen} className="mt-6">
-            <Card id="upload-section">
-              <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors rounded-t-lg">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <Upload className="h-5 w-5" />
-                      Ajouter un document
-                    </CardTitle>
-                    <ChevronDown className={`h-5 w-5 transition-transform duration-200 ${uploadSectionOpen ? 'rotate-180' : ''}`} />
-                  </div>
-                  <CardDescription>
-                    Sélectionnez une catégorie et téléchargez votre document (PDF, max 10 MB)
-                  </CardDescription>
-                </CardHeader>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <CardContent className="pt-4">
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="category">Catégorie</Label>
-                      <Select value={selectedCategory} onValueChange={(value) => {
-                        setSelectedCategory(value as Category);
-                        setSelectedSubcategory('');
-                      }}>
-                        <SelectTrigger id="category">
-                          <SelectValue placeholder="Sélectionner une catégorie" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Object.entries(categories).map(([key, { label }]) => (
-                            <SelectItem key={key} value={key}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {categories[selectedCategory]?.subcategories.length > 0 && (
-                      <div className="space-y-2">
-                        <Label htmlFor="subcategory">Sous-catégorie</Label>
-                        <Select value={selectedSubcategory} onValueChange={setSelectedSubcategory}>
-                          <SelectTrigger id="subcategory">
-                            <SelectValue placeholder="Sélectionner (optionnel)" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories[selectedCategory].subcategories.map((sub) => (
-                              <SelectItem key={sub.value} value={sub.value}>
-                                {sub.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    <div className="space-y-2 sm:col-span-2 lg:col-span-1 flex items-end">
-                      <Button 
-                        disabled={uploading} 
-                        className="w-full"
-                        onClick={handleChooseFile}
-                      >
-                        {uploading ? "Téléchargement..." : "Choisir un fichier"}
-                      </Button>
-                      <input
-                        id="file-upload"
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
         </div>
       </div>
+
+      {/* Hidden file input for direct upload */}
+      <input
+        id="file-upload-direct"
+        type="file"
+        accept=".pdf"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
 
       <Dialog open={!!viewingDocument} onOpenChange={() => {
         if (documentUrl) {
