@@ -558,7 +558,7 @@ const Budget = () => {
                             <span className="text-muted-foreground">%</span>
                           </div>
                           <p className="text-sm font-semibold text-primary mt-2">
-                            = {formatCurrency(revenuNet * (parseFloat(besoinPourcentage) || 0) / 100)}
+                            = {formatCurrency((parseFloat(revenuBrut) || 0) * (parseFloat(besoinPourcentage) || 0) / 100)}
                           </p>
                           <p className="text-xs text-muted-foreground mt-1">Montant estimé nécessaire à la retraite</p>
                         </div>
