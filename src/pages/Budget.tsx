@@ -455,24 +455,37 @@ const Budget = () => {
     ? (periodType === "mensuel" ? revenuBrutValue : revenuBrutValue / 12) * (parseFloat(besoinPourcentage) / 100)
     : (periodType === "annuel" ? revenuBrutValue : revenuBrutValue * 12) * (parseFloat(besoinPourcentage) / 100);
 
-  // Données pour le graphique de projection retraite (65-85 ans)
-  const dataRetraiteProjection = Array.from({ length: 21 }, (_, i) => {
-    const age = 65 + i;
-    const avsValue = graphDisplayMode === "mensuel" ? Math.round(avsRenteRetraite / 12) : Math.round(avsRenteRetraite);
-    const lppValue = graphDisplayMode === "mensuel" ? Math.round(lppRenteRetraite / 12) : Math.round(lppRenteRetraite);
-    const pilier3Value = graphDisplayMode === "mensuel" ? Math.round(pilier3RenteAnnuelle / 12) : Math.round(pilier3RenteAnnuelle);
-    const totalPiliers = avsValue + lppValue + pilier3Value;
-    const lacune = Math.max(0, besoinValue - totalPiliers);
-    
-    return {
-      age: `${age}`,
-      ageLabel: `${age} ans`,
+  // Calcul du revenu actuel et de retraite
+  const revenuActuel = graphDisplayMode === "mensuel" 
+    ? (periodType === "mensuel" ? revenuBrutValue : revenuBrutValue / 12)
+    : (periodType === "annuel" ? revenuBrutValue : revenuBrutValue * 12);
+
+  const avsValue = graphDisplayMode === "mensuel" ? Math.round(avsRenteRetraite / 12) : Math.round(avsRenteRetraite);
+  const lppValue = graphDisplayMode === "mensuel" ? Math.round(lppRenteRetraite / 12) : Math.round(lppRenteRetraite);
+  const pilier3Value = graphDisplayMode === "mensuel" ? Math.round(pilier3RenteAnnuelle / 12) : Math.round(pilier3RenteAnnuelle);
+  
+  const totalRetraite = avsValue + lppValue + pilier3Value;
+  const lacune = Math.max(0, besoinValue - totalRetraite);
+
+  // Données pour le graphique de comparaison (Actuel vs Retraite)
+  const dataComparaison = [
+    {
+      periode: "Revenu actuel",
+      revenu: revenuActuel,
+      avs: 0,
+      lpp: 0,
+      pilier3: 0,
+      lacune: 0,
+    },
+    {
+      periode: "À la retraite (65 ans)",
+      revenu: 0,
       avs: avsValue,
       lpp: lppValue,
       pilier3: pilier3Value,
       lacune: lacune,
-    };
-  });
+    }
+  ];
 
   // Données pour les graphiques de prévoyance (montants capitaux)
   const dataRetraite = [
@@ -1139,168 +1152,149 @@ const Budget = () => {
                   </CardHeader>
                   <CardContent>
                     {/* Badge d'alerte si lacune existe */}
-                    {besoinValue > 0 && (
-                      (graphDisplayMode === "mensuel" 
-                        ? Math.round(avsRenteRetraite / 12) + Math.round(lppRenteRetraite / 12) + Math.round(pilier3RenteAnnuelle / 12)
-                        : Math.round(avsRenteRetraite) + Math.round(lppRenteRetraite) + Math.round(pilier3RenteAnnuelle)
-                      ) < besoinValue
-                    ) && (
-                      <div className="mb-4 p-4 bg-destructive/10 border-2 border-destructive/20 rounded-lg">
-                        <div className="flex items-center gap-2 text-destructive">
-                          <AlertTriangle className="h-5 w-5" />
-                          <span className="font-semibold">Attention : Lacune de prévoyance détectée</span>
-                        </div>
-                        <p className="text-sm text-destructive/90 mt-2">
-                          Vos revenus de retraite projetés ne couvrent pas vos besoins. 
-                          Considérez augmenter vos cotisations au 3ème pilier.
-                        </p>
-                      </div>
-                    )}
+            {totalRetraite < besoinValue && (
+              <div className="mb-4 p-4 bg-destructive/10 border-2 border-destructive/20 rounded-lg">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertTriangle className="h-5 w-5" />
+                  <span className="font-semibold">Attention : Lacune de prévoyance détectée</span>
+                </div>
+                <p className="text-sm text-destructive/90 mt-2">
+                  Vos revenus de retraite projetés ne couvrent pas vos besoins ({besoinPourcentage}% du revenu actuel). 
+                  Perte estimée: CHF {Math.round(lacune).toLocaleString('fr-CH')} {graphDisplayMode === "mensuel" ? "par mois" : "par an"}.
+                </p>
+              </div>
+            )}
                     
-                    <ResponsiveContainer width="100%" height={400}>
-                      <BarChart data={dataRetraiteProjection}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis 
-                          dataKey="age" 
-                          angle={-45}
-                          textAnchor="end"
-                          height={70}
-                          interval={0}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <YAxis 
-                          label={{ 
-                            value: graphDisplayMode === "mensuel" ? 'CHF/mois' : 'CHF/an', 
-                            angle: -90, 
-                            position: 'insideLeft',
-                            style: { textAnchor: 'middle' }
-                          }}
-                          tick={{ fontSize: 12 }}
-                          tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                        />
-                        <Tooltip 
-                          formatter={(value: number) => `CHF ${value.toLocaleString('fr-CH')}`}
-                          labelFormatter={(label) => `${label} ans`}
-                        />
-                        <Legend 
-                          wrapperStyle={{ paddingTop: '20px' }}
-                          iconType="rect"
-                        />
-                        <Bar 
-                          dataKey="avs" 
-                          stackId="a" 
-                          fill="hsl(var(--chart-1))" 
-                          name="1er Pilier AVS"
-                        />
-                        <Bar 
-                          dataKey="lpp" 
-                          stackId="a" 
-                          fill="hsl(var(--chart-2))" 
-                          name="2ème Pilier LPP"
-                        />
-                        <Bar 
-                          dataKey="pilier3" 
-                          stackId="a" 
-                          fill="hsl(var(--chart-3))" 
-                          name="3ème Pilier (÷20 ans)"
-                        />
-                        <Bar 
-                          dataKey="lacune" 
-                          stackId="a" 
-                          fill="hsl(0 84% 60%)" 
-                          name="Lacune de prévoyance"
-                          opacity={0.7}
-                        />
-                        <ReferenceLine 
-                          y={besoinValue} 
-                          stroke="hsl(0 84% 60%)"
-                          strokeWidth={2}
-                          strokeDasharray="5 5"
-                          label={{ 
-                            value: `Besoin (${besoinPourcentage}%)`, 
-                            position: 'right',
-                            fill: 'hsl(0 84% 60%)',
-                            fontSize: 12,
-                            fontWeight: 'bold'
-                          }}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart 
+                  data={dataComparaison}
+                  layout="horizontal"
+                  margin={{ top: 20, right: 30, left: 150, bottom: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    type="number" 
+                    tickFormatter={(value) => `${value.toLocaleString('fr-CH')}`}
+                  />
+                  <YAxis 
+                    type="category" 
+                    dataKey="periode"
+                    width={140}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => `CHF ${value.toLocaleString('fr-CH')}`}
+                    cursor={{ fill: 'rgba(0, 0, 0, 0.1)' }}
+                  />
+                  <Legend />
+                  
+                  <Bar 
+                    dataKey="revenu" 
+                    stackId="a" 
+                    fill="hsl(200 70% 50%)" 
+                    name="Revenu actuel"
+                  />
+                  <Bar 
+                    dataKey="avs" 
+                    stackId="a" 
+                    fill="hsl(142 76% 36%)" 
+                    name="1er Pilier AVS"
+                  />
+                  <Bar 
+                    dataKey="lpp" 
+                    stackId="a" 
+                    fill="hsl(221 83% 53%)" 
+                    name="2ème Pilier LPP"
+                  />
+                  <Bar 
+                    dataKey="pilier3" 
+                    stackId="a" 
+                    fill="hsl(262 83% 58%)" 
+                    name="3ème Pilier"
+                  />
+                  <Bar 
+                    dataKey="lacune" 
+                    stackId="a" 
+                    fill="hsl(0 84% 60%)" 
+                    name="Perte / Lacune"
+                    opacity={0.7}
+                  />
+                  <ReferenceLine 
+                    x={besoinValue} 
+                    stroke="hsl(0 84% 60%)" 
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    label={{ 
+                      value: `Besoin (${besoinPourcentage}%)`, 
+                      position: 'top',
+                      fill: 'hsl(0 84% 60%)',
+                      fontSize: 12,
+                      fontWeight: 'bold'
+                    }}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
                     
                     {/* Légende avec montants */}
-                    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 p-4 bg-muted rounded-lg">
+                    <div className="mt-6 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4 p-4 bg-muted rounded-lg">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--chart-1))' }} />
-                          <span className="text-sm font-medium">1er Pilier AVS</span>
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(200, 70%, 50%)' }} />
+                          <span className="text-sm font-medium">Revenu actuel</span>
                         </div>
                         <span className="text-lg font-bold">
-                          CHF {(graphDisplayMode === "mensuel" 
-                            ? Math.round(avsRenteRetraite / 12) 
-                            : Math.round(avsRenteRetraite)
-                          ).toLocaleString('fr-CH')}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--chart-2))' }} />
-                          <span className="text-sm font-medium">2ème Pilier LPP</span>
-                        </div>
-                        <span className="text-lg font-bold">
-                          CHF {(graphDisplayMode === "mensuel"
-                            ? Math.round(lppRenteRetraite / 12)
-                            : Math.round(lppRenteRetraite)
-                          ).toLocaleString('fr-CH')}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--chart-3))' }} />
-                          <span className="text-sm font-medium">3ème Pilier (÷20)</span>
-                        </div>
-                        <span className="text-lg font-bold">
-                          CHF {(graphDisplayMode === "mensuel"
-                            ? Math.round(pilier3RenteAnnuelle / 12)
-                            : Math.round(pilier3RenteAnnuelle)
-                          ).toLocaleString('fr-CH')}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm bg-primary" />
-                          <span className="text-sm font-medium">Total</span>
-                        </div>
-                        <span className="text-lg font-bold text-primary">
-                          CHF {(graphDisplayMode === "mensuel"
-                            ? Math.round(totalRevenuRetraiteAnnuel / 12)
-                            : Math.round(totalRevenuRetraiteAnnuel)
-                          ).toLocaleString('fr-CH')}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-2">
-                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(0 84% 60%)' }} />
-                          <span className="text-sm font-medium">Lacune</span>
-                        </div>
-                        <span className="text-lg font-bold text-destructive">
-                          CHF {Math.max(0, Math.round(besoinValue - (
-                            (graphDisplayMode === "mensuel" 
-                              ? Math.round(avsRenteRetraite / 12) + Math.round(lppRenteRetraite / 12) + Math.round(pilier3RenteAnnuelle / 12)
-                              : Math.round(avsRenteRetraite) + Math.round(lppRenteRetraite) + Math.round(pilier3RenteAnnuelle)
-                            )
-                          ))).toLocaleString('fr-CH')}
+                          CHF {Math.round(revenuActuel).toLocaleString('fr-CH')}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
                         </span>
                       </div>
-                      <div className="flex flex-col gap-1 border-l-2 border-destructive pl-4">
+
+                      <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">
-                          <div className="h-1 w-8" style={{ backgroundColor: 'hsl(0 84% 60%)' }} />
-                          <span className="text-sm font-medium">Besoin ({besoinPourcentage}%)</span>
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(142, 76%, 36%)' }} />
+                          <span className="text-sm font-medium">1er Pilier AVS</span>
                         </div>
                         <span className="text-lg font-bold">
-                          CHF {Math.round(besoinValue).toLocaleString('fr-CH')}
+                          CHF {Math.round(avsValue).toLocaleString('fr-CH')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(221, 83%, 53%)' }} />
+                          <span className="text-sm font-medium">2ème Pilier LPP</span>
+                        </div>
+                        <span className="text-lg font-bold">
+                          CHF {Math.round(lppValue).toLocaleString('fr-CH')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(262, 83%, 58%)' }} />
+                          <span className="text-sm font-medium">3ème Pilier (÷20)</span>
+                        </div>
+                        <span className="text-lg font-bold">
+                          CHF {Math.round(pilier3Value).toLocaleString('fr-CH')}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: 'hsl(0, 84%, 60%)' }} />
+                          <span className="text-sm font-medium">Perte / Lacune</span>
+                        </div>
+                        <span className="text-lg font-bold text-destructive">
+                          CHF {Math.round(lacune).toLocaleString('fr-CH')}
                         </span>
                         <span className="text-xs text-muted-foreground">
                           {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
@@ -1308,8 +1302,31 @@ const Budget = () => {
                       </div>
                     </div>
                     
+                    <div className="mt-4 p-4 bg-primary/10 rounded-lg border-2 border-primary/20">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-medium text-muted-foreground">Besoin à la retraite ({besoinPourcentage}% du revenu)</span>
+                          <span className="text-2xl font-bold text-primary">
+                            CHF {Math.round(besoinValue).toLocaleString('fr-CH')}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-medium text-muted-foreground">Total revenus retraite</span>
+                          <span className="text-2xl font-bold text-primary">
+                            CHF {Math.round(totalRetraite).toLocaleString('fr-CH')}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {graphDisplayMode === "mensuel" ? "par mois" : "par an"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <p className="text-xs text-muted-foreground mt-4">
-                      * Projection basée sur une retraite à 65 ans avec une durée de 20 ans jusqu'à 85 ans. 
+                      * Comparaison entre le revenu actuel et les revenus projetés à la retraite (65 ans). 
                       Le 3ème pilier est divisé par 20 ans pour calculer le revenu annuel disponible.
                     </p>
                   </CardContent>
