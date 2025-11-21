@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Wallet, TrendingUp } from "lucide-react";
+import { Plus, Wallet, TrendingUp, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateThirdPillarAnalysis, ThirdPillarAnalysis } from "@/lib/thirdPillarCalculations";
@@ -10,6 +11,7 @@ import ThirdPillarAccountForm from "@/components/third-pillar/ThirdPillarAccount
 
 const ThirdPillar = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [analysis, setAnalysis] = useState<ThirdPillarAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -90,6 +92,15 @@ const ThirdPillar = () => {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
+      <Button 
+        variant="ghost" 
+        onClick={() => navigate('/prevoyance')}
+        className="gap-2 mb-4"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Retour à Prévoyance
+      </Button>
+      
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">3e Pilier</h1>
