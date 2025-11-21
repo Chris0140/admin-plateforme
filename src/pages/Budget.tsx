@@ -73,6 +73,7 @@ const Budget = () => {
   const [newMonthlyCategoryName, setNewMonthlyCategoryName] = useState("");
   const [newMonthlyCategoryType, setNewMonthlyCategoryType] = useState("");
   const [newMonthlyCategoryAmount, setNewMonthlyCategoryAmount] = useState("");
+  const [selectedMonths, setSelectedMonths] = useState<number[]>([selectedMonth]);
 
   const [revenusOpen, setRevenusOpen] = useState(true);
   const [depensesOpen, setDepensesOpen] = useState(true);
@@ -81,6 +82,7 @@ const Budget = () => {
     if (!user) return;
     if (mode === "mensuel") {
       fetchMonthlyBudget();
+      setSelectedMonths([selectedMonth]); // Reset selected months when changing month
     } else if (mode === "annuel") {
       fetchAnnualProjection();
     } else if (mode === "yearly-detailed") {
@@ -501,7 +503,7 @@ const Budget = () => {
                         {/* Formulaire ajout catégorie */}
                         {showAddMonthlyCategory ? (
                           <div className="pt-4 border-t space-y-3">
-                            <p className="text-sm font-medium">Nouvelle catégorie</p>
+                            <p className="text-sm font-medium">Nouvelle dépense</p>
                             <div>
                               <Label htmlFor="newMonthlyCategoryName">Nom</Label>
                               <Input
@@ -530,6 +532,49 @@ const Budget = () => {
                                 onChange={(e) => setNewMonthlyCategoryAmount(e.target.value)}
                               />
                             </div>
+                            
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label>Appliquer aux mois</Label>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (selectedMonths.length === 12) {
+                                      setSelectedMonths([selectedMonth]);
+                                    } else {
+                                      setSelectedMonths([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                                    }
+                                  }}
+                                >
+                                  {selectedMonths.length === 12 ? "Désélectionner tout" : "Tous les mois"}
+                                </Button>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2">
+                                {months.map((m) => (
+                                  <label
+                                    key={m.value}
+                                    className="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-muted/50"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedMonths.includes(m.value)}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          setSelectedMonths([...selectedMonths, m.value]);
+                                        } else {
+                                          setSelectedMonths(selectedMonths.filter((month) => month !== m.value));
+                                        }
+                                      }}
+                                      className="rounded border-input"
+                                    />
+                                    <span className="text-sm">{m.label}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                            
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
@@ -542,37 +587,50 @@ const Budget = () => {
                                     });
                                     return;
                                   }
+                                  if (selectedMonths.length === 0) {
+                                    toast({
+                                      variant: "destructive",
+                                      title: "Erreur",
+                                      description: "Veuillez sélectionner au moins un mois",
+                                    });
+                                    return;
+                                  }
                                   try {
-                                    const { data, error } = await supabase
-                                      .from("monthly_expense_categories")
-                                      .insert({
-                                        user_id: user?.id,
-                                        year: selectedYear,
-                                        month: selectedMonth,
-                                        name: newMonthlyCategoryName,
-                                        category: newMonthlyCategoryType || "Autre",
-                                        amount: parseFloat(newMonthlyCategoryAmount),
-                                      })
-                                      .select()
-                                      .single();
+                                    const insertPromises = selectedMonths.map((month) =>
+                                      supabase
+                                        .from("monthly_expense_categories")
+                                        .insert({
+                                          user_id: user?.id,
+                                          year: selectedYear,
+                                          month: month,
+                                          name: newMonthlyCategoryName,
+                                          category: newMonthlyCategoryType || "Autre",
+                                          amount: parseFloat(newMonthlyCategoryAmount),
+                                        })
+                                    );
 
-                                    if (error) throw error;
+                                    await Promise.all(insertPromises);
 
-                                    setMonthlyCategories([...monthlyCategories, data]);
+                                    // Refresh current month categories if one of the selected months is current
+                                    if (selectedMonths.includes(selectedMonth)) {
+                                      await fetchMonthlyBudget();
+                                    }
+
                                     setNewMonthlyCategoryName("");
                                     setNewMonthlyCategoryType("");
                                     setNewMonthlyCategoryAmount("");
+                                    setSelectedMonths([selectedMonth]);
                                     setShowAddMonthlyCategory(false);
                                     toast({
-                                      title: "Catégorie ajoutée",
-                                      description: "La catégorie a été ajoutée avec succès",
+                                      title: "Dépense ajoutée",
+                                      description: `La dépense a été ajoutée à ${selectedMonths.length} mois`,
                                     });
                                   } catch (error) {
                                     console.error(error);
                                     toast({
                                       variant: "destructive",
                                       title: "Erreur",
-                                      description: "Impossible d'ajouter la catégorie",
+                                      description: "Impossible d'ajouter la dépense",
                                     });
                                   }
                                 }}
@@ -587,6 +645,7 @@ const Budget = () => {
                                   setNewMonthlyCategoryName("");
                                   setNewMonthlyCategoryType("");
                                   setNewMonthlyCategoryAmount("");
+                                  setSelectedMonths([selectedMonth]);
                                 }}
                               >
                                 Annuler
