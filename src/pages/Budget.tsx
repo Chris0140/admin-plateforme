@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-type BudgetMode = "mensuel" | "annuel";
+type BudgetMode = "mensuel" | "annuel" | "yearly-detailed";
 
 const months = [
   { value: 1, label: "Janvier" },
@@ -39,6 +39,9 @@ const Budget = () => {
   const [mode, setMode] = useState<BudgetMode>("mensuel");
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
+  
+  // Yearly detailed data
+  const [yearlyData, setYearlyData] = useState<any[]>([]);
 
   // Mode mensuel states
   const [resteMoisPrecedent, setResteMoisPrecedent] = useState("");
@@ -78,8 +81,10 @@ const Budget = () => {
     if (!user) return;
     if (mode === "mensuel") {
       fetchMonthlyBudget();
-    } else {
+    } else if (mode === "annuel") {
       fetchAnnualProjection();
+    } else if (mode === "yearly-detailed") {
+      fetchYearlyDetailed();
     }
   }, [user, mode, selectedYear, selectedMonth]);
 
@@ -126,6 +131,22 @@ const Budget = () => {
       }
     } catch (err) {
       console.error("Erreur chargement budget mensuel:", err);
+    }
+  };
+
+  const fetchYearlyDetailed = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("budget_monthly")
+        .select("*")
+        .eq("user_id", user?.id)
+        .eq("year", selectedYear)
+        .order("month", { ascending: true });
+
+      if (error) throw error;
+      setYearlyData(data || []);
+    } catch (err) {
+      console.error("Erreur chargement année détaillée:", err);
     }
   };
 
@@ -323,20 +344,33 @@ const Budget = () => {
             <span className="font-semibold">projection annuelle simple</span>.
           </p>
 
-          <div className="mb-8 flex flex-col items-center gap-3">
-            <ToggleGroup
-              type="single"
-              value={mode}
-              onValueChange={(value) => value && setMode(value as BudgetMode)}
-              className="bg-muted rounded-lg p-1"
-            >
-              <ToggleGroupItem value="mensuel" className="px-6">
-                Suivi mensuel détaillé
-              </ToggleGroupItem>
-              <ToggleGroupItem value="annuel" className="px-6">
+          <div className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="w-full md:w-auto">
+              <Button
+                variant={mode === "annuel" ? "default" : "outline"}
+                onClick={() => setMode("annuel")}
+                className="w-full md:w-auto px-6"
+              >
                 Projection annuelle simple
-              </ToggleGroupItem>
-            </ToggleGroup>
+              </Button>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                variant={mode === "mensuel" ? "default" : "outline"}
+                onClick={() => setMode("mensuel")}
+                className="px-6"
+              >
+                Suivi mensuel détaillé
+              </Button>
+              <Button
+                variant={mode === "yearly-detailed" ? "default" : "outline"}
+                onClick={() => setMode("yearly-detailed")}
+                className="px-6"
+              >
+                Année détaillée
+              </Button>
+            </div>
           </div>
 
           {mode === "mensuel" && (
@@ -674,6 +708,117 @@ const Budget = () => {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+          )}
+
+          {mode === "yearly-detailed" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold">Année {selectedYear}</h2>
+                <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
+                      <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Récapitulatif des mois de {selectedYear}</CardTitle>
+                  <CardDescription>Données réelles enregistrées par mois</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-2 font-semibold text-sm">Mois</th>
+                          <th className="text-right py-3 px-2 font-semibold text-sm">Revenus</th>
+                          <th className="text-right py-3 px-2 font-semibold text-sm">Sorties</th>
+                          <th className="text-right py-3 px-2 font-semibold text-sm">Solde</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {months.map((month) => {
+                          const monthData = yearlyData.find(d => d.month === month.value);
+                          const revenus = monthData?.total_revenus || 0;
+                          const sorties = monthData?.total_sorties || 0;
+                          const solde = monthData?.total_restant || 0;
+                          
+                          return (
+                            <tr key={month.value} className="border-b hover:bg-muted/50">
+                              <td className="py-3 px-2 text-sm">{month.label}</td>
+                              <td className="text-right py-3 px-2 text-sm">{formatCurrency(revenus)}</td>
+                              <td className="text-right py-3 px-2 text-sm">{formatCurrency(sorties)}</td>
+                              <td className={`text-right py-3 px-2 text-sm font-semibold ${solde >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {formatCurrency(solde)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                        <tr className="font-bold border-t-2">
+                          <td className="py-3 px-2 text-sm">Total</td>
+                          <td className="text-right py-3 px-2 text-sm">
+                            {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_revenus || 0), 0))}
+                          </td>
+                          <td className="text-right py-3 px-2 text-sm">
+                            {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_sorties || 0), 0))}
+                          </td>
+                          <td className={`text-right py-3 px-2 text-sm ${
+                            yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 
+                              ? 'text-green-600' 
+                              : 'text-red-600'
+                          }`}>
+                            {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0))}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Revenus annuels</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-primary">
+                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_revenus || 0), 0))}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Dépenses annuelles</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-primary">
+                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_sorties || 0), 0))}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Solde annuel</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className={`text-3xl font-bold ${
+                      yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 
+                        ? 'text-green-600' 
+                        : 'text-red-600'
+                    }`}>
+                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0))}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           )}
 
