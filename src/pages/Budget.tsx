@@ -12,7 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ChevronDown, Calculator, AlertTriangle } from "lucide-react";
+import { Save, ChevronDown, Calculator, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { calculateAllAVSPensions, formatCHF } from "@/lib/avsCalculations";
 
@@ -74,6 +74,14 @@ const Budget = () => {
   const [revenusOpen, setRevenusOpen] = useState(true);
   const [depensesOpen, setDepensesOpen] = useState(true);
 
+  // Fixed expenses state
+  const [fixedExpenses, setFixedExpenses] = useState<any[]>([]);
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [newExpenseName, setNewExpenseName] = useState("");
+  const [newExpenseAmount, setNewExpenseAmount] = useState("");
+  const [newExpenseCategory, setNewExpenseCategory] = useState("");
+  const [newExpenseFrequency, setNewExpenseFrequency] = useState("mensuel");
+
   // Charger les données depuis Supabase
   useEffect(() => {
     if (user) {
@@ -133,6 +141,17 @@ const Budget = () => {
         .maybeSingle();
 
       if (error) throw error;
+
+      // Load fixed expenses
+      const { data: expensesData, error: expensesError } = await supabase
+        .from("fixed_expenses")
+        .select("*")
+        .eq("user_id", user?.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (expensesError) throw expensesError;
+      if (expensesData) setFixedExpenses(expensesData);
 
       if (data) {
         // Charger les valeurs selon le periodType sélectionné
@@ -615,14 +634,30 @@ const Budget = () => {
     }
   }, [periodType]);
 
+  // Helper function to convert expenses to current period
+  const convertExpenseAmount = (amount: number, frequency: string) => {
+    if (periodType === "mensuel") {
+      return frequency === "annuel" ? Math.round(amount / 12) : amount;
+    } else {
+      return frequency === "mensuel" ? amount * 12 : amount;
+    }
+  };
+
   // Calculs Budget Personnel
   const multiplier = 1;
   const revenuNet = parseFloat(revenuBrut || "0") - parseFloat(chargesSociales || "0");
+  
+  // Calculate fixed expenses total
+  const fixedExpensesTotal = fixedExpenses.reduce((sum, expense) => {
+    return sum + convertExpenseAmount(expense.amount, expense.frequency);
+  }, 0);
+  
   const totalDepenses = 
     parseFloat(depensesLogement || "0") +
     parseFloat(depensesTransport || "0") +
     parseFloat(depensesAlimentation || "0") +
-    parseFloat(autresDepenses || "0");
+    parseFloat(autresDepenses || "0") +
+    fixedExpensesTotal;
   const solde = revenuNet - totalDepenses;
   
   // Montants affichés (déjà dans la bonne unité)
@@ -872,6 +907,181 @@ const Budget = () => {
                               setAutresDepenses(value);
                           }}
                         />
+                      </div>
+
+                      {/* Additional fixed expenses */}
+                      {fixedExpenses.length > 0 && (
+                        <div className="pt-4 border-t space-y-3">
+                          <p className="text-sm font-medium">Dépenses additionnelles</p>
+                          {fixedExpenses.map((expense) => (
+                            <div key={expense.id} className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-md">
+                              <div className="flex-1">
+                                <p className="text-sm font-medium">{expense.name}</p>
+                                <p className="text-xs text-muted-foreground">{expense.category}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold">
+                                  {formatCurrency(convertExpenseAmount(expense.amount, expense.frequency))}
+                                </p>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={async () => {
+                                    try {
+                                      await supabase
+                                        .from("fixed_expenses")
+                                        .delete()
+                                        .eq("id", expense.id);
+                                      setFixedExpenses(fixedExpenses.filter(e => e.id !== expense.id));
+                                      toast({
+                                        title: "Dépense supprimée",
+                                        description: "La dépense a été supprimée avec succès",
+                                      });
+                                    } catch (error) {
+                                      console.error(error);
+                                      toast({
+                                        variant: "destructive",
+                                        title: "Erreur",
+                                        description: "Impossible de supprimer la dépense",
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Add new expense form */}
+                      {showAddExpense ? (
+                        <div className="pt-4 border-t space-y-3">
+                          <p className="text-sm font-medium">Nouvelle dépense</p>
+                          <div>
+                            <Label htmlFor="newExpenseName">Nom</Label>
+                            <Input
+                              id="newExpenseName"
+                              placeholder="Ex: Abonnement sport"
+                              value={newExpenseName}
+                              onChange={(e) => setNewExpenseName(e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="newExpenseCategory">Catégorie</Label>
+                            <Input
+                              id="newExpenseCategory"
+                              placeholder="Ex: Loisirs"
+                              value={newExpenseCategory}
+                              onChange={(e) => setNewExpenseCategory(e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor="newExpenseAmount">Montant (CHF)</Label>
+                            <Input
+                              id="newExpenseAmount"
+                              type="number"
+                              step="1"
+                              placeholder="100"
+                              value={newExpenseAmount}
+                              onChange={(e) => setNewExpenseAmount(e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <Label>Fréquence</Label>
+                            <Select value={newExpenseFrequency} onValueChange={setNewExpenseFrequency}>
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="mensuel">Mensuel</SelectItem>
+                                <SelectItem value="annuel">Annuel</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              onClick={async () => {
+                                if (!newExpenseName || !newExpenseAmount) {
+                                  toast({
+                                    variant: "destructive",
+                                    title: "Erreur",
+                                    description: "Veuillez remplir tous les champs",
+                                  });
+                                  return;
+                                }
+                                try {
+                                  const { data, error } = await supabase
+                                    .from("fixed_expenses")
+                                    .insert({
+                                      user_id: user?.id,
+                                      name: newExpenseName,
+                                      category: newExpenseCategory || "Autre",
+                                      amount: parseFloat(newExpenseAmount),
+                                      frequency: newExpenseFrequency,
+                                    })
+                                    .select()
+                                    .single();
+
+                                  if (error) throw error;
+
+                                  setFixedExpenses([...fixedExpenses, data]);
+                                  setNewExpenseName("");
+                                  setNewExpenseCategory("");
+                                  setNewExpenseAmount("");
+                                  setNewExpenseFrequency("mensuel");
+                                  setShowAddExpense(false);
+                                  toast({
+                                    title: "Dépense ajoutée",
+                                    description: "La dépense a été ajoutée avec succès",
+                                  });
+                                } catch (error) {
+                                  console.error(error);
+                                  toast({
+                                    variant: "destructive",
+                                    title: "Erreur",
+                                    description: "Impossible d'ajouter la dépense",
+                                  });
+                                }
+                              }}
+                            >
+                              Ajouter
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setShowAddExpense(false);
+                                setNewExpenseName("");
+                                setNewExpenseCategory("");
+                                setNewExpenseAmount("");
+                              }}
+                            >
+                              Annuler
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full gap-2"
+                          onClick={() => setShowAddExpense(true)}
+                        >
+                          <Plus className="h-4 w-4" />
+                          Ajouter une catégorie
+                        </Button>
+                      )}
+
+                      {/* Total */}
+                      <div className="pt-4 border-t">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium">Total des dépenses</p>
+                          <p className="text-xl font-bold text-primary">{formatCurrency(totalDepenses)}</p>
+                        </div>
                       </div>
                     </CardContent>
                     </CollapsibleContent>
