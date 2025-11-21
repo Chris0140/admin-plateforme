@@ -132,58 +132,6 @@ const AVSAccountForm = ({
 
       <Card>
         <CardHeader>
-          <CardTitle>Historique de cotisation</CardTitle>
-          <CardDescription>Vos années de cotisation AVS</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="yearsContributed">Années cotisées</Label>
-              <Input
-                id="yearsContributed"
-                type="number"
-                min="0"
-                max="44"
-                value={yearsContributed}
-                onChange={(e) => setYearsContributed(Number(e.target.value))}
-                className="mt-1"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Maximum : 44 ans (entre 21 et 65 ans)
-              </p>
-            </div>
-            <div>
-              <Label>Années manquantes</Label>
-              <Input
-                type="number"
-                value={yearsMissing}
-                disabled
-                className="mt-1 bg-muted"
-              />
-            </div>
-            <div>
-              <Label>Coefficient de rente</Label>
-              <Input
-                value={`${rentCoefficient}%`}
-                disabled
-                className="mt-1 bg-muted"
-              />
-            </div>
-          </div>
-
-          {yearsMissing > 0 && (
-            <div className="flex gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md">
-              <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-destructive">
-                Attention : {yearsMissing} année(s) de lacune. Rente réduite à {rentCoefficient}%.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Calcul des rentes</CardTitle>
           <CardDescription>Estimation selon l'Échelle 44 2025</CardDescription>
         </CardHeader>
@@ -256,6 +204,58 @@ const AVSAccountForm = ({
                   </p>
                 </CardContent>
               </Card>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Historique de cotisation</CardTitle>
+          <CardDescription>Vos années de cotisation AVS</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label htmlFor="yearsContributed">Années cotisées</Label>
+              <Input
+                id="yearsContributed"
+                type="number"
+                min="0"
+                max="44"
+                value={yearsContributed}
+                onChange={(e) => setYearsContributed(Number(e.target.value))}
+                className="mt-1"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Maximum : 44 ans (entre 21 et 65 ans)
+              </p>
+            </div>
+            <div>
+              <Label>Années manquantes</Label>
+              <Input
+                type="number"
+                value={yearsMissing}
+                disabled
+                className="mt-1 bg-muted"
+              />
+            </div>
+            <div>
+              <Label>Coefficient de rente</Label>
+              <Input
+                value={`${rentCoefficient}%`}
+                disabled
+                className="mt-1 bg-muted"
+              />
+            </div>
+          </div>
+
+          {yearsMissing > 0 && (
+            <div className="flex gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md">
+              <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-destructive">
+                Attention : {yearsMissing} année(s) de lacune. Rente réduite à {rentCoefficient}%.
+              </p>
             </div>
           )}
         </CardContent>
