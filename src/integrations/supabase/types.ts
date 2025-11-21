@@ -935,10 +935,13 @@ export type Database = {
           contract_number: string | null
           created_at: string | null
           current_amount: number
+          death_capital: number | null
+          disability_rent_annual: number | null
           id: string
           institution_name: string
           is_active: boolean | null
           notes: string | null
+          premium_exemption_waiting_period: number | null
           profile_id: string
           projected_amount_at_retirement: number | null
           projected_annual_rent: number | null
@@ -952,10 +955,13 @@ export type Database = {
           contract_number?: string | null
           created_at?: string | null
           current_amount?: number
+          death_capital?: number | null
+          disability_rent_annual?: number | null
           id?: string
           institution_name: string
           is_active?: boolean | null
           notes?: string | null
+          premium_exemption_waiting_period?: number | null
           profile_id: string
           projected_amount_at_retirement?: number | null
           projected_annual_rent?: number | null
@@ -969,10 +975,13 @@ export type Database = {
           contract_number?: string | null
           created_at?: string | null
           current_amount?: number
+          death_capital?: number | null
+          disability_rent_annual?: number | null
           id?: string
           institution_name?: string
           is_active?: boolean | null
           notes?: string | null
+          premium_exemption_waiting_period?: number | null
           profile_id?: string
           projected_amount_at_retirement?: number | null
           projected_annual_rent?: number | null

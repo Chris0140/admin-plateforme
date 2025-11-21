@@ -20,6 +20,10 @@ const formSchema = z.object({
   annual_contribution: z.number().min(0),
   start_date: z.string().optional(),
   return_rate: z.number().min(0).max(100),
+  projected_amount_at_retirement: z.number().min(0).optional(),
+  disability_rent_annual: z.number().min(0).optional(),
+  death_capital: z.number().min(0).optional(),
+  premium_exemption_waiting_period: z.number().optional(),
   notes: z.string().optional(),
 });
 
@@ -46,6 +50,10 @@ const ThirdPillarAccountForm = ({ accountId, onSuccess, onCancel }: ThirdPillarA
       annual_contribution: 0,
       start_date: '',
       return_rate: 2,
+      projected_amount_at_retirement: 0,
+      disability_rent_annual: 0,
+      death_capital: 0,
+      premium_exemption_waiting_period: undefined,
       notes: '',
     },
   });
@@ -81,6 +89,10 @@ const ThirdPillarAccountForm = ({ accountId, onSuccess, onCancel }: ThirdPillarA
             annual_contribution: Number(account.annual_contribution),
             start_date: account.start_date || '',
             return_rate: Number(account.return_rate),
+            projected_amount_at_retirement: Number(account.projected_amount_at_retirement || 0),
+            disability_rent_annual: Number(account.disability_rent_annual || 0),
+            death_capital: Number(account.death_capital || 0),
+            premium_exemption_waiting_period: account.premium_exemption_waiting_period || undefined,
             notes: account.notes || '',
           });
         }
@@ -266,6 +278,100 @@ const ThirdPillarAccountForm = ({ accountId, onSuccess, onCancel }: ThirdPillarA
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="projected_amount_at_retirement"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Avoir projeté à la retraite (CHF)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Capital estimé à 65 ans
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="death_capital"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Capital décès (CHF)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {(form.watch('account_type') === '3a_insurance' || form.watch('account_type') === '3b') && (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="disability_rent_annual"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Rente d'invalidité annuelle (CHF)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="premium_exemption_waiting_period"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Exonération des primes</FormLabel>
+                        <Select 
+                          onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)} 
+                          value={field.value?.toString()}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Délai d'attente" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="3">3 mois</SelectItem>
+                            <SelectItem value="6">6 mois</SelectItem>
+                            <SelectItem value="12">12 mois</SelectItem>
+                            <SelectItem value="24">24 mois</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Délai avant exonération en cas d'incapacité de gain
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
             </div>
 
             <FormField

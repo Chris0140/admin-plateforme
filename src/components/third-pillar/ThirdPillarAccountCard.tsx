@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, TrendingUp } from "lucide-react";
+import { Edit, Trash2, TrendingUp, Shield, Heart } from "lucide-react";
 import { ThirdPillarProjection } from "@/lib/thirdPillarCalculations";
 import { deleteThirdPillarAccount } from "@/lib/thirdPillarCalculations";
 import { useToast } from "@/hooks/use-toast";
@@ -29,6 +29,13 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   '3b': '3b',
 };
 
+const WAITING_PERIOD_LABELS: Record<number, string> = {
+  3: '3 mois',
+  6: '6 mois',
+  12: '12 mois',
+  24: '24 mois',
+};
+
 const ThirdPillarAccountCard = ({ account, onEdit, onDelete }: ThirdPillarAccountCardProps) => {
   const { toast } = useToast();
 
@@ -49,6 +56,8 @@ const ThirdPillarAccountCard = ({ account, onEdit, onDelete }: ThirdPillarAccoun
       });
     }
   };
+
+  const showInsuranceFields = account.accountType === '3a_insurance' || account.accountType === '3b';
 
   return (
     <Card>
@@ -122,7 +131,41 @@ const ThirdPillarAccountCard = ({ account, onEdit, onDelete }: ThirdPillarAccoun
               {account.projectedAnnualRent.toLocaleString('fr-CH')} CHF
             </p>
           </div>
+
+          {account.deathCapital && account.deathCapital > 0 && (
+            <div>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Heart className="h-3 w-3" />
+                Capital décès
+              </p>
+              <p className="text-lg font-semibold">
+                {account.deathCapital.toLocaleString('fr-CH')} CHF
+              </p>
+            </div>
+          )}
+
+          {showInsuranceFields && account.disabilityRentAnnual && account.disabilityRentAnnual > 0 && (
+            <div>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <Shield className="h-3 w-3" />
+                Rente d'invalidité annuelle
+              </p>
+              <p className="text-lg font-semibold">
+                {account.disabilityRentAnnual.toLocaleString('fr-CH')} CHF
+              </p>
+            </div>
+          )}
+
+          {showInsuranceFields && account.premiumExemptionWaitingPeriod && (
+            <div>
+              <p className="text-sm text-muted-foreground">Exonération des primes</p>
+              <p className="text-sm font-medium">
+                Délai: {WAITING_PERIOD_LABELS[account.premiumExemptionWaitingPeriod] || `${account.premiumExemptionWaitingPeriod} mois`}
+              </p>
+            </div>
+          )}
         </div>
+
         {account.yearsToRetirement > 0 && (
           <p className="text-xs text-muted-foreground mt-4">
             Dans {account.yearsToRetirement} ans (à 65 ans)
