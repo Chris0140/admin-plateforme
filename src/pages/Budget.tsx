@@ -55,10 +55,7 @@ const Budget = () => {
   // Mode annuel states
   const [revenuBrutAnnuel, setRevenuBrutAnnuel] = useState("");
   const [chargesSocialesAnnuel, setChargesSocialesAnnuel] = useState("");
-  const [logementAnnuel, setLogementAnnuel] = useState("");
-  const [assurancesAnnuel, setAssurancesAnnuel] = useState("");
-  const [alimentationAnnuel, setAlimentationAnnuel] = useState("");
-  const [autresDepensesAnnuel, setAutresDepensesAnnuel] = useState("");
+  const [depensesAnnuel, setDepensesAnnuel] = useState("");
 
   const [fixedExpenses, setFixedExpenses] = useState<any[]>([]);
   const [showAddExpense, setShowAddExpense] = useState(false);
@@ -175,17 +172,11 @@ const Budget = () => {
       if (data) {
         setRevenuBrutAnnuel(data.revenu_brut_annuel?.toString() || "");
         setChargesSocialesAnnuel(data.charges_sociales_annuel?.toString() || "");
-        setLogementAnnuel(data.depenses_logement_annuel?.toString() || "");
-        setAssurancesAnnuel(data.depenses_transport_annuel?.toString() || "");
-        setAlimentationAnnuel(data.depenses_alimentation_annuel?.toString() || "");
-        setAutresDepensesAnnuel(data.autres_depenses_annuel?.toString() || "");
+        setDepensesAnnuel(data.autres_depenses_annuel?.toString() || "");
       } else {
         setRevenuBrutAnnuel("");
         setChargesSocialesAnnuel("");
-        setLogementAnnuel("");
-        setAssurancesAnnuel("");
-        setAlimentationAnnuel("");
-        setAutresDepensesAnnuel("");
+        setDepensesAnnuel("");
       }
     } catch (err) {
       console.error("Erreur chargement projection annuelle:", err);
@@ -244,10 +235,7 @@ const Budget = () => {
     try {
       const revenu = parseFloat(revenuBrutAnnuel) || 0;
       const charges = parseFloat(chargesSocialesAnnuel) || 0;
-      const logement = parseFloat(logementAnnuel) || 0;
-      const assur = parseFloat(assurancesAnnuel) || 0;
-      const alim = parseFloat(alimentationAnnuel) || 0;
-      const autres = parseFloat(autresDepensesAnnuel) || 0;
+      const depenses = parseFloat(depensesAnnuel) || 0;
 
       const { data: existing } = await supabase
         .from("budget_data")
@@ -260,22 +248,22 @@ const Budget = () => {
         period_type: "annuel",
         revenu_brut: revenu,
         charges_sociales: charges,
-        depenses_logement: logement,
-        depenses_transport: assur,
-        depenses_alimentation: alim,
-        autres_depenses: autres,
+        depenses_logement: 0,
+        depenses_transport: 0,
+        depenses_alimentation: 0,
+        autres_depenses: depenses,
         revenu_brut_annuel: revenu,
         charges_sociales_annuel: charges,
-        depenses_logement_annuel: logement,
-        depenses_transport_annuel: assur,
-        depenses_alimentation_annuel: alim,
-        autres_depenses_annuel: autres,
+        depenses_logement_annuel: 0,
+        depenses_transport_annuel: 0,
+        depenses_alimentation_annuel: 0,
+        autres_depenses_annuel: depenses,
         revenu_brut_mensuel: Math.round(revenu / 12),
         charges_sociales_mensuel: Math.round(charges / 12),
-        depenses_logement_mensuel: Math.round(logement / 12),
-        depenses_transport_mensuel: Math.round(assur / 12),
-        depenses_alimentation_mensuel: Math.round(alim / 12),
-        autres_depenses_mensuel: Math.round(autres / 12),
+        depenses_logement_mensuel: 0,
+        depenses_transport_mensuel: 0,
+        depenses_alimentation_mensuel: 0,
+        autres_depenses_mensuel: Math.round(depenses / 12),
       };
 
       if (existing) {
@@ -302,10 +290,7 @@ const Budget = () => {
   const annualRevenuNet = (parseFloat(revenuBrutAnnuel || "0") - parseFloat(chargesSocialesAnnuel || "0"));
   const annualFixedExpenses = fixedExpenses.reduce((sum, exp) => sum + convertExpenseAmount(exp.amount, exp.frequency), 0);
   const annualTotalDepenses = 
-    (parseFloat(logementAnnuel || "0") || 0) +
-    (parseFloat(assurancesAnnuel || "0") || 0) +
-    (parseFloat(alimentationAnnuel || "0") || 0) +
-    (parseFloat(autresDepensesAnnuel || "0") || 0) +
+    (parseFloat(depensesAnnuel || "0") || 0) +
     annualFixedExpenses;
   const annualSolde = annualRevenuNet - annualTotalDepenses;
 
@@ -911,20 +896,8 @@ const Budget = () => {
                     <CollapsibleContent>
                       <CardContent className="space-y-4">
                         <div>
-                          <Label htmlFor="logementAnnuel">Logement (annuel)</Label>
-                          <Input id="logementAnnuel" type="number" value={logementAnnuel} onChange={(e) => setLogementAnnuel(e.target.value)} placeholder="Loyer/hypothèque * 12" />
-                        </div>
-                        <div>
-                          <Label htmlFor="assurancesAnnuel">Assurances (annuel)</Label>
-                          <Input id="assurancesAnnuel" type="number" value={assurancesAnnuel} onChange={(e) => setAssurancesAnnuel(e.target.value)} />
-                        </div>
-                        <div>
-                          <Label htmlFor="alimentationAnnuel">Alimentation (annuel)</Label>
-                          <Input id="alimentationAnnuel" type="number" value={alimentationAnnuel} onChange={(e) => setAlimentationAnnuel(e.target.value)} />
-                        </div>
-                        <div>
-                          <Label htmlFor="autresDepensesAnnuel">Autres dépenses (annuel)</Label>
-                          <Input id="autresDepensesAnnuel" type="number" value={autresDepensesAnnuel} onChange={(e) => setAutresDepensesAnnuel(e.target.value)} />
+                          <Label htmlFor="depensesAnnuel">Dépenses (annuel)</Label>
+                          <Input id="depensesAnnuel" type="number" value={depensesAnnuel} onChange={(e) => setDepensesAnnuel(e.target.value)} placeholder="Ex: 50'000" />
                         </div>
 
                         {fixedExpenses.length > 0 && (
@@ -1013,7 +986,7 @@ const Budget = () => {
                         ) : (
                           <Button variant="outline" size="sm" className="w-full gap-2 mt-2" onClick={() => setShowAddExpense(true)}>
                             <Plus className="h-4 w-4" />
-                            Ajouter une dépense fixe
+                            Ajouter une dépense
                           </Button>
                         )}
 
