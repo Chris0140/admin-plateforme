@@ -249,23 +249,23 @@ const Prevoyance = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-4 gap-4">
-                    <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
+                    <div className="text-center p-4 bg-muted/30 rounded-lg border border-border">
                       <p className="text-sm text-muted-foreground mb-1">1er Pilier AVS</p>
-                      <p className="text-xl font-bold text-yellow-600">
+                      <p className="text-xl font-bold text-accent">
                         {formatCHF(avsTotalRent)}
                       </p>
                       <p className="text-xs text-muted-foreground">par an</p>
                     </div>
-                    <div className="text-center p-4 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
+                    <div className="text-center p-4 bg-muted/30 rounded-lg border border-border">
                       <p className="text-sm text-muted-foreground mb-1">2ème Pilier LPP</p>
-                      <p className="text-xl font-bold text-orange-600">
+                      <p className="text-xl font-bold text-accent">
                         {lppSummary ? formatCHF(lppSummary.total_annual_rent_65) : formatCHF(0)}
                       </p>
                       <p className="text-xs text-muted-foreground">par an</p>
                     </div>
-                    <div className="text-center p-4 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg">
+                    <div className="text-center p-4 bg-muted/30 rounded-lg border border-border">
                       <p className="text-sm text-muted-foreground mb-1">3ème Pilier</p>
-                      <p className="text-xl font-bold text-emerald-600">
+                      <p className="text-xl font-bold text-accent">
                         {thirdPillarSummary ? formatCHF(thirdPillarSummary.totalProjectedAnnualRent) : formatCHF(0)}
                       </p>
                       <p className="text-xs text-muted-foreground">par an</p>
