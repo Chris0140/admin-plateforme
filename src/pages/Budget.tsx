@@ -727,6 +727,43 @@ const Budget = () => {
                 </Select>
               </div>
 
+              <div className="grid md:grid-cols-3 gap-6 mb-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Revenus annuels</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-primary">
+                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_revenus || 0), 0))}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Dépenses annuelles</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-3xl font-bold text-primary">
+                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_sorties || 0), 0))}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Solde annuel</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className={`text-3xl font-bold ${
+                      yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 
+                        ? 'text-green-600' 
+                        : 'text-red-600'
+                    }`}>
+                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0))}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
               <Card>
                 <CardHeader>
                   <CardTitle>Récapitulatif des mois de {selectedYear}</CardTitle>
@@ -782,43 +819,6 @@ const Budget = () => {
                   </div>
                 </CardContent>
               </Card>
-
-              <div className="grid md:grid-cols-3 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Revenus annuels</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-primary">
-                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_revenus || 0), 0))}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Dépenses annuelles</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-primary">
-                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_sorties || 0), 0))}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Solde annuel</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className={`text-3xl font-bold ${
-                      yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 
-                        ? 'text-green-600' 
-                        : 'text-red-600'
-                    }`}>
-                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0))}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
             </div>
           )}
 
