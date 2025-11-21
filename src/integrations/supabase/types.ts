@@ -637,6 +637,42 @@ export type Database = {
           },
         ]
       }
+      monthly_expense_categories: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          id: string
+          month: number
+          name: string
+          updated_at: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          amount?: number
+          category: string
+          created_at?: string | null
+          id?: string
+          month: number
+          name: string
+          updated_at?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          id?: string
+          month?: number
+          name?: string
+          updated_at?: string | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       prevoyance_data: {
         Row: {
           avs_1er_pilier: number | null

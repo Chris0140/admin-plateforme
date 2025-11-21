@@ -64,6 +64,13 @@ const Budget = () => {
   const [newExpenseAmount, setNewExpenseAmount] = useState("");
   const [newExpenseFrequency, setNewExpenseFrequency] = useState<"mensuel" | "annuel">("mensuel");
 
+  // Monthly custom categories
+  const [monthlyCategories, setMonthlyCategories] = useState<any[]>([]);
+  const [showAddMonthlyCategory, setShowAddMonthlyCategory] = useState(false);
+  const [newMonthlyCategoryName, setNewMonthlyCategoryName] = useState("");
+  const [newMonthlyCategoryType, setNewMonthlyCategoryType] = useState("");
+  const [newMonthlyCategoryAmount, setNewMonthlyCategoryAmount] = useState("");
+
   const [revenusOpen, setRevenusOpen] = useState(true);
   const [depensesOpen, setDepensesOpen] = useState(true);
 
@@ -87,6 +94,18 @@ const Budget = () => {
         .maybeSingle();
 
       if (error && error.code !== "PGRST116") throw error;
+
+      // Load monthly categories
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from("monthly_expense_categories")
+        .select("*")
+        .eq("user_id", user?.id)
+        .eq("year", selectedYear)
+        .eq("month", selectedMonth)
+        .order("created_at", { ascending: false });
+
+      if (categoriesError) throw categoriesError;
+      if (categoriesData) setMonthlyCategories(categoriesData);
 
       if (data) {
         setResteMoisPrecedent(data.reste_mois_precedent?.toString() || "");
@@ -278,9 +297,11 @@ const Budget = () => {
   const mFrais = parseFloat(fraisFixesDettes || "0") || 0;
   const mAss = parseFloat(assurances || "0") || 0;
   const mEpargne = parseFloat(epargneInvest || "0") || 0;
+  
+  const mCategoriesTotal = monthlyCategories.reduce((sum, cat) => sum + (parseFloat(cat.amount) || 0), 0);
 
   const mTotalRevenus = mSalaire + mAutres;
-  const mTotalSorties = mDepVar + mFrais + mAss + mEpargne;
+  const mTotalSorties = mDepVar + mFrais + mAss + mEpargne + mCategoriesTotal;
   const mTotalRestant = mReste + mTotalRevenus - mTotalSorties;
 
   const formatCurrency = (value: number) =>
@@ -417,6 +438,164 @@ const Budget = () => {
                           <Label htmlFor="epargneInvest">Épargne & investissements</Label>
                           <Input id="epargneInvest" type="number" value={epargneInvest} onChange={(e) => setEpargneInvest(e.target.value)} placeholder="3e pilier, ETF, etc." />
                         </div>
+
+                        {/* Catégories additionnelles */}
+                        {monthlyCategories.length > 0 && (
+                          <div className="pt-4 border-t space-y-3">
+                            <p className="text-sm font-medium">Catégories additionnelles</p>
+                            {monthlyCategories.map((cat) => (
+                              <div
+                                key={cat.id}
+                                className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-md"
+                              >
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium">{cat.name}</p>
+                                  <p className="text-xs text-muted-foreground">{cat.category}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold">
+                                    {formatCurrency(parseFloat(cat.amount) || 0)}
+                                  </p>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={async () => {
+                                      try {
+                                        await supabase
+                                          .from("monthly_expense_categories")
+                                          .delete()
+                                          .eq("id", cat.id);
+                                        setMonthlyCategories(monthlyCategories.filter((c) => c.id !== cat.id));
+                                        toast({
+                                          title: "Catégorie supprimée",
+                                          description: "La catégorie a été supprimée avec succès",
+                                        });
+                                      } catch (error) {
+                                        console.error(error);
+                                        toast({
+                                          variant: "destructive",
+                                          title: "Erreur",
+                                          description: "Impossible de supprimer la catégorie",
+                                        });
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Formulaire ajout catégorie */}
+                        {showAddMonthlyCategory ? (
+                          <div className="pt-4 border-t space-y-3">
+                            <p className="text-sm font-medium">Nouvelle catégorie</p>
+                            <div>
+                              <Label htmlFor="newMonthlyCategoryName">Nom</Label>
+                              <Input
+                                id="newMonthlyCategoryName"
+                                placeholder="Ex: Loisirs"
+                                value={newMonthlyCategoryName}
+                                onChange={(e) => setNewMonthlyCategoryName(e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="newMonthlyCategoryType">Type</Label>
+                              <Input
+                                id="newMonthlyCategoryType"
+                                placeholder="Ex: Sorties"
+                                value={newMonthlyCategoryType}
+                                onChange={(e) => setNewMonthlyCategoryType(e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="newMonthlyCategoryAmount">Montant (CHF)</Label>
+                              <Input
+                                id="newMonthlyCategoryAmount"
+                                type="number"
+                                placeholder="100"
+                                value={newMonthlyCategoryAmount}
+                                onChange={(e) => setNewMonthlyCategoryAmount(e.target.value)}
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={async () => {
+                                  if (!newMonthlyCategoryName || !newMonthlyCategoryAmount) {
+                                    toast({
+                                      variant: "destructive",
+                                      title: "Erreur",
+                                      description: "Veuillez remplir tous les champs",
+                                    });
+                                    return;
+                                  }
+                                  try {
+                                    const { data, error } = await supabase
+                                      .from("monthly_expense_categories")
+                                      .insert({
+                                        user_id: user?.id,
+                                        year: selectedYear,
+                                        month: selectedMonth,
+                                        name: newMonthlyCategoryName,
+                                        category: newMonthlyCategoryType || "Autre",
+                                        amount: parseFloat(newMonthlyCategoryAmount),
+                                      })
+                                      .select()
+                                      .single();
+
+                                    if (error) throw error;
+
+                                    setMonthlyCategories([...monthlyCategories, data]);
+                                    setNewMonthlyCategoryName("");
+                                    setNewMonthlyCategoryType("");
+                                    setNewMonthlyCategoryAmount("");
+                                    setShowAddMonthlyCategory(false);
+                                    toast({
+                                      title: "Catégorie ajoutée",
+                                      description: "La catégorie a été ajoutée avec succès",
+                                    });
+                                  } catch (error) {
+                                    console.error(error);
+                                    toast({
+                                      variant: "destructive",
+                                      title: "Erreur",
+                                      description: "Impossible d'ajouter la catégorie",
+                                    });
+                                  }
+                                }}
+                              >
+                                Ajouter
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setShowAddMonthlyCategory(false);
+                                  setNewMonthlyCategoryName("");
+                                  setNewMonthlyCategoryType("");
+                                  setNewMonthlyCategoryAmount("");
+                                }}
+                              >
+                                Annuler
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full gap-2"
+                            onClick={() => setShowAddMonthlyCategory(true)}
+                          >
+                            <Plus className="h-4 w-4" />
+                            Ajouter une catégorie
+                          </Button>
+                        )}
+
                         <div className="pt-4 border-t space-y-1">
                           <p className="text-sm text-muted-foreground">Total sorties du mois</p>
                           <p className="text-2xl font-bold text-primary">{formatCurrency(mTotalSorties)}</p>
