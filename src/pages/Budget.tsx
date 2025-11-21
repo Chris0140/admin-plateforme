@@ -60,9 +60,7 @@ const Budget = () => {
   const [fixedExpenses, setFixedExpenses] = useState<any[]>([]);
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [newExpenseName, setNewExpenseName] = useState("");
-  const [newExpenseCategory, setNewExpenseCategory] = useState("");
   const [newExpenseAmount, setNewExpenseAmount] = useState("");
-  const [newExpenseFrequency, setNewExpenseFrequency] = useState<"mensuel" | "annuel">("mensuel");
 
   // Monthly custom categories
   const [monthlyCategories, setMonthlyCategories] = useState<any[]>([]);
@@ -283,12 +281,8 @@ const Budget = () => {
     }
   };
 
-  const convertExpenseAmount = (amount: number, frequency: "mensuel" | "annuel") => {
-    return frequency === "mensuel" ? amount * 12 : amount;
-  };
-
   const annualRevenuNet = (parseFloat(revenuBrutAnnuel || "0") - parseFloat(chargesSocialesAnnuel || "0"));
-  const annualFixedExpenses = fixedExpenses.reduce((sum, exp) => sum + convertExpenseAmount(exp.amount, exp.frequency), 0);
+  const annualFixedExpenses = fixedExpenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
   const annualTotalDepenses = 
     (parseFloat(depensesAnnuel || "0") || 0) +
     annualFixedExpenses;
@@ -907,10 +901,9 @@ const Budget = () => {
                               <div key={exp.id} className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-md">
                                 <div className="flex-1">
                                   <p className="text-sm font-medium">{exp.name}</p>
-                                  <p className="text-xs text-muted-foreground">{exp.category} ({exp.frequency})</p>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <p className="text-sm font-semibold">{formatCurrency(convertExpenseAmount(exp.amount, exp.frequency))}</p>
+                                  <p className="text-sm font-semibold">{formatCurrency(exp.amount || 0)}</p>
                                   <Button
                                     variant="ghost"
                                     size="icon"
@@ -935,20 +928,9 @@ const Budget = () => {
 
                         {showAddExpense ? (
                           <div className="pt-4 border-t space-y-3">
-                            <p className="text-sm font-medium">Nouvelle dépense fixe</p>
+                            <p className="text-sm font-medium">Nouvelle dépense</p>
                             <div><Label>Nom</Label><Input value={newExpenseName} onChange={(e) => setNewExpenseName(e.target.value)} placeholder="Ex: Netflix" /></div>
-                            <div><Label>Catégorie</Label><Input value={newExpenseCategory} onChange={(e) => setNewExpenseCategory(e.target.value)} placeholder="Ex: Loisirs" /></div>
-                            <div><Label>Montant</Label><Input type="number" value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} /></div>
-                            <div>
-                              <Label>Fréquence</Label>
-                              <Select value={newExpenseFrequency} onValueChange={(v) => setNewExpenseFrequency(v as "mensuel" | "annuel")}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="mensuel">Mensuel</SelectItem>
-                                  <SelectItem value="annuel">Annuel</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                            <div><Label>Montant annuel</Label><Input type="number" value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} placeholder="Ex: 1200" /></div>
                             <div className="flex gap-2">
                               <Button size="sm" onClick={async () => {
                                 if (!newExpenseName || !newExpenseAmount) {
@@ -959,16 +941,14 @@ const Budget = () => {
                                   const { data } = await supabase.from("fixed_expenses").insert({
                                     user_id: user?.id,
                                     name: newExpenseName,
-                                    category: newExpenseCategory || "Autre",
+                                    category: "Autre",
                                     amount: parseFloat(newExpenseAmount),
-                                    frequency: newExpenseFrequency,
+                                    frequency: "annuel",
                                     is_active: true,
                                   }).select().single();
                                   if (data) setFixedExpenses([...fixedExpenses, data]);
                                   setNewExpenseName("");
-                                  setNewExpenseCategory("");
                                   setNewExpenseAmount("");
-                                  setNewExpenseFrequency("mensuel");
                                   setShowAddExpense(false);
                                   toast({ title: "Dépense ajoutée" });
                                 } catch (err) {
@@ -978,7 +958,6 @@ const Budget = () => {
                               <Button size="sm" variant="outline" onClick={() => {
                                 setShowAddExpense(false);
                                 setNewExpenseName("");
-                                setNewExpenseCategory("");
                                 setNewExpenseAmount("");
                               }}>Annuler</Button>
                             </div>
