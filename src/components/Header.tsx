@@ -187,7 +187,7 @@ const Header = () => {
                     <span>Se déconnecter</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu> : <Link to="/auth">
+              </DropdownMenu> : <Link to="/login">
                 <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
                   Connexion / Inscription
                 </Button>
@@ -365,7 +365,7 @@ const Header = () => {
                         </button>
                       </div>
                     ) : (
-                      <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
+                      <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
                         <Button className="w-full bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
                           Connexion / Inscription
                         </Button>
