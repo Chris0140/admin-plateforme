@@ -27,6 +27,8 @@ import AssuranceAnimaux from "./pages/comparateur/AssuranceAnimaux";
 import Budget from "./pages/Budget";
 import UserProfile from "./pages/UserProfile";
 import LPPAccounts from "./pages/LPPAccounts";
+import Admin from "./pages/Admin";
+import { AdminRoute } from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +62,7 @@ const App = () => (
             <Route path="/prevoyance/lpp" element={<LPPAccounts />} />
             <Route path="/prevoyance/3e-pilier" element={<ThirdPillar />} />
             <Route path="/assurances" element={<Insurance />} />
+            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

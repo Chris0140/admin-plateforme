@@ -9,11 +9,14 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { useUserRole } from "@/hooks/useUserRole";
+
 const Header = () => {
   const {
     user,
     loading
   } = useAuth();
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
   const {
     toast
@@ -181,6 +184,17 @@ const Header = () => {
                       <span>Paramètres du compte</span>
                     </Link>
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center cursor-pointer text-primary">
+                          <Shield className="mr-2 h-4 w-4" />
+                          <span className="font-semibold">Administration</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
@@ -353,7 +367,17 @@ const Header = () => {
                           <FileText className="h-4 w-4" />
                           <span>Mes documents</span>
                         </Link>
-                        <button 
+                        {isAdmin && (
+                          <Link 
+                            to="/admin" 
+                            className="flex items-center gap-2 py-2 px-3 hover:bg-accent rounded-md transition-colors text-primary"
+                            onClick={() => setMobileMenuOpen(false)}
+                          >
+                            <Shield className="h-4 w-4" />
+                            <span className="font-semibold">Administration</span>
+                          </Link>
+                        )}
+                        <button
                           onClick={() => {
                             handleLogout();
                             setMobileMenuOpen(false);
