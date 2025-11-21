@@ -1,5 +1,6 @@
 import { Settings, FileText, LogOut, ChevronDown, Heart, Car, Bike, Shield, Plane, Home, PawPrint, PiggyBank, Menu, ChevronRight, User, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import adminLogo from "@/assets/admin-logo.png";
@@ -188,9 +189,12 @@ const Header = () => {
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem asChild>
-                        <Link to="/admin" className="flex items-center cursor-pointer text-primary">
-                          <Shield className="mr-2 h-4 w-4" />
-                          <span className="font-semibold">Administration</span>
+                        <Link 
+                          to="/admin" 
+                          className="flex items-center cursor-pointer bg-gradient-to-r from-accent/20 to-accent/10 hover:from-accent/30 hover:to-accent/20 transition-all duration-300 animate-fade-in rounded-sm"
+                        >
+                          <Shield className="mr-2 h-4 w-4 text-accent" />
+                          <span className="font-semibold text-accent">Administration</span>
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -370,11 +374,17 @@ const Header = () => {
                         {isAdmin && (
                           <Link 
                             to="/admin" 
-                            className="flex items-center gap-2 py-2 px-3 hover:bg-accent rounded-md transition-colors text-primary"
+                            className="flex items-center gap-2 py-2 px-3 bg-gradient-to-r from-accent/20 to-accent/10 hover:from-accent/30 hover:to-accent/20 rounded-md transition-all duration-300 animate-fade-in"
                             onClick={() => setMobileMenuOpen(false)}
                           >
-                            <Shield className="h-4 w-4" />
-                            <span className="font-semibold">Administration</span>
+                            <Shield className="h-4 w-4 text-accent" />
+                            <span className="font-semibold text-accent">Administration</span>
+                            <Badge 
+                              variant="default" 
+                              className="ml-auto h-5 px-2 text-[10px] font-bold bg-accent text-accent-foreground"
+                            >
+                              ADMIN
+                            </Badge>
                           </Link>
                         )}
                         <button
