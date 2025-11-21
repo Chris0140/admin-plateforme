@@ -1,151 +1,206 @@
 /**
  * AVS (Assurance Vieillesse et Survivants) Pension Calculations
- * Based on Echelle 44 2025
+ * Based on Echelle 44 2025 - Database-driven version
  * 
- * Source: AVS_Echelle_44_2025.pdf
+ * Source: avs_scale_44 table populated from AVS_Echelle_44_2025.pdf
  * 
- * This scale is used to calculate monthly pensions for:
+ * This module queries the official AVS scale from the database to calculate:
  * - Old-age pensions (Rente de vieillesse)
  * - Disability pensions (Rente d'invalidité)
- * 
- * Important notes:
- * - These are complete pension amounts (full contribution period)
- * - Actual pensions may vary based on contribution years, splitting, etc.
- * - Users should be able to manually adjust calculated values
+ * - Survivor pensions (Rente de survivants)
+ * - Child pensions (Rente pour enfants)
  */
 
-// Echelle 44 2025 - Mapping of annual income to monthly pension
-// Format: [maxIncome, monthlyPension]
-const ECHELLE_44_2025: [number, number][] = [
-  [15120, 1260],
-  [16800, 1285],
-  [18480, 1310],
-  [20160, 1335],
-  [21840, 1360],
-  [23520, 1385],
-  [25200, 1410],
-  [26880, 1435],
-  [28560, 1460],
-  [30240, 1485],
-  [31920, 1510],
-  [33600, 1535],
-  [35280, 1560],
-  [36960, 1585],
-  [38640, 1610],
-  [40320, 1635],
-  [42000, 1660],
-  [43680, 1685],
-  [45360, 1710],
-  [47040, 1735],
-  [48720, 1760],
-  [50400, 1785],
-  [52080, 1810],
-  [53760, 1835],
-  [55440, 1860],
-  [57120, 1885],
-  [58800, 1910],
-  [60480, 1935],
-  [62160, 1960],
-  [63840, 1985],
-  [65520, 2010],
-  [67200, 2035],
-  [68880, 2060],
-  [70560, 2085],
-  [72240, 2110],
-  [73920, 2135],
-  [75600, 2160],
-  [77280, 2185],
-  [78960, 2210],
-  [80640, 2235],
-  [82320, 2260],
-  [84000, 2285],
-  [85680, 2310],
-  [87360, 2335],
-  [89040, 2360],
-  [90720, 2520], // Maximum pension at 90,720 CHF or more
-];
-
-const MIN_PENSION = 1260; // CHF per month
-const MAX_PENSION = 2520; // CHF per month
-const MIN_INCOME = 15120; // CHF per year
-const MAX_INCOME = 90720; // CHF per year
+import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Calculate monthly AVS pension based on annual income
- * Uses Echelle 44 2025
- * 
- * @param annualIncome - Annual determining income in CHF
- * @returns Monthly pension amount in CHF
+ * Detailed AVS calculation result
  */
-export function calculateAVSPension(annualIncome: number): number {
-  // Handle edge cases
-  if (!annualIncome || annualIncome <= 0) {
-    return 0;
-  }
-
-  // Minimum pension for income at or below minimum threshold
-  if (annualIncome <= MIN_INCOME) {
-    return MIN_PENSION;
-  }
-
-  // Maximum pension for income at or above maximum threshold
-  if (annualIncome >= MAX_INCOME) {
-    return MAX_PENSION;
-  }
-
-  // Find the appropriate bracket in the scale
-  for (const [maxIncome, monthlyPension] of ECHELLE_44_2025) {
-    if (annualIncome <= maxIncome) {
-      return monthlyPension;
-    }
-  }
-
-  // Fallback to maximum pension (should not reach here)
-  return MAX_PENSION;
+export interface AVSCalculationResult {
+  // Old-age pensions
+  old_age_rent_monthly: number;
+  old_age_rent_annual: number;
+  
+  // Disability pensions (adjustable by fraction)
+  disability_rent_monthly: number;
+  disability_rent_annual: number;
+  disability_fraction: '1/1' | '3/4' | '1/2' | '1/4';
+  
+  // Survivor pensions
+  widow_rent_monthly: number;
+  widow_rent_annual: number;
+  
+  // Child pensions (per child)
+  child_rent_monthly: number;
+  child_rent_annual: number;
+  orphan_rent_monthly: number;
+  orphan_rent_annual: number;
+  
+  // Metadata
+  income_used: number;
+  scale_row_id: string;
+  full_rent_fraction: number;
+  years_contributed: number;
 }
 
 /**
- * Calculate AVS child pension
- * According to Echelle 44: child pension is 30% of base pension per child
+ * Calculate all AVS pensions from the official Échelle 44 database
  * 
- * @param basePension - Base monthly pension amount in CHF
- * @param numberOfChildren - Number of children
- * @returns Object with monthly and annual child pension
+ * @param annualIncome - Average annual determining income (CHF)
+ * @param yearsContributed - Years contributed to AVS (0-44)
+ * @param disabilityFraction - Degree of disability (optional, default 1/1 = full)
+ * @returns Complete AVS calculation results
  */
-export function calculateAVSChildPension(basePension: number, numberOfChildren: number) {
-  const childPensionPerChild = basePension * 0.30; // 30% of base pension
-  const totalMonthly = childPensionPerChild * numberOfChildren;
-  const totalAnnual = totalMonthly * 12;
-
+export async function calculateAVSFromScale(
+  annualIncome: number,
+  yearsContributed: number = 44,
+  disabilityFraction: '1/1' | '3/4' | '1/2' | '1/4' = '1/1'
+): Promise<AVSCalculationResult> {
+  
+  // 1. Validation
+  if (!annualIncome || annualIncome <= 0) {
+    throw new Error("Le revenu annuel doit être positif");
+  }
+  
+  if (yearsContributed < 0 || yearsContributed > 44) {
+    throw new Error("Les années cotisées doivent être entre 0 et 44");
+  }
+  
+  // 2. Find appropriate scale row (first threshold >= income)
+  const { data: scaleRow, error } = await supabase
+    .from('avs_scale_44')
+    .select('*')
+    .gte('income_threshold', annualIncome)
+    .order('income_threshold', { ascending: true })
+    .limit(1)
+    .single();
+  
+  if (error || !scaleRow) {
+    throw new Error("Impossible de trouver la tranche de revenu dans l'échelle AVS");
+  }
+  
+  // 3. Calculate pension coefficient (years contributed / 44)
+  const fullRentFraction = Math.min(yearsContributed / 44, 1);
+  
+  // 4. Calculate old-age pensions
+  const oldAgeRentMonthly = scaleRow.old_age_rent_full * fullRentFraction;
+  const oldAgeRentAnnual = oldAgeRentMonthly * 12;
+  
+  // 5. Calculate disability pensions according to degree
+  let disabilityRentMonthly: number;
+  switch (disabilityFraction) {
+    case '3/4':
+      disabilityRentMonthly = scaleRow.disability_rent_3_4 * fullRentFraction;
+      break;
+    case '1/2':
+      disabilityRentMonthly = scaleRow.disability_rent_1_2 * fullRentFraction;
+      break;
+    case '1/4':
+      disabilityRentMonthly = scaleRow.disability_rent_1_4 * fullRentFraction;
+      break;
+    default:
+      disabilityRentMonthly = scaleRow.old_age_rent_full * fullRentFraction;
+  }
+  const disabilityRentAnnual = disabilityRentMonthly * 12;
+  
+  // 6. Calculate survivor pensions
+  const widowRentMonthly = scaleRow.widow_rent_full * fullRentFraction;
+  const widowRentAnnual = widowRentMonthly * 12;
+  
+  // 7. Calculate child pensions (per child)
+  const childRentMonthly = scaleRow.child_rent * fullRentFraction;
+  const childRentAnnual = childRentMonthly * 12;
+  
+  const orphanRentMonthly = scaleRow.orphan_rent_60pct * fullRentFraction;
+  const orphanRentAnnual = orphanRentMonthly * 12;
+  
   return {
-    monthly: Math.round(totalMonthly),
-    annual: Math.round(totalAnnual),
+    old_age_rent_monthly: Math.round(oldAgeRentMonthly),
+    old_age_rent_annual: Math.round(oldAgeRentAnnual),
+    disability_rent_monthly: Math.round(disabilityRentMonthly),
+    disability_rent_annual: Math.round(disabilityRentAnnual),
+    disability_fraction: disabilityFraction,
+    widow_rent_monthly: Math.round(widowRentMonthly),
+    widow_rent_annual: Math.round(widowRentAnnual),
+    child_rent_monthly: Math.round(childRentMonthly),
+    child_rent_annual: Math.round(childRentAnnual),
+    orphan_rent_monthly: Math.round(orphanRentMonthly),
+    orphan_rent_annual: Math.round(orphanRentAnnual),
+    income_used: annualIncome,
+    scale_row_id: scaleRow.id,
+    full_rent_fraction: fullRentFraction,
+    years_contributed: yearsContributed,
   };
 }
 
 /**
- * Calculate all AVS pension values (monthly and annual, old-age and disability)
+ * Save or update AVS profile in the database
+ * 
+ * @param profileId - User's profile ID
+ * @param annualIncome - Average annual determining income
+ * @param yearsContributed - Years contributed to AVS
+ */
+export async function saveAVSProfile(
+  profileId: string,
+  annualIncome: number,
+  yearsContributed: number
+): Promise<void> {
+  const hasGaps = yearsContributed < 44;
+  const fullRentFraction = Math.min(yearsContributed / 44, 1);
+  
+  const { error } = await supabase
+    .from('avs_profiles')
+    .upsert({
+      profile_id: profileId,
+      years_contributed: yearsContributed,
+      years_missing: 44 - yearsContributed,
+      has_gaps: hasGaps,
+      average_annual_income_determinant: annualIncome,
+      scale_used: '44',
+      full_rent_fraction: fullRentFraction,
+      last_calculation_date: new Date().toISOString(),
+    }, {
+      onConflict: 'profile_id'
+    });
+  
+  if (error) throw error;
+}
+
+/**
+ * Load AVS profile from database
+ * 
+ * @param profileId - User's profile ID
+ * @returns AVS profile data or null if not found
+ */
+export async function loadAVSProfile(profileId: string) {
+  const { data, error } = await supabase
+    .from('avs_profiles')
+    .select('*')
+    .eq('profile_id', profileId)
+    .maybeSingle();
+  
+  if (error) throw error;
+  return data;
+}
+
+/**
+ * Calculate all AVS pensions with number of children
+ * Legacy function for backward compatibility
  * 
  * @param annualIncome - Annual determining income in CHF
  * @param numberOfChildren - Number of children (optional, default 0)
  * @returns Object containing all pension calculations
  */
-export function calculateAllAVSPensions(annualIncome: number, numberOfChildren: number = 0) {
-  const monthlyPension = calculateAVSPension(annualIncome);
-  const annualPension = monthlyPension * 12;
-
-  // Calculate child pension if there are children
-  const childPension = numberOfChildren > 0 
-    ? calculateAVSChildPension(monthlyPension, numberOfChildren)
-    : { monthly: 0, annual: 0 };
-
+export async function calculateAllAVSPensions(annualIncome: number, numberOfChildren: number = 0) {
+  const result = await calculateAVSFromScale(annualIncome, 44, '1/1');
+  
   return {
-    rente_vieillesse_mensuelle: monthlyPension,
-    rente_vieillesse_annuelle: annualPension,
-    rente_invalidite_mensuelle: monthlyPension, // Same as old-age for AVS
-    rente_invalidite_annuelle: annualPension,
-    avs_rente_enfant_mensuelle: childPension.monthly,
-    avs_rente_enfant_annuelle: childPension.annual,
+    rente_vieillesse_mensuelle: result.old_age_rent_monthly,
+    rente_vieillesse_annuelle: result.old_age_rent_annual,
+    rente_invalidite_mensuelle: result.disability_rent_monthly,
+    rente_invalidite_annuelle: result.disability_rent_annual,
+    avs_rente_enfant_mensuelle: result.child_rent_monthly * numberOfChildren,
+    avs_rente_enfant_annuelle: result.child_rent_annual * numberOfChildren,
     revenu_annuel_determinant: annualIncome,
   };
 }

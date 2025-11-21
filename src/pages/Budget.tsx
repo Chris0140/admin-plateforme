@@ -36,6 +36,7 @@ const Budget = () => {
   
   // 1er Pilier AVS States
   const [avsRevenuDeterminant, setAvsRevenuDeterminant] = useState("");
+  const [avsYearsContributed, setAvsYearsContributed] = useState(44);
   const [avsRenteMensuelle, setAvsRenteMensuelle] = useState("");
   const [avsRenteAnnuelle, setAvsRenteAnnuelle] = useState("");
   const [avsInvaliditeMensuelle, setAvsInvaliditeMensuelle] = useState("");
@@ -527,7 +528,7 @@ const Budget = () => {
     setIsCalculatingAVS(true);
 
     try {
-      const avsData = calculateAllAVSPensions(revenuDeterminant);
+      const avsData = await calculateAllAVSPensions(revenuDeterminant, parseInt(nombreEnfants) || 0);
       
       setAvsRenteMensuelle(avsData.rente_vieillesse_mensuelle.toString());
       setAvsRenteAnnuelle(avsData.rente_vieillesse_annuelle.toString());
@@ -1019,6 +1020,55 @@ const Budget = () => {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <CardContent className="space-y-4">
+                        {/* AVS Contribution History */}
+                        <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <h4 className="font-semibold text-blue-900 dark:text-blue-100">Historique de cotisation AVS</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <Label htmlFor="avsYearsContributed">Années cotisées</Label>
+                              <Input
+                                id="avsYearsContributed"
+                                type="number"
+                                min="0"
+                                max="44"
+                                value={avsYearsContributed}
+                                onChange={(e) => setAvsYearsContributed(Number(e.target.value))}
+                                className="mt-1"
+                              />
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Maximum : 44 ans (entre 21 et 65 ans)
+                              </p>
+                            </div>
+                            <div>
+                              <Label>Années manquantes</Label>
+                              <Input
+                                type="number"
+                                value={44 - avsYearsContributed}
+                                disabled
+                                className="mt-1 bg-muted"
+                              />
+                            </div>
+                            <div>
+                              <Label>Coefficient de rente</Label>
+                              <Input
+                                value={`${Math.round((avsYearsContributed / 44) * 100)}%`}
+                                disabled
+                                className="mt-1 bg-muted"
+                              />
+                            </div>
+                          </div>
+                          {avsYearsContributed < 44 && (
+                            <div className="flex gap-2 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md">
+                              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                              <p className="text-sm text-amber-800 dark:text-amber-200">
+                                Attention : Vous avez {44 - avsYearsContributed} années de lacunes.
+                                Vos rentes AVS seront réduites proportionnellement.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* AVS Income Input */}
                         <div>
                           <Label htmlFor="avsRevenuDeterminant">Revenu annuel déterminant (CHF)</Label>
                           <div className="flex gap-2">
