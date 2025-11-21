@@ -144,7 +144,7 @@ const Prevoyance = () => {
 
           <div className="space-y-6">
             {/* 1er Pilier AVS */}
-            <Card>
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/prevoyance/avs')}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -156,126 +156,30 @@ const Prevoyance = () => {
                       <CardDescription>Assurance Vieillesse et Survivants</CardDescription>
                     </div>
                   </div>
+                  <ChevronRight className="h-6 w-6 text-muted-foreground" />
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Historique de cotisation */}
-                <div className="p-4 bg-muted/30 rounded-lg border border-border">
-                  <h4 className="font-semibold text-foreground mb-4">Historique de cotisation AVS</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <CardContent>
+                {avsResults ? (
+                  <div className="grid md:grid-cols-3 gap-4">
                     <div>
-                      <Label htmlFor="avsYearsContributed">Années cotisées</Label>
-                      <Input
-                        id="avsYearsContributed"
-                        type="number"
-                        min="0"
-                        max="44"
-                        value={avsYearsContributed}
-                        onChange={(e) => setAvsYearsContributed(Number(e.target.value))}
-                        className="mt-1"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Maximum : 44 ans (entre 21 et 65 ans)
-                      </p>
+                      <p className="text-sm text-muted-foreground">Rente vieillesse</p>
+                      <p className="text-2xl font-bold">{formatCHF(avsResults.oldAge.fullRent.annual)}</p>
+                      <p className="text-xs text-muted-foreground">par an</p>
                     </div>
                     <div>
-                      <Label>Années manquantes</Label>
-                      <Input
-                        type="number"
-                        value={44 - avsYearsContributed}
-                        disabled
-                        className="mt-1 bg-muted"
-                      />
+                      <p className="text-sm text-muted-foreground">Années cotisées</p>
+                      <p className="text-2xl font-bold">{avsYearsContributed} / 44</p>
+                      <p className="text-xs text-muted-foreground">ans</p>
                     </div>
                     <div>
-                      <Label>Coefficient de rente</Label>
-                      <Input
-                        value={`${Math.round((avsYearsContributed / 44) * 100)}%`}
-                        disabled
-                        className="mt-1 bg-muted"
-                      />
+                      <p className="text-sm text-muted-foreground">Coefficient</p>
+                      <p className="text-2xl font-bold">{Math.round((avsYearsContributed / 44) * 100)}%</p>
+                      <p className="text-xs text-muted-foreground">de rente</p>
                     </div>
                   </div>
-                  {avsYearsContributed < 44 && (
-                    <div className="flex gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md mt-4">
-                      <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-destructive">
-                        Attention : Vous avez {44 - avsYearsContributed} années de lacunes.
-                        Vos rentes AVS seront réduites proportionnellement.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Calcul AVS */}
-                <div>
-                  <Label htmlFor="avsRevenuDeterminant">Revenu annuel déterminant (CHF)</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input
-                      id="avsRevenuDeterminant"
-                      type="number"
-                      step="1"
-                      placeholder="96000"
-                      value={avsRevenuDeterminant}
-                      onChange={(e) => setAvsRevenuDeterminant(e.target.value.replace(/^0+(?=\d)/, ''))}
-                    />
-                    <Button 
-                      onClick={handleCalculateAVS} 
-                      disabled={isCalculatingAVS}
-                      className="gap-2"
-                    >
-                      <Calculator className="h-4 w-4" />
-                      Calculer
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">Selon l'Échelle 44 2025</p>
-                </div>
-
-                {/* Résultats AVS */}
-                {avsResults && (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <Card className="border-2 border-green-200 dark:border-green-800">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Rente vieillesse</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                          {formatCHF(avsResults.oldAge.fullRent.annual)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatCHF(avsResults.oldAge.fullRent.monthly)} / mois
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-2 border-blue-200 dark:border-blue-800">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Rente invalidité</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                          {formatCHF(avsResults.disability.fullRent.annual)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatCHF(avsResults.disability.fullRent.monthly)} / mois
-                        </p>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="border-2 border-purple-200 dark:border-purple-800">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Rente veuve/veuf</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                          {formatCHF(avsResults.widow.fullRent.annual)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatCHF(avsResults.widow.fullRent.monthly)} / mois
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
+                ) : (
+                  <p className="text-muted-foreground">Cliquez pour gérer votre AVS</p>
                 )}
               </CardContent>
             </Card>

@@ -17,11 +17,13 @@ export type Database = {
       avs_profiles: {
         Row: {
           average_annual_income_determinant: number | null
+          avs_number: string | null
           created_at: string | null
           full_rent_fraction: number | null
           has_gaps: boolean | null
           id: string
           last_calculation_date: string | null
+          marital_status: string | null
           profile_id: string
           scale_used: string | null
           updated_at: string | null
@@ -30,11 +32,13 @@ export type Database = {
         }
         Insert: {
           average_annual_income_determinant?: number | null
+          avs_number?: string | null
           created_at?: string | null
           full_rent_fraction?: number | null
           has_gaps?: boolean | null
           id?: string
           last_calculation_date?: string | null
+          marital_status?: string | null
           profile_id: string
           scale_used?: string | null
           updated_at?: string | null
@@ -43,11 +47,13 @@ export type Database = {
         }
         Update: {
           average_annual_income_determinant?: number | null
+          avs_number?: string | null
           created_at?: string | null
           full_rent_fraction?: number | null
           has_gaps?: boolean | null
           id?: string
           last_calculation_date?: string | null
+          marital_status?: string | null
           profile_id?: string
           scale_used?: string | null
           updated_at?: string | null
