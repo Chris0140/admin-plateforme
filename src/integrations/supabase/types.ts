@@ -795,6 +795,7 @@ export type Database = {
           nom: string
           nombre_enfants: number | null
           permit_type: string | null
+          phone_verified: boolean | null
           prenom: string
           profession: string | null
           telephone: string | null
@@ -821,6 +822,7 @@ export type Database = {
           nom: string
           nombre_enfants?: number | null
           permit_type?: string | null
+          phone_verified?: boolean | null
           prenom: string
           profession?: string | null
           telephone?: string | null
@@ -847,6 +849,7 @@ export type Database = {
           nom?: string
           nombre_enfants?: number | null
           permit_type?: string | null
+          phone_verified?: boolean | null
           prenom?: string
           profession?: string | null
           telephone?: string | null
