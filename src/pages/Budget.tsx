@@ -201,13 +201,9 @@ const Budget = () => {
       const reste = parseFloat(resteMoisPrecedent) || 0;
       const salaire = parseFloat(salaireNet) || 0;
       const autres = parseFloat(autresRevenus) || 0;
-      const depVar = parseFloat(depensesVariables) || 0;
-      const frais = parseFloat(fraisFixesDettes) || 0;
-      const ass = parseFloat(assurances) || 0;
-      const epargne = parseFloat(epargneInvest) || 0;
 
       const totalRevenus = salaire + autres;
-      const totalSorties = depVar + frais + ass + epargne;
+      const totalSorties = mCategoriesTotal;
       const totalRestant = reste + totalRevenus - totalSorties;
 
       const { error } = await supabase.from("budget_monthly").upsert({
@@ -217,10 +213,10 @@ const Budget = () => {
         reste_mois_precedent: reste,
         salaire_net: salaire,
         autres_revenus: autres,
-        depenses_variables: depVar,
-        frais_fixes_dettes: frais,
-        assurances: ass,
-        epargne_investissements: epargne,
+        depenses_variables: 0,
+        frais_fixes_dettes: 0,
+        assurances: 0,
+        epargne_investissements: 0,
         total_revenus: totalRevenus,
         total_sorties: totalSorties,
         total_restant: totalRestant,
@@ -314,15 +310,11 @@ const Budget = () => {
   const mReste = parseFloat(resteMoisPrecedent || "0") || 0;
   const mSalaire = parseFloat(salaireNet || "0") || 0;
   const mAutres = parseFloat(autresRevenus || "0") || 0;
-  const mDepVar = parseFloat(depensesVariables || "0") || 0;
-  const mFrais = parseFloat(fraisFixesDettes || "0") || 0;
-  const mAss = parseFloat(assurances || "0") || 0;
-  const mEpargne = parseFloat(epargneInvest || "0") || 0;
   
   const mCategoriesTotal = monthlyCategories.reduce((sum, cat) => sum + (parseFloat(cat.amount) || 0), 0);
 
   const mTotalRevenus = mSalaire + mAutres;
-  const mTotalSorties = mDepVar + mFrais + mAss + mEpargne + mCategoriesTotal;
+  const mTotalSorties = mCategoriesTotal;
   const mTotalRestant = mReste + mTotalRevenus - mTotalSorties;
 
   const formatCurrency = (value: number) =>
@@ -456,27 +448,10 @@ const Budget = () => {
                     </CardHeader>
                     <CollapsibleContent>
                       <CardContent className="space-y-4">
-                        <div>
-                          <Label htmlFor="depensesVariables">Dépenses (variables)</Label>
-                          <Input id="depensesVariables" type="number" value={depensesVariables} onChange={(e) => setDepensesVariables(e.target.value)} placeholder="Courses, sorties, etc." />
-                        </div>
-                        <div>
-                          <Label htmlFor="fraisFixesDettes">Frais fixes & dettes</Label>
-                          <Input id="fraisFixesDettes" type="number" value={fraisFixesDettes} onChange={(e) => setFraisFixesDettes(e.target.value)} placeholder="Loyer, leasing, etc." />
-                        </div>
-                        <div>
-                          <Label htmlFor="assurances">Assurances</Label>
-                          <Input id="assurances" type="number" value={assurances} onChange={(e) => setAssurances(e.target.value)} placeholder="Lamal, RC, véhicule…" />
-                        </div>
-                        <div>
-                          <Label htmlFor="epargneInvest">Épargne & investissements</Label>
-                          <Input id="epargneInvest" type="number" value={epargneInvest} onChange={(e) => setEpargneInvest(e.target.value)} placeholder="3e pilier, ETF, etc." />
-                        </div>
-
-                        {/* Catégories additionnelles */}
+                        {/* Catégories de dépenses */}
                         {monthlyCategories.length > 0 && (
-                          <div className="pt-4 border-t space-y-3">
-                            <p className="text-sm font-medium">Catégories additionnelles</p>
+                          <div className="space-y-3">
+                            <p className="text-sm font-medium">Catégories de dépenses</p>
                             {monthlyCategories.map((cat) => (
                               <div
                                 key={cat.id}
