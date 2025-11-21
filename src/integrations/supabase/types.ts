@@ -217,6 +217,59 @@ export type Database = {
         }
         Relationships: []
       }
+      dependants: {
+        Row: {
+          created_at: string | null
+          date_of_birth: string
+          first_name: string
+          gender: string | null
+          id: string
+          is_disabled: boolean | null
+          is_student: boolean | null
+          last_name: string
+          profile_id: string
+          relationship: string
+          shared_custody: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date_of_birth: string
+          first_name: string
+          gender?: string | null
+          id?: string
+          is_disabled?: boolean | null
+          is_student?: boolean | null
+          last_name: string
+          profile_id: string
+          relationship: string
+          shared_custody?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date_of_birth?: string
+          first_name?: string
+          gender?: string | null
+          id?: string
+          is_disabled?: boolean | null
+          is_student?: boolean | null
+          last_name?: string
+          profile_id?: string
+          relationship?: string
+          shared_custody?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dependants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           category: string
@@ -258,6 +311,158 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      lpp_accounts: {
+        Row: {
+          additional_death_capital: number | null
+          admin_fees: number | null
+          avs_salary: number | null
+          child_disability_rent_annual: number | null
+          contract_number: string | null
+          conversion_rate_at_65: number | null
+          coordination_deduction: number | null
+          created_at: string | null
+          current_retirement_savings: number | null
+          death_capital: number | null
+          disability_rent_annual: number | null
+          employee_risk_contribution: number | null
+          employee_savings_contribution: number | null
+          employer_risk_contribution: number | null
+          employer_savings_contribution: number | null
+          entry_date: string | null
+          epl_min_amount_remaining: number | null
+          epl_pledge_amount: number | null
+          epl_pledged: boolean | null
+          epl_withdrawal_amount: number | null
+          epl_withdrawal_date: string | null
+          id: string
+          insured_salary: number | null
+          interest_rate: number | null
+          is_active: boolean | null
+          last_buyback_amount: number | null
+          last_buyback_date: string | null
+          last_certificate_date: string | null
+          max_buyback_amount: number | null
+          notes: string | null
+          orphan_rent_annual: number | null
+          plan_name: string | null
+          profile_id: string
+          projected_retirement_rent_at_60: number | null
+          projected_retirement_rent_at_61: number | null
+          projected_retirement_rent_at_62: number | null
+          projected_retirement_rent_at_63: number | null
+          projected_retirement_rent_at_64: number | null
+          projected_retirement_rent_at_65: number | null
+          projected_savings_at_65: number | null
+          provider_name: string
+          total_annual_contribution: number | null
+          updated_at: string | null
+          waiting_period_days: number | null
+          widow_rent_annual: number | null
+        }
+        Insert: {
+          additional_death_capital?: number | null
+          admin_fees?: number | null
+          avs_salary?: number | null
+          child_disability_rent_annual?: number | null
+          contract_number?: string | null
+          conversion_rate_at_65?: number | null
+          coordination_deduction?: number | null
+          created_at?: string | null
+          current_retirement_savings?: number | null
+          death_capital?: number | null
+          disability_rent_annual?: number | null
+          employee_risk_contribution?: number | null
+          employee_savings_contribution?: number | null
+          employer_risk_contribution?: number | null
+          employer_savings_contribution?: number | null
+          entry_date?: string | null
+          epl_min_amount_remaining?: number | null
+          epl_pledge_amount?: number | null
+          epl_pledged?: boolean | null
+          epl_withdrawal_amount?: number | null
+          epl_withdrawal_date?: string | null
+          id?: string
+          insured_salary?: number | null
+          interest_rate?: number | null
+          is_active?: boolean | null
+          last_buyback_amount?: number | null
+          last_buyback_date?: string | null
+          last_certificate_date?: string | null
+          max_buyback_amount?: number | null
+          notes?: string | null
+          orphan_rent_annual?: number | null
+          plan_name?: string | null
+          profile_id: string
+          projected_retirement_rent_at_60?: number | null
+          projected_retirement_rent_at_61?: number | null
+          projected_retirement_rent_at_62?: number | null
+          projected_retirement_rent_at_63?: number | null
+          projected_retirement_rent_at_64?: number | null
+          projected_retirement_rent_at_65?: number | null
+          projected_savings_at_65?: number | null
+          provider_name: string
+          total_annual_contribution?: number | null
+          updated_at?: string | null
+          waiting_period_days?: number | null
+          widow_rent_annual?: number | null
+        }
+        Update: {
+          additional_death_capital?: number | null
+          admin_fees?: number | null
+          avs_salary?: number | null
+          child_disability_rent_annual?: number | null
+          contract_number?: string | null
+          conversion_rate_at_65?: number | null
+          coordination_deduction?: number | null
+          created_at?: string | null
+          current_retirement_savings?: number | null
+          death_capital?: number | null
+          disability_rent_annual?: number | null
+          employee_risk_contribution?: number | null
+          employee_savings_contribution?: number | null
+          employer_risk_contribution?: number | null
+          employer_savings_contribution?: number | null
+          entry_date?: string | null
+          epl_min_amount_remaining?: number | null
+          epl_pledge_amount?: number | null
+          epl_pledged?: boolean | null
+          epl_withdrawal_amount?: number | null
+          epl_withdrawal_date?: string | null
+          id?: string
+          insured_salary?: number | null
+          interest_rate?: number | null
+          is_active?: boolean | null
+          last_buyback_amount?: number | null
+          last_buyback_date?: string | null
+          last_certificate_date?: string | null
+          max_buyback_amount?: number | null
+          notes?: string | null
+          orphan_rent_annual?: number | null
+          plan_name?: string | null
+          profile_id?: string
+          projected_retirement_rent_at_60?: number | null
+          projected_retirement_rent_at_61?: number | null
+          projected_retirement_rent_at_62?: number | null
+          projected_retirement_rent_at_63?: number | null
+          projected_retirement_rent_at_64?: number | null
+          projected_retirement_rent_at_65?: number | null
+          projected_savings_at_65?: number | null
+          provider_name?: string
+          total_annual_contribution?: number | null
+          updated_at?: string | null
+          waiting_period_days?: number | null
+          widow_rent_annual?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lpp_accounts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       prevoyance_data: {
         Row: {
@@ -519,7 +724,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      migrate_prevoyance_to_lpp: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

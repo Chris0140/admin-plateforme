@@ -1,4 +1,4 @@
-import { Settings, FileText, LogOut, ChevronDown, Heart, Car, Bike, Shield, Plane, Home, PawPrint, PiggyBank, Menu, ChevronRight, User } from "lucide-react";
+import { Settings, FileText, LogOut, ChevronDown, Heart, Car, Bike, Shield, Plane, Home, PawPrint, PiggyBank, Menu, ChevronRight, User, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,6 +54,9 @@ const Header = () => {
           <nav className="hidden lg:flex items-center gap-8">
             <Link to="/budget" className="text-foreground hover:text-primary transition-colors font-medium">
               Budget
+            </Link>
+            <Link to="/prevoyance/lpp" className="text-foreground hover:text-primary transition-colors font-medium">
+              Prévoyance LPP
             </Link>
             <Link to="/simulateur-impots" className="text-foreground hover:text-primary transition-colors font-medium">
               Simulateur d'impôts
@@ -209,6 +212,14 @@ const Header = () => {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Budget
+                  </Link>
+                  
+                  <Link 
+                    to="/prevoyance/lpp" 
+                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Prévoyance LPP
                   </Link>
                   
                   <Link 
