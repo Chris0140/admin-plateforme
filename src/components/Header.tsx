@@ -58,6 +58,12 @@ const Header = () => {
             <Link to="/prevoyance/lpp" className="text-foreground hover:text-primary transition-colors font-medium">
               Prévoyance LPP
             </Link>
+            <Link to="/prevoyance/3e-pilier" className="text-foreground hover:text-primary transition-colors font-medium">
+              3e Pilier
+            </Link>
+            <Link to="/assurances" className="text-foreground hover:text-primary transition-colors font-medium">
+              Assurances
+            </Link>
             <Link to="/simulateur-impots" className="text-foreground hover:text-primary transition-colors font-medium">
               Simulateur d'impôts
             </Link>
@@ -220,6 +226,22 @@ const Header = () => {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Prévoyance LPP
+                  </Link>
+                  
+                  <Link 
+                    to="/prevoyance/3e-pilier" 
+                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    3e Pilier
+                  </Link>
+                  
+                  <Link 
+                    to="/assurances" 
+                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Assurances
                   </Link>
                   
                   <Link 
