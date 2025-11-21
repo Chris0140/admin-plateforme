@@ -62,7 +62,7 @@ const Header = () => {
               Assurances
             </Link>
             <Link to="/simulateur-impots" className="text-foreground hover:text-primary transition-colors font-medium">
-              Simulateur d'impôts
+              Impôts
             </Link>
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-1 text-foreground hover:text-primary transition-colors font-medium">
@@ -238,7 +238,7 @@ const Header = () => {
                     className="text-foreground hover:text-primary transition-colors font-medium py-2"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Simulateur d'impôts
+                    Impôts
                   </Link>
 
                   {/* Comparateur Section */}
