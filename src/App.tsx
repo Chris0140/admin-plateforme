@@ -10,6 +10,8 @@ import Contact from "./pages/Contact";
 import AccountSettings from "./pages/AccountSettings";
 import AccountSecurity from "./pages/AccountSecurity";
 import AccountDocuments from "./pages/AccountDocuments";
+import ThirdPillar from "./pages/ThirdPillar";
+import Insurance from "./pages/Insurance";
 import NotFound from "./pages/NotFound";
 import SimulateurImpots from "./pages/SimulateurImpots";
 import Comparateur from "./pages/Comparateur";
@@ -46,6 +48,8 @@ const App = () => (
             <Route path="/simulateur-impots" element={<SimulateurImpots />} />
             <Route path="/budget" element={<Budget />} />
             <Route path="/prevoyance/lpp" element={<LPPAccounts />} />
+            <Route path="/prevoyance/3e-pilier" element={<ThirdPillar />} />
+            <Route path="/assurances" element={<Insurance />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

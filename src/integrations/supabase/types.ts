@@ -312,6 +312,71 @@ export type Database = {
         }
         Relationships: []
       }
+      insurance_contracts: {
+        Row: {
+          annual_premium: number
+          company_name: string
+          contract_number: string | null
+          coverage_amount: number | null
+          created_at: string | null
+          death_capital: number | null
+          deductible: number | null
+          disability_rent_annual: number | null
+          end_date: string | null
+          id: string
+          insurance_type: string
+          is_active: boolean | null
+          notes: string | null
+          profile_id: string
+          start_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          annual_premium?: number
+          company_name: string
+          contract_number?: string | null
+          coverage_amount?: number | null
+          created_at?: string | null
+          death_capital?: number | null
+          deductible?: number | null
+          disability_rent_annual?: number | null
+          end_date?: string | null
+          id?: string
+          insurance_type: string
+          is_active?: boolean | null
+          notes?: string | null
+          profile_id: string
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          annual_premium?: number
+          company_name?: string
+          contract_number?: string | null
+          coverage_amount?: number | null
+          created_at?: string | null
+          death_capital?: number | null
+          deductible?: number | null
+          disability_rent_annual?: number | null
+          end_date?: string | null
+          id?: string
+          insurance_type?: string
+          is_active?: boolean | null
+          notes?: string | null
+          profile_id?: string
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insurance_contracts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lpp_accounts: {
         Row: {
           additional_death_capital: number | null
@@ -718,6 +783,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      third_pillar_accounts: {
+        Row: {
+          account_type: string
+          annual_contribution: number
+          contract_number: string | null
+          created_at: string | null
+          current_amount: number
+          id: string
+          institution_name: string
+          is_active: boolean | null
+          notes: string | null
+          profile_id: string
+          projected_amount_at_retirement: number | null
+          projected_annual_rent: number | null
+          return_rate: number
+          start_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          account_type: string
+          annual_contribution?: number
+          contract_number?: string | null
+          created_at?: string | null
+          current_amount?: number
+          id?: string
+          institution_name: string
+          is_active?: boolean | null
+          notes?: string | null
+          profile_id: string
+          projected_amount_at_retirement?: number | null
+          projected_annual_rent?: number | null
+          return_rate?: number
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          account_type?: string
+          annual_contribution?: number
+          contract_number?: string | null
+          created_at?: string | null
+          current_amount?: number
+          id?: string
+          institution_name?: string
+          is_active?: boolean | null
+          notes?: string | null
+          profile_id?: string
+          projected_amount_at_retirement?: number | null
+          projected_annual_rent?: number | null
+          return_rate?: number
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "third_pillar_accounts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
