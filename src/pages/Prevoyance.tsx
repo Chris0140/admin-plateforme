@@ -10,9 +10,19 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Calculator, AlertTriangle, ChevronRight, Wallet, Shield, PiggyBank, Save } from "lucide-react";
-import { calculateAllAVSPensions, saveAVSProfile, loadAVSProfile } from "@/lib/avsCalculations";
+import { calculateAllAVSPensionsStructured } from "@/lib/avsCalculations";
 import { calculateLPPAnalysis } from "@/lib/lppCalculations";
 import { calculateThirdPillarAnalysis } from "@/lib/thirdPillarCalculations";
+
+interface AVSAccount {
+  id: string;
+  owner_name?: string;
+  avs_number?: string;
+  marital_status?: string;
+  average_annual_income_determinant?: number;
+  years_contributed?: number;
+  is_active?: boolean;
+}
 
 const Prevoyance = () => {
   const { user } = useAuth();
@@ -20,12 +30,9 @@ const Prevoyance = () => {
   const navigate = useNavigate();
 
   // AVS States
-  const [avsRevenuDeterminant, setAvsRevenuDeterminant] = useState("");
-  const [avsYearsContributed, setAvsYearsContributed] = useState(44);
-  const [avsResults, setAvsResults] = useState<any>(null);
-  const [isCalculatingAVS, setIsCalculatingAVS] = useState(false);
-  const [profileId, setProfileId] = useState<string | null>(null);
-  const [dateNaissance, setDateNaissance] = useState<string>("");
+  const [avsAccounts, setAvsAccounts] = useState<AVSAccount[]>([]);
+  const [avsYearsContributed, setAvsYearsContributed] = useState(0);
+  const [avsTotalRent, setAvsTotalRent] = useState(0);
 
   // LPP Summary
   const [lppSummary, setLppSummary] = useState<any>(null);
@@ -52,23 +59,34 @@ const Prevoyance = () => {
 
       if (!profile) return;
 
-      setProfileId(profile.id);
-      setDateNaissance(profile.date_naissance);
+      // Load AVS accounts  
+      const { data: avsAccountsData } = await supabase
+        .from('avs_profiles')
+        .select('id, owner_name, avs_number, marital_status, average_annual_income_determinant, years_contributed, is_active')
+        .eq('profile_id', profile.id)
+        .eq('is_active', true);
 
-      // Load AVS data
-      const avsProfile = await loadAVSProfile(profile.id);
-      if (avsProfile) {
-        setAvsRevenuDeterminant(avsProfile.average_annual_income_determinant?.toString() || "");
-        setAvsYearsContributed(avsProfile.years_contributed || 44);
+      if (avsAccountsData && avsAccountsData.length > 0) {
+        setAvsAccounts(avsAccountsData as AVSAccount[]);
+        
+        // Calculate average years and total projected rent
+        const avgYears = Math.round(
+          avsAccountsData.reduce((sum, acc) => sum + (acc.years_contributed || 0), 0) / avsAccountsData.length
+        );
+        setAvsYearsContributed(avgYears);
 
-        // If we have saved data, calculate results
-        if (avsProfile.average_annual_income_determinant) {
-          const results = await calculateAllAVSPensions(
-            avsProfile.average_annual_income_determinant,
-            avsProfile.years_contributed || 44
-          );
-          setAvsResults(results);
+        // Calculate total AVS rent from all accounts
+        let totalRent = 0;
+        for (const account of avsAccountsData) {
+          if (account.average_annual_income_determinant) {
+            const results = await calculateAllAVSPensionsStructured(
+              account.average_annual_income_determinant,
+              account.years_contributed || 44
+            );
+            totalRent += results.oldAge.fullRent.annual;
+          }
         }
+        setAvsTotalRent(totalRent);
       }
 
       // Load LPP summary
@@ -84,43 +102,6 @@ const Prevoyance = () => {
     }
   };
 
-  const handleCalculateAVS = async () => {
-    const revenu = parseFloat(avsRevenuDeterminant);
-    
-    if (isNaN(revenu) || revenu <= 0) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez entrer un revenu valide",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsCalculatingAVS(true);
-    try {
-      const results = await calculateAllAVSPensions(revenu, avsYearsContributed);
-      setAvsResults(results);
-
-      // Save to profile if logged in
-      if (profileId) {
-        await saveAVSProfile(profileId, revenu, avsYearsContributed);
-      }
-
-      toast({
-        title: "Calcul effectué",
-        description: "Les rentes AVS ont été calculées avec succès",
-      });
-    } catch (error) {
-      console.error('Error calculating AVS:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de calculer les rentes AVS",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCalculatingAVS(false);
-    }
-  };
 
   const formatCHF = (value: number) => {
     return new Intl.NumberFormat('fr-CH', {
@@ -160,22 +141,21 @@ const Prevoyance = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {avsResults ? (
+                {avsAccounts.length > 0 ? (
                   <div className="grid md:grid-cols-3 gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Rente vieillesse</p>
-                      <p className="text-2xl font-bold">{formatCHF(avsResults.oldAge.fullRent.annual)}</p>
+                      <p className="text-sm text-muted-foreground">Comptes actifs</p>
+                      <p className="text-2xl font-bold">{avsAccounts.length}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Rente totale estimée</p>
+                      <p className="text-2xl font-bold">{formatCHF(avsTotalRent)}</p>
                       <p className="text-xs text-muted-foreground">par an</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Années cotisées</p>
+                      <p className="text-sm text-muted-foreground">Années cotisées (moy.)</p>
                       <p className="text-2xl font-bold">{avsYearsContributed} / 44</p>
                       <p className="text-xs text-muted-foreground">ans</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Coefficient</p>
-                      <p className="text-2xl font-bold">{Math.round((avsYearsContributed / 44) * 100)}%</p>
-                      <p className="text-xs text-muted-foreground">de rente</p>
                     </div>
                   </div>
                 ) : (
@@ -261,7 +241,7 @@ const Prevoyance = () => {
             </Card>
 
             {/* Vue d'ensemble */}
-            {(avsResults || lppSummary || thirdPillarSummary) && (
+            {(avsAccounts.length > 0 || lppSummary || thirdPillarSummary) && (
               <Card className="border-2 border-primary">
                 <CardHeader>
                   <CardTitle className="text-2xl">Vue d'ensemble - Revenu retraite estimé</CardTitle>
@@ -272,7 +252,7 @@ const Prevoyance = () => {
                     <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg">
                       <p className="text-sm text-muted-foreground mb-1">1er Pilier AVS</p>
                       <p className="text-xl font-bold text-yellow-600">
-                        {avsResults ? formatCHF(avsResults.oldAge.fullRent.annual) : formatCHF(0)}
+                        {formatCHF(avsTotalRent)}
                       </p>
                       <p className="text-xs text-muted-foreground">par an</p>
                     </div>
@@ -294,7 +274,7 @@ const Prevoyance = () => {
                       <p className="text-sm text-muted-foreground mb-1">Total</p>
                       <p className="text-2xl font-bold text-primary">
                         {formatCHF(
-                          (avsResults?.oldAge.fullRent.annual || 0) +
+                          avsTotalRent +
                           (lppSummary?.total_annual_rent_65 || 0) +
                           (thirdPillarSummary?.totalProjectedAnnualRent || 0)
                         )}

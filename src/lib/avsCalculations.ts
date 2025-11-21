@@ -184,6 +184,42 @@ export async function loadAVSProfile(profileId: string) {
 }
 
 /**
+ * Calculate all AVS pensions with proper structure for UI components
+ * 
+ * @param annualIncome - Annual determining income in CHF
+ * @param yearsContributed - Years contributed (default 44)
+ * @returns Object containing all pension calculations in structured format
+ */
+export async function calculateAllAVSPensionsStructured(annualIncome: number, yearsContributed: number = 44) {
+  const result = await calculateAVSFromScale(annualIncome, yearsContributed, '1/1');
+  
+  return {
+    oldAge: {
+      fullRent: {
+        monthly: result.old_age_rent_monthly,
+        annual: result.old_age_rent_annual,
+      }
+    },
+    disability: {
+      fullRent: {
+        monthly: result.disability_rent_monthly,
+        annual: result.disability_rent_annual,
+      }
+    },
+    widow: {
+      fullRent: {
+        monthly: result.widow_rent_monthly,
+        annual: result.widow_rent_annual,
+      }
+    },
+    child: {
+      monthly: result.child_rent_monthly,
+      annual: result.child_rent_annual,
+    }
+  };
+}
+
+/**
  * Calculate all AVS pensions with number of children
  * Legacy function for backward compatibility
  * 

@@ -22,8 +22,10 @@ export type Database = {
           full_rent_fraction: number | null
           has_gaps: boolean | null
           id: string
+          is_active: boolean | null
           last_calculation_date: string | null
           marital_status: string | null
+          owner_name: string | null
           profile_id: string
           scale_used: string | null
           updated_at: string | null
@@ -37,8 +39,10 @@ export type Database = {
           full_rent_fraction?: number | null
           has_gaps?: boolean | null
           id?: string
+          is_active?: boolean | null
           last_calculation_date?: string | null
           marital_status?: string | null
+          owner_name?: string | null
           profile_id: string
           scale_used?: string | null
           updated_at?: string | null
@@ -52,8 +56,10 @@ export type Database = {
           full_rent_fraction?: number | null
           has_gaps?: boolean | null
           id?: string
+          is_active?: boolean | null
           last_calculation_date?: string | null
           marital_status?: string | null
+          owner_name?: string | null
           profile_id?: string
           scale_used?: string | null
           updated_at?: string | null
