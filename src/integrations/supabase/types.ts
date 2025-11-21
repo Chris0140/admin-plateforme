@@ -14,6 +14,122 @@ export type Database = {
   }
   public: {
     Tables: {
+      avs_profiles: {
+        Row: {
+          average_annual_income_determinant: number | null
+          created_at: string | null
+          full_rent_fraction: number | null
+          has_gaps: boolean | null
+          id: string
+          last_calculation_date: string | null
+          profile_id: string
+          scale_used: string | null
+          updated_at: string | null
+          years_contributed: number | null
+          years_missing: number | null
+        }
+        Insert: {
+          average_annual_income_determinant?: number | null
+          created_at?: string | null
+          full_rent_fraction?: number | null
+          has_gaps?: boolean | null
+          id?: string
+          last_calculation_date?: string | null
+          profile_id: string
+          scale_used?: string | null
+          updated_at?: string | null
+          years_contributed?: number | null
+          years_missing?: number | null
+        }
+        Update: {
+          average_annual_income_determinant?: number | null
+          created_at?: string | null
+          full_rent_fraction?: number | null
+          has_gaps?: boolean | null
+          id?: string
+          last_calculation_date?: string | null
+          profile_id?: string
+          scale_used?: string | null
+          updated_at?: string | null
+          years_contributed?: number | null
+          years_missing?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avs_profiles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      avs_scale_44: {
+        Row: {
+          child_rent: number
+          child_rent_1_2: number
+          child_rent_1_4: number
+          child_rent_3_4: number
+          created_at: string | null
+          disability_rent_1_2: number
+          disability_rent_1_4: number
+          disability_rent_3_4: number
+          double_child_rent: number
+          id: string
+          income_threshold: number
+          old_age_rent_full: number
+          orphan_rent_60pct: number
+          scale_year: number | null
+          widow_additional_rent: number
+          widow_rent_1_2: number
+          widow_rent_1_4: number
+          widow_rent_3_4: number
+          widow_rent_full: number
+        }
+        Insert: {
+          child_rent: number
+          child_rent_1_2: number
+          child_rent_1_4: number
+          child_rent_3_4: number
+          created_at?: string | null
+          disability_rent_1_2: number
+          disability_rent_1_4: number
+          disability_rent_3_4: number
+          double_child_rent: number
+          id?: string
+          income_threshold: number
+          old_age_rent_full: number
+          orphan_rent_60pct: number
+          scale_year?: number | null
+          widow_additional_rent: number
+          widow_rent_1_2: number
+          widow_rent_1_4: number
+          widow_rent_3_4: number
+          widow_rent_full: number
+        }
+        Update: {
+          child_rent?: number
+          child_rent_1_2?: number
+          child_rent_1_4?: number
+          child_rent_3_4?: number
+          created_at?: string | null
+          disability_rent_1_2?: number
+          disability_rent_1_4?: number
+          disability_rent_3_4?: number
+          double_child_rent?: number
+          id?: string
+          income_threshold?: number
+          old_age_rent_full?: number
+          orphan_rent_60pct?: number
+          scale_year?: number | null
+          widow_additional_rent?: number
+          widow_rent_1_2?: number
+          widow_rent_1_4?: number
+          widow_rent_3_4?: number
+          widow_rent_full?: number
+        }
+        Relationships: []
+      }
       budget_data: {
         Row: {
           autres_depenses: number | null
@@ -249,50 +365,80 @@ export type Database = {
         Row: {
           adresse: string | null
           appellation: string
+          canton: string | null
+          commune: string | null
           created_at: string
           date_naissance: string
           email: string
+          employer_name: string | null
           etat_civil: string | null
+          gender: string | null
+          household_mode: string | null
+          housing_status: string | null
           id: string
           localite: string
+          nationality: string | null
           nom: string
           nombre_enfants: number | null
+          permit_type: string | null
           prenom: string
+          profession: string | null
           telephone: string | null
           updated_at: string
           user_id: string
+          work_rate: number | null
         }
         Insert: {
           adresse?: string | null
           appellation: string
+          canton?: string | null
+          commune?: string | null
           created_at?: string
           date_naissance: string
           email: string
+          employer_name?: string | null
           etat_civil?: string | null
+          gender?: string | null
+          household_mode?: string | null
+          housing_status?: string | null
           id?: string
           localite: string
+          nationality?: string | null
           nom: string
           nombre_enfants?: number | null
+          permit_type?: string | null
           prenom: string
+          profession?: string | null
           telephone?: string | null
           updated_at?: string
           user_id: string
+          work_rate?: number | null
         }
         Update: {
           adresse?: string | null
           appellation?: string
+          canton?: string | null
+          commune?: string | null
           created_at?: string
           date_naissance?: string
           email?: string
+          employer_name?: string | null
           etat_civil?: string | null
+          gender?: string | null
+          household_mode?: string | null
+          housing_status?: string | null
           id?: string
           localite?: string
+          nationality?: string | null
           nom?: string
           nombre_enfants?: number | null
+          permit_type?: string | null
           prenom?: string
+          profession?: string | null
           telephone?: string | null
           updated_at?: string
           user_id?: string
+          work_rate?: number | null
         }
         Relationships: []
       }

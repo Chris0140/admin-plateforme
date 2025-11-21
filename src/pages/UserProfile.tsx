@@ -32,6 +32,16 @@ interface Profile {
   telephone: string | null;
   etat_civil?: string | null;
   nombre_enfants?: number | null;
+  gender?: string | null;
+  nationality?: string | null;
+  profession?: string | null;
+  employer_name?: string | null;
+  canton?: string | null;
+  commune?: string | null;
+  permit_type?: string | null;
+  housing_status?: string | null;
+  household_mode?: string | null;
+  work_rate?: number | null;
 }
 
 interface Document {
@@ -116,6 +126,10 @@ const profileSchema = z.object({
   telephone: z.string().trim().max(20, "Le téléphone doit faire moins de 20 caractères").optional(),
   etat_civil: z.string().optional(),
   nombre_enfants: z.number().min(0, "Le nombre doit être positif").optional(),
+  gender: z.string().optional(),
+  nationality: z.string().optional(),
+  profession: z.string().optional(),
+  employer_name: z.string().optional(),
 });
 
 const budgetSchema = z.object({
@@ -1803,6 +1817,67 @@ const UserProfile = () => {
                               </FormItem>
                             )}
                           />
+                          <FormField
+                            control={profileForm.control}
+                            name="gender"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Sexe</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Sélectionner" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="M">Homme</SelectItem>
+                                    <SelectItem value="F">Femme</SelectItem>
+                                    <SelectItem value="Autre">Autre</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="nationality"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Nationalité</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Ex: Suisse" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="profession"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Profession</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Ex: Ingénieur" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={profileForm.control}
+                            name="employer_name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Employeur</FormLabel>
+                                <FormControl>
+                                  <Input {...field} placeholder="Nom de l'entreprise" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                         </div>
                         <Button type="submit" className="w-full md:w-auto">
                           <Save className="h-4 w-4 mr-2" />
@@ -1861,6 +1936,28 @@ const UserProfile = () => {
                           <div>
                             <h3 className="text-sm font-medium text-muted-foreground mb-1">Nombre d'enfants</h3>
                             <p className="text-foreground">{prevoyanceData.nombre_enfants || 0}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Sexe</h3>
+                            <p className="text-foreground">
+                              {profile.gender 
+                                ? profile.gender === "M" ? "Homme"
+                                  : profile.gender === "F" ? "Femme"
+                                  : profile.gender
+                                : "Non renseigné"}
+                            </p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Nationalité</h3>
+                            <p className="text-foreground">{profile.nationality || "Non renseignée"}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Profession</h3>
+                            <p className="text-foreground">{profile.profession || "Non renseignée"}</p>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Employeur</h3>
+                            <p className="text-foreground">{profile.employer_name || "Non renseigné"}</p>
                           </div>
                         </>
                       )}
