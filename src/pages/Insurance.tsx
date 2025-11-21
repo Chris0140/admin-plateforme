@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Shield, DollarSign, Heart } from "lucide-react";
+import { Plus, Shield, DollarSign, Heart, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateInsuranceAnalysis, InsuranceAnalysis } from "@/lib/insuranceCalculations";
@@ -10,6 +11,7 @@ import InsuranceContractForm from "@/components/insurance/InsuranceContractForm"
 
 const Insurance = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [analysis, setAnalysis] = useState<InsuranceAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -87,6 +89,15 @@ const Insurance = () => {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
+      <Button 
+        variant="ghost" 
+        onClick={() => navigate('/prevoyance')}
+        className="gap-2 mb-4"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Retour à Prévoyance
+      </Button>
+      
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Assurances</h1>

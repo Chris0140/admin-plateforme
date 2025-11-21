@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Building2, TrendingUp, Shield, Heart } from "lucide-react";
+import { Plus, Building2, TrendingUp, Shield, Heart, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { 
@@ -22,6 +23,7 @@ type LPPAccount = Database['public']['Tables']['lpp_accounts']['Row'];
 export default function LPPAccounts() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   const [profileId, setProfileId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<LPPAnalysis | null>(null);
@@ -107,17 +109,28 @@ export default function LPPAccounts() {
   return (
     <div className="container mx-auto py-8 space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold">Prévoyance professionnelle (LPP)</h1>
-          <p className="text-muted-foreground mt-2">
-            Gérez vos comptes de 2e pilier et analysez votre couverture retraite, invalidité et décès
-          </p>
-        </div>
-        <Button onClick={handleAddAccount} size="lg">
-          <Plus className="mr-2 h-5 w-5" />
-          Ajouter un compte LPP
+      <div className="space-y-4">
+        <Button 
+          variant="ghost" 
+          onClick={() => navigate('/prevoyance')}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour à Prévoyance
         </Button>
+        
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold">Prévoyance professionnelle (LPP)</h1>
+            <p className="text-muted-foreground mt-2">
+              Gérez vos comptes de 2e pilier et analysez votre couverture retraite, invalidité et décès
+            </p>
+          </div>
+          <Button onClick={handleAddAccount} size="lg">
+            <Plus className="mr-2 h-5 w-5" />
+            Ajouter un compte LPP
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
