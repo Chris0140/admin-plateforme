@@ -467,7 +467,11 @@ const Budget = () => {
               )}
 
               <Card>
-                <CardHeader><CardTitle>Résumé du mois</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>
+                    Résumé du mois - {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
+                  </CardTitle>
+                </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-4 gap-4">
                     <div className="p-4 bg-muted rounded-lg text-center">
