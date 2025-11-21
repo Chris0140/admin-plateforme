@@ -2,10 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Building2, TrendingUp, Shield, Heart, ArrowLeft } from "lucide-react";
+import { Plus, Building2, TrendingUp, Shield, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { 
   calculateLPPAnalysis, 
   calculateLPPRetirement,
@@ -23,7 +22,6 @@ type LPPAccount = Database['public']['Tables']['lpp_accounts']['Row'];
 export default function LPPAccounts() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const navigate = useNavigate();
   
   const [profileId, setProfileId] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<LPPAnalysis | null>(null);
@@ -108,16 +106,6 @@ export default function LPPAccounts() {
 
   return (
     <div className="container mx-auto py-8 space-y-8">
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => navigate(-1)}
-        className="mb-4"
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Retour
-      </Button>
-
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
