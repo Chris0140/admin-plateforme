@@ -407,73 +407,70 @@ const Budget = () => {
                           <Input id="resteMoisPrecedent" type="number" value={resteMoisPrecedent} onChange={(e) => setResteMoisPrecedent(e.target.value)} placeholder="Ex: 500" />
                         </div>
                         <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="salaireNet">Salaire net</Label>
-                            <Dialog open={showSalaryDialog} onOpenChange={setShowSalaryDialog}>
-                              <DialogTrigger asChild>
-                                <Button variant="outline" size="sm">
-                                  <Plus className="h-4 w-4 mr-1" />
-                                  Détails
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Détails du salaire</DialogTitle>
-                                  <DialogDescription>
-                                    Entrez les détails de votre salaire
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4 py-4">
-                                  <div>
-                                    <Label htmlFor="salaireBrut">Salaire brut</Label>
-                                    <Input
-                                      id="salaireBrut"
-                                      type="number"
-                                      value={salaireBrut}
-                                      onChange={(e) => {
-                                        setSalaireBrut(e.target.value);
-                                        const brut = parseFloat(e.target.value) || 0;
-                                        const charges = parseFloat(chargesSociales) || 0;
-                                        setSalaireNet((brut - charges).toString());
-                                      }}
-                                      placeholder="Ex: 8'000"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="chargesSociales">Charges sociales</Label>
-                                    <Input
-                                      id="chargesSociales"
-                                      type="number"
-                                      value={chargesSociales}
-                                      onChange={(e) => {
-                                        setChargesSociales(e.target.value);
-                                        const brut = parseFloat(salaireBrut) || 0;
-                                        const charges = parseFloat(e.target.value) || 0;
-                                        setSalaireNet((brut - charges).toString());
-                                      }}
-                                      placeholder="Ex: 1'200"
-                                    />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="salaireNetDialog">Salaire net</Label>
-                                    <Input
-                                      id="salaireNetDialog"
-                                      type="number"
-                                      value={salaireNet}
-                                      onChange={(e) => setSalaireNet(e.target.value)}
-                                      placeholder="Ex: 6'800"
-                                    />
-                                  </div>
+                          <Label htmlFor="salaireNet">Salaire net</Label>
+                          <Dialog open={showSalaryDialog} onOpenChange={setShowSalaryDialog}>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" className="w-full">
+                                <Plus className="h-4 w-4 mr-1" />
+                                Ajouter salaire
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>Détails du salaire</DialogTitle>
+                                <DialogDescription>
+                                  Entrez les détails de votre salaire
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4 py-4">
+                                <div>
+                                  <Label htmlFor="salaireBrut">Salaire brut</Label>
+                                  <Input
+                                    id="salaireBrut"
+                                    type="number"
+                                    value={salaireBrut}
+                                    onChange={(e) => {
+                                      setSalaireBrut(e.target.value);
+                                      const brut = parseFloat(e.target.value) || 0;
+                                      const charges = parseFloat(chargesSociales) || 0;
+                                      setSalaireNet((brut - charges).toString());
+                                    }}
+                                    placeholder="Ex: 8'000"
+                                  />
                                 </div>
-                                <DialogFooter>
-                                  <Button onClick={() => setShowSalaryDialog(false)}>
-                                    Enregistrer
-                                  </Button>
-                                </DialogFooter>
-                              </DialogContent>
-                            </Dialog>
-                          </div>
-                          <Input id="salaireNet" type="number" value={salaireNet} onChange={(e) => setSalaireNet(e.target.value)} placeholder="Ex: 6'800" />
+                                <div>
+                                  <Label htmlFor="chargesSociales">Charges sociales</Label>
+                                  <Input
+                                    id="chargesSociales"
+                                    type="number"
+                                    value={chargesSociales}
+                                    onChange={(e) => {
+                                      setChargesSociales(e.target.value);
+                                      const brut = parseFloat(salaireBrut) || 0;
+                                      const charges = parseFloat(e.target.value) || 0;
+                                      setSalaireNet((brut - charges).toString());
+                                    }}
+                                    placeholder="Ex: 1'200"
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor="salaireNetDialog">Salaire net</Label>
+                                  <Input
+                                    id="salaireNetDialog"
+                                    type="number"
+                                    value={salaireNet}
+                                    onChange={(e) => setSalaireNet(e.target.value)}
+                                    placeholder="Ex: 6'800"
+                                  />
+                                </div>
+                              </div>
+                              <DialogFooter>
+                                <Button onClick={() => setShowSalaryDialog(false)}>
+                                  Enregistrer
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
                           {parseFloat(salaireNet) > 0 && parseFloat(chargesSociales) > 0 && (
                             <div className="text-xs text-muted-foreground space-y-0.5 pt-1">
                               <div>Salaire net: {formatCurrency(parseFloat(salaireNet))}</div>
