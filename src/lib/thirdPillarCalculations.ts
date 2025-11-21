@@ -12,6 +12,9 @@ export interface ThirdPillarAccount {
   return_rate: number;
   projected_amount_at_retirement?: number;
   projected_annual_rent?: number;
+  disability_rent_annual?: number;
+  death_capital?: number;
+  premium_exemption_waiting_period?: number;
   is_active: boolean;
   notes?: string;
 }
@@ -26,6 +29,9 @@ export interface ThirdPillarProjection {
   returnRate: number;
   projectedAmount: number;
   projectedAnnualRent: number;
+  disabilityRentAnnual?: number;
+  deathCapital?: number;
+  premiumExemptionWaitingPeriod?: number;
 }
 
 export interface ThirdPillarAnalysis {
@@ -86,6 +92,9 @@ export function calculateThirdPillarProjection(
     returnRate: account.return_rate,
     projectedAmount,
     projectedAnnualRent,
+    disabilityRentAnnual: account.disability_rent_annual,
+    deathCapital: account.death_capital,
+    premiumExemptionWaitingPeriod: account.premium_exemption_waiting_period,
   };
 }
 
