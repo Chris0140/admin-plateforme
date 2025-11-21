@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Plus, Building2, TrendingUp, Shield, Heart, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { 
   calculateLPPAnalysis, 
   calculateLPPRetirement,
@@ -98,16 +100,22 @@ export default function LPPAccounts() {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="flex items-center justify-center">
-          <p className="text-muted-foreground">Chargement...</p>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto py-20">
+          <div className="flex items-center justify-center">
+            <p className="text-muted-foreground">Chargement...</p>
+          </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-8">
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="container mx-auto px-4 py-20 space-y-8">
       {/* Header */}
       <div className="space-y-4">
         <Button 
@@ -239,6 +247,8 @@ export default function LPPAccounts() {
           onClose={handleFormClose}
         />
       )}
+      </main>
+      <Footer />
     </div>
   );
 }
