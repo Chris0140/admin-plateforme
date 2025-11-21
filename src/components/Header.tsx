@@ -20,6 +20,7 @@ const Header = () => {
   } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [comparateurOpen, setComparateurOpen] = useState(false);
+  const [budgetOpen, setBudgetOpen] = useState(false);
   const handleLogout = async () => {
     const {
       error
@@ -52,12 +53,31 @@ const Header = () => {
 
           {/* Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
-            <Link to="/budget" className="text-foreground hover:text-primary transition-colors font-medium">
-              Budget
-            </Link>
-            <Link to="/prevoyance/lpp" className="text-foreground hover:text-primary transition-colors font-medium">
-              Prévoyance LPP
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 text-foreground hover:text-primary transition-colors font-medium">
+                Budget
+                <ChevronDown className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64 bg-card/95 backdrop-blur-md border-border shadow-lg z-50 p-2">
+                <DropdownMenuItem asChild>
+                  <Link to="/budget" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/10">
+                      <PiggyBank className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <span className="font-medium">Budget mensuel</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/prevoyance/lpp" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500/10">
+                      <Building2 className="h-4 w-4 text-green-500" />
+                    </div>
+                    <span className="font-medium">2ème pilier (LPP)</span>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             <Link to="/simulateur-impots" className="text-foreground hover:text-primary transition-colors font-medium">
               Simulateur d'impôts
             </Link>
@@ -206,21 +226,31 @@ const Header = () => {
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
                 <nav className="flex flex-col gap-4 mt-8">
-                  <Link 
-                    to="/budget" 
-                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Budget
-                  </Link>
-                  
-                  <Link 
-                    to="/prevoyance/lpp" 
-                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Prévoyance LPP
-                  </Link>
+                  {/* Budget Section */}
+                  <Collapsible open={budgetOpen} onOpenChange={setBudgetOpen}>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full text-foreground hover:text-primary transition-colors font-medium py-2">
+                      <span>Budget</span>
+                      <ChevronRight className={`h-4 w-4 transition-transform ${budgetOpen ? 'rotate-90' : ''}`} />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-2 pl-4 mt-2">
+                      <Link 
+                        to="/budget" 
+                        className="flex items-center gap-3 py-2 hover:bg-accent rounded-md transition-colors"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <PiggyBank className="h-4 w-4 text-blue-500" />
+                        <span>Budget mensuel</span>
+                      </Link>
+                      <Link 
+                        to="/prevoyance/lpp" 
+                        className="flex items-center gap-3 py-2 hover:bg-accent rounded-md transition-colors"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <Building2 className="h-4 w-4 text-green-500" />
+                        <span>2ème pilier (LPP)</span>
+                      </Link>
+                    </CollapsibleContent>
+                  </Collapsible>
                   
                   <Link 
                     to="/simulateur-impots" 
