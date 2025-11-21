@@ -55,11 +55,8 @@ const Header = () => {
             <Link to="/budget" className="text-foreground hover:text-primary transition-colors font-medium">
               Budget
             </Link>
-            <Link to="/prevoyance/lpp" className="text-foreground hover:text-primary transition-colors font-medium">
-              Prévoyance LPP
-            </Link>
-            <Link to="/prevoyance/3e-pilier" className="text-foreground hover:text-primary transition-colors font-medium">
-              3e Pilier
+            <Link to="/prevoyance" className="text-foreground hover:text-primary transition-colors font-medium">
+              Prévoyance
             </Link>
             <Link to="/assurances" className="text-foreground hover:text-primary transition-colors font-medium">
               Assurances
@@ -221,19 +218,11 @@ const Header = () => {
                   </Link>
                   
                   <Link 
-                    to="/prevoyance/lpp" 
+                    to="/prevoyance" 
                     className="text-foreground hover:text-primary transition-colors font-medium py-2"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Prévoyance LPP
-                  </Link>
-                  
-                  <Link 
-                    to="/prevoyance/3e-pilier" 
-                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    3e Pilier
+                    Prévoyance
                   </Link>
                   
                   <Link 
