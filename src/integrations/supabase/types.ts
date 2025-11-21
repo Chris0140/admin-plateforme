@@ -229,6 +229,63 @@ export type Database = {
         }
         Relationships: []
       }
+      budget_monthly: {
+        Row: {
+          assurances: number | null
+          autres_revenus: number | null
+          created_at: string | null
+          depenses_variables: number | null
+          epargne_investissements: number | null
+          frais_fixes_dettes: number | null
+          id: string
+          month: number
+          reste_mois_precedent: number | null
+          salaire_net: number | null
+          total_restant: number | null
+          total_revenus: number | null
+          total_sorties: number | null
+          updated_at: string | null
+          user_id: string
+          year: number
+        }
+        Insert: {
+          assurances?: number | null
+          autres_revenus?: number | null
+          created_at?: string | null
+          depenses_variables?: number | null
+          epargne_investissements?: number | null
+          frais_fixes_dettes?: number | null
+          id?: string
+          month: number
+          reste_mois_precedent?: number | null
+          salaire_net?: number | null
+          total_restant?: number | null
+          total_revenus?: number | null
+          total_sorties?: number | null
+          updated_at?: string | null
+          user_id: string
+          year: number
+        }
+        Update: {
+          assurances?: number | null
+          autres_revenus?: number | null
+          created_at?: string | null
+          depenses_variables?: number | null
+          epargne_investissements?: number | null
+          frais_fixes_dettes?: number | null
+          id?: string
+          month?: number
+          reste_mois_precedent?: number | null
+          salaire_net?: number | null
+          total_restant?: number | null
+          total_revenus?: number | null
+          total_sorties?: number | null
+          updated_at?: string | null
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       dependants: {
         Row: {
           created_at: string | null
