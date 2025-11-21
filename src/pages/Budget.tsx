@@ -392,7 +392,7 @@ const Budget = () => {
                     <CollapsibleContent>
                       <CardContent className="space-y-4">
                         <div>
-                          <Label htmlFor="resteMoisPrecedent">Etat du compte/ Epargne du mois à date</Label>
+                          <Label htmlFor="resteMoisPrecedent">État du compte/ Épargne du mois avant salaire</Label>
                           <Input id="resteMoisPrecedent" type="number" value={resteMoisPrecedent} onChange={(e) => setResteMoisPrecedent(e.target.value)} placeholder="Ex: 500" />
                         </div>
                         <div>
