@@ -347,9 +347,9 @@ const Budget = () => {
           <div className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="w-full md:w-auto">
               <Button
-                variant={mode === "annuel" ? "default" : "outline"}
+                variant="default"
                 onClick={() => setMode("annuel")}
-                className="w-full md:w-auto px-6"
+                className={`w-full md:w-auto px-6 ${mode === "annuel" ? "" : "opacity-70"}`}
               >
                 Projection annuelle simple
               </Button>
@@ -357,16 +357,16 @@ const Budget = () => {
             
             <div className="flex gap-2">
               <Button
-                variant={mode === "mensuel" ? "default" : "outline"}
+                variant="default"
                 onClick={() => setMode("mensuel")}
-                className="px-6"
+                className={`px-6 ${mode === "mensuel" ? "" : "opacity-70"}`}
               >
                 Suivi mensuel détaillé
               </Button>
               <Button
-                variant={mode === "yearly-detailed" ? "default" : "outline"}
+                variant="default"
                 onClick={() => setMode("yearly-detailed")}
-                className="px-6"
+                className={`px-6 ${mode === "yearly-detailed" ? "" : "opacity-70"}`}
               >
                 Année détaillée
               </Button>
