@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { ChevronDown, Save, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Save, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -428,10 +428,40 @@ const Budget = () => {
               </div>
 
               {user && (
-                <div className="flex justify-center mb-4">
+                <div className="flex justify-center items-center gap-4 mb-4">
+                  <Button
+                    onClick={() => {
+                      if (selectedMonth === 1) {
+                        setSelectedMonth(12);
+                        setSelectedYear(selectedYear - 1);
+                      } else {
+                        setSelectedMonth(selectedMonth - 1);
+                      }
+                    }}
+                    variant="outline"
+                    size="icon"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  
                   <Button onClick={saveMonthlyBudget} disabled={isLoading} className="gap-2">
                     <Save className="h-4 w-4" />
                     Enregistrer le mois
+                  </Button>
+                  
+                  <Button
+                    onClick={() => {
+                      if (selectedMonth === 12) {
+                        setSelectedMonth(1);
+                        setSelectedYear(selectedYear + 1);
+                      } else {
+                        setSelectedMonth(selectedMonth + 1);
+                      }
+                    }}
+                    variant="outline"
+                    size="icon"
+                  >
+                    <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               )}
