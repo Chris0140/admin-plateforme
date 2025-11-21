@@ -341,7 +341,7 @@ const Budget = () => {
                 onClick={() => setMode("yearly-detailed")}
                 className={`px-6 ${mode === "yearly-detailed" ? "" : "opacity-70"}`}
               >
-                Année détaillée
+                Année en cours
               </Button>
             </div>
           </div>
