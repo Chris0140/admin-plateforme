@@ -890,7 +890,7 @@ const Budget = () => {
                     <CollapsibleContent>
                       <CardContent className="space-y-4">
                         <div>
-                          <Label htmlFor="depensesAnnuel">Dépenses (annuel)</Label>
+                          <Label htmlFor="depensesAnnuel">Dépenses fixes (annuel)</Label>
                           <Input id="depensesAnnuel" type="number" value={depensesAnnuel} onChange={(e) => setDepensesAnnuel(e.target.value)} placeholder="Ex: 50'000" />
                         </div>
 
