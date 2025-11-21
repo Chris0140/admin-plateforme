@@ -12,6 +12,7 @@ import AccountSecurity from "./pages/AccountSecurity";
 import AccountDocuments from "./pages/AccountDocuments";
 import ThirdPillar from "./pages/ThirdPillar";
 import Insurance from "./pages/Insurance";
+import Prevoyance from "./pages/Prevoyance";
 import NotFound from "./pages/NotFound";
 import SimulateurImpots from "./pages/SimulateurImpots";
 import Comparateur from "./pages/Comparateur";
@@ -47,6 +48,7 @@ const App = () => (
             <Route path="/comparateur/assurance-animaux" element={<AssuranceAnimaux />} />
             <Route path="/simulateur-impots" element={<SimulateurImpots />} />
             <Route path="/budget" element={<Budget />} />
+            <Route path="/prevoyance" element={<Prevoyance />} />
             <Route path="/prevoyance/lpp" element={<LPPAccounts />} />
             <Route path="/prevoyance/3e-pilier" element={<ThirdPillar />} />
             <Route path="/assurances" element={<Insurance />} />
