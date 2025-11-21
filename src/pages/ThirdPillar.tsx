@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Plus, Wallet, TrendingUp, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { calculateThirdPillarAnalysis, ThirdPillarAnalysis } from "@/lib/thirdPillarCalculations";
 import ThirdPillarAccountCard from "@/components/third-pillar/ThirdPillarAccountCard";
 import ThirdPillarAccountForm from "@/components/third-pillar/ThirdPillarAccountForm";
@@ -84,14 +86,20 @@ const ThirdPillar = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-8">
-        <p>Chargement...</p>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto py-20">
+          <p>Chargement...</p>
+        </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="min-h-screen bg-background">
+      <Header />
+      <main className="container mx-auto px-4 py-20 space-y-6">
       <Button 
         variant="ghost" 
         onClick={() => navigate('/prevoyance')}
@@ -208,6 +216,8 @@ const ThirdPillar = () => {
           </div>
         </>
       )}
+      </main>
+      <Footer />
     </div>
   );
 };
