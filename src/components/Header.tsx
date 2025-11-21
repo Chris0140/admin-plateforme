@@ -136,7 +136,7 @@ const Header = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/comparateur/troisieme-pilier" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
+            <Link to="/comparateur/troisieme-pilier" className="cursor-pointer flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-primary/10 transition-colors">
                     <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/10">
                       <PiggyBank className="h-4 w-4 text-emerald-500" />
                     </div>
@@ -146,17 +146,9 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <Link to="/account/documents" className="text-foreground hover:text-primary transition-colors font-medium">
-              Mes documents
-            </Link>
             <Link to="/contact" className="text-foreground hover:text-primary transition-colors">
               Contact
             </Link>
-            {user && (
-              <Link to="/profil" className="text-foreground hover:text-primary transition-colors font-medium">
-                Profil utilisateur
-              </Link>
-            )}
           </nav>
 
           {/* Account Button/Menu - Desktop */}
@@ -172,15 +164,21 @@ const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 bg-card border-border z-50">
                   <DropdownMenuItem asChild>
-                    <Link to="/account/settings" className="flex items-center cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Paramètres du compte</span>
+                    <Link to="/profil" className="flex items-center cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profil utilisateur</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/account/documents" className="flex items-center cursor-pointer">
                       <FileText className="mr-2 h-4 w-4" />
                       <span>Mes documents</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/account/settings" className="flex items-center cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Paramètres du compte</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -324,29 +322,12 @@ const Header = () => {
                   </Collapsible>
 
                   <Link 
-                    to="/account/documents"
-                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Mes documents
-                  </Link>
-                  <Link 
                     to="/contact" 
                     className="text-foreground hover:text-primary transition-colors font-medium py-2"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Contact
                   </Link>
-                  
-                  {user && (
-                    <Link 
-                      to="/profil" 
-                      className="text-foreground hover:text-primary transition-colors font-medium py-2"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      Profil utilisateur
-                    </Link>
-                  )}
 
                   {/* Auth Section */}
                   <div className="pt-4 border-t border-border mt-4">
