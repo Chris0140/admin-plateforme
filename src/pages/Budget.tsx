@@ -12,9 +12,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ChevronDown, Calculator, AlertTriangle } from "lucide-react";
+import { Save, ChevronDown, Calculator, AlertTriangle, Plus } from "lucide-react";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { calculateAllAVSPensions, formatCHF } from "@/lib/avsCalculations";
+import FixedExpenseCard from "@/components/budget/FixedExpenseCard";
+import FixedExpenseForm from "@/components/budget/FixedExpenseForm";
 
 const Budget = () => {
   const { user } = useAuth();
@@ -74,10 +76,17 @@ const Budget = () => {
   const [revenusOpen, setRevenusOpen] = useState(true);
   const [depensesOpen, setDepensesOpen] = useState(true);
 
+  // Fixed expenses state
+  const [fixedExpenses, setFixedExpenses] = useState<any[]>([]);
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
+  const [isSubmittingExpense, setIsSubmittingExpense] = useState(false);
+
   // Charger les données depuis Supabase
   useEffect(() => {
     if (user) {
       fetchBudgetData();
+      fetchFixedExpenses();
     }
   }, [user]);
 
@@ -226,6 +235,113 @@ const Budget = () => {
     } catch (error) {
       console.error("Erreur lors du chargement des données:", error);
     }
+  };
+
+  const fetchFixedExpenses = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("fixed_expenses")
+        .select("*")
+        .eq("user_id", user?.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setFixedExpenses(data || []);
+    } catch (error) {
+      console.error("Erreur lors du chargement des dépenses fixes:", error);
+    }
+  };
+
+  const handleSubmitExpense = async (data: any) => {
+    if (!user) return;
+
+    setIsSubmittingExpense(true);
+    try {
+      if (editingExpense?.id) {
+        const { error } = await supabase
+          .from("fixed_expenses")
+          .update({
+            ...data,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", editingExpense.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Dépense mise à jour",
+          description: "La dépense a été modifiée avec succès",
+        });
+      } else {
+        const { error } = await supabase
+          .from("fixed_expenses")
+          .insert({
+            user_id: user.id,
+            ...data,
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Dépense ajoutée",
+          description: "La dépense fixe a été créée avec succès",
+        });
+      }
+
+      setShowExpenseForm(false);
+      setEditingExpense(null);
+      fetchFixedExpenses();
+    } catch (error) {
+      console.error("Error saving expense:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder la dépense",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingExpense(false);
+    }
+  };
+
+  const handleEditExpense = (expense: any) => {
+    setEditingExpense(expense);
+    setShowExpenseForm(true);
+  };
+
+  const handleDeleteExpense = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("fixed_expenses")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Dépense supprimée",
+        description: "La dépense a été supprimée avec succès",
+      });
+
+      fetchFixedExpenses();
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer la dépense",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleAddNewExpense = () => {
+    setEditingExpense({});
+    setShowExpenseForm(true);
+  };
+
+  const handleCancelExpense = () => {
+    setShowExpenseForm(false);
+    setEditingExpense(null);
   };
 
   const saveAllData = async () => {
@@ -912,6 +1028,83 @@ const Budget = () => {
                         </p>
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+
+                {/* Dépenses fixes section */}
+                <Card className="md:col-span-2">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Dépenses fixes</CardTitle>
+                        <CardDescription>Gérez vos dépenses récurrentes par catégorie</CardDescription>
+                      </div>
+                      {!showExpenseForm && (
+                        <Button onClick={handleAddNewExpense} className="gap-2">
+                          <Plus className="h-4 w-4" />
+                          Ajouter une dépense
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {showExpenseForm ? (
+                      <FixedExpenseForm
+                        expense={editingExpense}
+                        onSubmit={handleSubmitExpense}
+                        onCancel={handleCancelExpense}
+                        isSubmitting={isSubmittingExpense}
+                      />
+                    ) : fixedExpenses.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-muted-foreground mb-4">
+                          Aucune dépense fixe enregistrée
+                        </p>
+                        <Button onClick={handleAddNewExpense} variant="outline" className="gap-2">
+                          <Plus className="h-4 w-4" />
+                          Ajouter votre première dépense
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="grid md:grid-cols-2 gap-4">
+                          {fixedExpenses.map((expense) => (
+                            <FixedExpenseCard
+                              key={expense.id}
+                              expense={expense}
+                              onEdit={handleEditExpense}
+                              onDelete={handleDeleteExpense}
+                            />
+                          ))}
+                        </div>
+                        {fixedExpenses.length > 0 && (
+                          <div className="mt-6 p-4 bg-primary/10 rounded-lg border border-primary/30">
+                            <div className="grid grid-cols-2 gap-4 text-center">
+                              <div>
+                                <p className="text-sm text-muted-foreground mb-1">Total mensuel</p>
+                                <p className="text-2xl font-bold text-primary">
+                                  {formatCurrency(
+                                    fixedExpenses.reduce((sum, exp) => 
+                                      sum + (exp.frequency === 'mensuel' ? exp.amount : exp.amount / 12), 0
+                                    )
+                                  )}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-sm text-muted-foreground mb-1">Total annuel</p>
+                                <p className="text-2xl font-bold text-primary">
+                                  {formatCurrency(
+                                    fixedExpenses.reduce((sum, exp) => 
+                                      sum + (exp.frequency === 'annuel' ? exp.amount : exp.amount * 12), 0
+                                    )
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
