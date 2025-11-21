@@ -63,7 +63,7 @@ const categories: Record<Category, { label: string; subcategories: { value: stri
     ],
   },
   autres: {
-    label: "Autres",
+    label: "Identité",
     subcategories: [],
   },
 };
