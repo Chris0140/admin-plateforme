@@ -1422,6 +1422,7 @@ const Budget = () => {
                           setNewMonthlyCategoryName("");
                           setNewMonthlyCategoryAmount("");
                           setNewMonthlyCategoryType("");
+                          setSelectedMonths([selectedMonth]);
                         }
                       }}>
                         <DialogContent>
@@ -1460,6 +1461,49 @@ const Budget = () => {
                                 />
                               </div>
                             )}
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label className="text-xs">Appliquer aux mois</Label>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-5 text-xs px-2"
+                                  onClick={() => {
+                                    if (selectedMonths.length === 12) {
+                                      setSelectedMonths([selectedMonth]);
+                                    } else {
+                                      setSelectedMonths([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                                    }
+                                  }}
+                                >
+                                  {selectedMonths.length === 12 ? "Aucun" : "Tous"}
+                                </Button>
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {months.map((m) => (
+                                  <button
+                                    key={m.value}
+                                    type="button"
+                                    onClick={() => {
+                                      if (selectedMonths.includes(m.value)) {
+                                        setSelectedMonths(selectedMonths.filter((month) => month !== m.value));
+                                      } else {
+                                        setSelectedMonths([...selectedMonths, m.value]);
+                                      }
+                                    }}
+                                    className={cn(
+                                      "px-1.5 py-0.5 text-xs rounded transition-all",
+                                      selectedMonths.includes(m.value)
+                                        ? "bg-primary/20 text-primary border border-primary/30"
+                                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                                    )}
+                                  >
+                                    {m.short}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           </div>
                           <DialogFooter>
                             <Button onClick={async () => {
@@ -1468,14 +1512,47 @@ const Budget = () => {
                                 return;
                               }
                               try {
+                                // Update current month
                                 await supabase.from("monthly_expense_categories").update({
                                   name: newMonthlyCategoryName,
                                   amount: parseFloat(newMonthlyCategoryAmount),
                                   category: newMonthlyCategoryType || "Autre"
                                 }).eq("id", editingExpenseId);
+                                
+                                // Insert/update for other selected months
+                                const otherMonths = selectedMonths.filter(m => m !== selectedMonth);
+                                for (const month of otherMonths) {
+                                  // Check if expense with same name exists for that month
+                                  const { data: existing } = await supabase
+                                    .from("monthly_expense_categories")
+                                    .select("id")
+                                    .eq("user_id", user?.id)
+                                    .eq("year", selectedYear)
+                                    .eq("month", month)
+                                    .eq("name", newMonthlyCategoryName)
+                                    .maybeSingle();
+                                  
+                                  if (existing) {
+                                    await supabase.from("monthly_expense_categories").update({
+                                      amount: parseFloat(newMonthlyCategoryAmount),
+                                      category: newMonthlyCategoryType || "Autre"
+                                    }).eq("id", existing.id);
+                                  } else {
+                                    await supabase.from("monthly_expense_categories").insert({
+                                      user_id: user?.id,
+                                      year: selectedYear,
+                                      month: month,
+                                      name: newMonthlyCategoryName,
+                                      amount: parseFloat(newMonthlyCategoryAmount),
+                                      category: newMonthlyCategoryType || "Autre"
+                                    });
+                                  }
+                                }
+                                
                                 await fetchMonthlyBudget();
                                 setShowExpenseDialog(false);
-                                toast({ title: "Dépense modifiée" });
+                                setSelectedMonths([selectedMonth]);
+                                toast({ title: selectedMonths.length > 1 ? `Dépense modifiée sur ${selectedMonths.length} mois` : "Dépense modifiée" });
                               } catch (error) {
                                 toast({ variant: "destructive", title: "Erreur" });
                               }
