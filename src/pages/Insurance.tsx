@@ -24,11 +24,7 @@ const Insurance = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        toast({
-          title: "Non authentifié",
-          description: "Veuillez vous connecter pour accéder à cette page.",
-          variant: "destructive",
-        });
+        setLoading(false);
         return;
       }
 
@@ -39,11 +35,7 @@ const Insurance = () => {
         .single();
 
       if (!profile) {
-        toast({
-          title: "Profil non trouvé",
-          description: "Veuillez compléter votre profil d'abord.",
-          variant: "destructive",
-        });
+        setLoading(false);
         return;
       }
 
@@ -51,11 +43,6 @@ const Insurance = () => {
       setAnalysis(analysisResult);
     } catch (error) {
       console.error('Error loading insurance data:', error);
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les données des assurances.",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
