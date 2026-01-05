@@ -485,6 +485,68 @@ export type Database = {
           },
         ]
       }
+      investment_assets: {
+        Row: {
+          asset_name: string
+          asset_type: string
+          created_at: string
+          currency: string
+          current_price: number | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          platform: string | null
+          profile_id: string
+          purchase_date: string | null
+          purchase_price: number
+          quantity: number
+          ticker_symbol: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset_name: string
+          asset_type: string
+          created_at?: string
+          currency?: string
+          current_price?: number | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          platform?: string | null
+          profile_id: string
+          purchase_date?: string | null
+          purchase_price?: number
+          quantity?: number
+          ticker_symbol?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset_name?: string
+          asset_type?: string
+          created_at?: string
+          currency?: string
+          current_price?: number | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          platform?: string | null
+          profile_id?: string
+          purchase_date?: string | null
+          purchase_price?: number
+          quantity?: number
+          ticker_symbol?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "investment_assets_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lpp_accounts: {
         Row: {
           additional_death_capital: number | null

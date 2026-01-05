@@ -15,6 +15,7 @@ import AccountSecurity from "./pages/AccountSecurity";
 import AccountDocuments from "./pages/AccountDocuments";
 import ThirdPillar from "./pages/ThirdPillar";
 import Insurance from "./pages/Insurance";
+import Investissement from "./pages/Investissement";
 import Prevoyance from "./pages/Prevoyance";
 import AVS from "./pages/prevoyance/AVS";
 import NotFound from "./pages/NotFound";
@@ -62,6 +63,7 @@ const App = () => (
             <Route path="/prevoyance/lpp" element={<LPPAccounts />} />
             <Route path="/prevoyance/3e-pilier" element={<ThirdPillar />} />
             <Route path="/assurances" element={<Insurance />} />
+            <Route path="/investissement" element={<Investissement />} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
