@@ -24,7 +24,11 @@ const ThirdPillar = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        setLoading(false);
+        toast({
+          title: "Non authentifié",
+          description: "Veuillez vous connecter pour accéder à cette page.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -35,7 +39,11 @@ const ThirdPillar = () => {
         .single();
 
       if (!profile) {
-        setLoading(false);
+        toast({
+          title: "Profil non trouvé",
+          description: "Veuillez compléter votre profil d'abord.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -46,6 +54,11 @@ const ThirdPillar = () => {
       setAnalysis(analysisResult);
     } catch (error) {
       console.error('Error loading third pillar data:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les données du 3e pilier.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
