@@ -99,15 +99,11 @@ export default function LPPAccounts() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container mx-auto py-20">
-          <div className="flex items-center justify-center">
-            <p className="text-muted-foreground">Chargement...</p>
-          </div>
+      <AppLayout title="2ème Pilier - LPP" subtitle="Gérez vos comptes de 2e pilier et analysez votre couverture retraite, invalidité et décès">
+        <div className="flex items-center justify-center py-20">
+          <p className="text-muted-foreground">Chargement...</p>
         </div>
-        <Footer />
-      </div>
+      </AppLayout>
     );
   }
 

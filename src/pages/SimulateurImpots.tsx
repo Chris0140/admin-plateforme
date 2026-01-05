@@ -3,8 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Calculator, TrendingDown, Info, FileText, Save, ChevronDown } from "lucide-react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { calculateVaudIncomeTax, calculateVaudWealthTax } from "@/lib/vaudTaxCalculations";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -1569,23 +1568,12 @@ const SimulateurImpots = () => {
     calculateTax(values);
   };
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-12">
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Formulaire */}
-            <div className="md:col-span-2">
-              <Card className="glass border-border/50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    Vos informations
-                  </CardTitle>
-                  <CardDescription>
-                    Remplissez les champs ci-dessous pour calculer vos impôts
-                  </CardDescription>
-                </CardHeader>
+    <AppLayout title="Calculez vos impôts 2025" subtitle="Estimez précisément vos impôts fédéraux, cantonaux et communaux selon votre situation personnelle">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Formulaire */}
+          <div className="md:col-span-2">
+            <Card className="bg-card border-border shadow-lg">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-primary" />
@@ -1621,8 +1609,8 @@ const SimulateurImpots = () => {
                             </Select>
                             <FormMessage />
                           </FormItem>} />
-                          
-                      <FormField control={form.control} name="commune" render={({
+
+                    <FormField control={form.control} name="commune" render={({
                       field
                     }) => <FormItem>
                             <FormLabel>Commune de résidence *</FormLabel>
@@ -1640,80 +1628,7 @@ const SimulateurImpots = () => {
                             </Select>
                             <FormMessage />
                           </FormItem>} />
-                    </div>
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 mb-4">
-            <Calculator className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Simulateur d'impôts </span>
-          </div>
-          <h1 className="text-4xl font-bold mb-4 text-foreground">
-            Calculez vos impôts 2025
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Estimez précisément vos impôts fédéraux, cantonaux et communaux selon votre situation personnelle
-          </p>
-        </div>
-
-        <div className="max-w-7xl mx-auto space-y-8">
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Formulaire */}
-            <div className="md:col-span-2">
-              <Card className="bg-card border-border shadow-lg">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                    Vos informations
-                  </CardTitle>
-                  <CardDescription>
-                    Remplissez les champs ci-dessous pour calculer vos impôts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <FormField control={form.control} name="canton" render={({
-                      field
-                    }) => <FormItem>
-                            <FormLabel>Canton de résidence *</FormLabel>
-                            <Select onValueChange={value => {
-                        field.onChange(value);
-                        setCommunesDisponibles(communesParCanton[value] || []);
-                        form.setValue("commune", "");
-                      }} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Sélectionnez un canton" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {cantons.map(canton => <SelectItem key={canton.value} value={canton.value}>
-                                    {canton.label}
-                                  </SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>} />
-
-                      <FormField control={form.control} name="commune" render={({
-                      field
-                    }) => <FormItem>
-                            <FormLabel>Commune de résidence *</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCanton}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Sélectionnez une commune" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {communesDisponibles.map(commune => <SelectItem key={commune.value} value={commune.value}>
-                                    {commune.label}
-                                  </SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>} />
-                    </div>
+                  </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
                       <FormField control={form.control} name="etatCivil" render={({
@@ -2065,12 +1980,10 @@ const SimulateurImpots = () => {
               </p>
             </CardContent>
           </Card>
+          </div>
         </div>
       </div>
-      </div>
-      </main>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 };
 export default SimulateurImpots;
