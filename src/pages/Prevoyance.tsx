@@ -116,67 +116,67 @@ const Prevoyance = () => {
   return (
     <AppLayout 
       title="Prévoyance" 
-      subtitle="Vue d'ensemble de votre prévoyance suisse (AVS, LPP, 3e pilier)"
+      subtitle="Vue d'ensemble de votre prévoyance suisse"
     >
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
         <Card className="glass border-border/50">
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground mb-1">Capital actuel total</p>
-            <p className="text-3xl font-bold text-foreground">{formatCHF(totalCurrentCapital)}</p>
+          <CardContent className="pt-4 md:pt-6 px-4 md:px-6 pb-4">
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Capital actuel total</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{formatCHF(totalCurrentCapital)}</p>
           </CardContent>
         </Card>
         <Card className="glass border-border/50">
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground mb-1">Rente annuelle projetée</p>
-            <p className="text-3xl font-bold text-primary">{formatCHF(totalProjectedRent)}</p>
-            <p className="text-xs text-muted-foreground">à 65 ans</p>
+          <CardContent className="pt-4 md:pt-6 px-4 md:px-6 pb-4">
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Rente annuelle projetée</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{formatCHF(totalProjectedRent)}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">à 65 ans</p>
           </CardContent>
         </Card>
-        <Card className="glass border-border/50">
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground mb-1">Rente mensuelle projetée</p>
-            <p className="text-3xl font-bold text-foreground">{formatCHF(totalProjectedRent / 12)}</p>
-            <p className="text-xs text-muted-foreground">à 65 ans</p>
+        <Card className="glass border-border/50 sm:col-span-2 md:col-span-1">
+          <CardContent className="pt-4 md:pt-6 px-4 md:px-6 pb-4">
+            <p className="text-xs md:text-sm text-muted-foreground mb-1">Rente mensuelle projetée</p>
+            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{formatCHF(totalProjectedRent / 12)}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground">à 65 ans</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Pillar Cards */}
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {/* 1er Pilier AVS */}
         <Card 
           className="glass border-border/50 cursor-pointer hover:border-primary/50 transition-all duration-300 group" 
           onClick={() => navigate('/prevoyance/avs')}
         >
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-yellow-500/10 flex items-center justify-center group-hover:bg-yellow-500/20 transition-colors">
-                  <Wallet className="h-6 w-6 text-yellow-500" />
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-yellow-500/10 flex items-center justify-center group-hover:bg-yellow-500/20 transition-colors flex-shrink-0">
+                  <Wallet className="h-5 w-5 md:h-6 md:w-6 text-yellow-500" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">1er Pilier - AVS</h3>
-                  <p className="text-sm text-muted-foreground">Assurance Vieillesse et Survivants</p>
+                <div className="min-w-0">
+                  <h3 className="text-sm md:text-lg font-semibold text-foreground truncate">1er Pilier - AVS</h3>
+                  <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Assurance Vieillesse et Survivants</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-3 md:gap-8">
                 {avsAccounts.length > 0 ? (
                   <>
-                    <div className="text-right hidden md:block">
-                      <p className="text-sm text-muted-foreground">Rente estimée</p>
-                      <p className="text-xl font-bold text-foreground">{formatCHF(avsTotalRent)}</p>
+                    <div className="text-right hidden lg:block">
+                      <p className="text-xs md:text-sm text-muted-foreground">Rente estimée</p>
+                      <p className="text-lg md:text-xl font-bold text-foreground">{formatCHF(avsTotalRent)}</p>
                     </div>
                     <div className="text-right hidden md:block">
-                      <p className="text-sm text-muted-foreground">Années cotisées</p>
-                      <p className="text-xl font-bold text-foreground">{avsYearsContributed}/44</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">Années</p>
+                      <p className="text-lg md:text-xl font-bold text-foreground">{avsYearsContributed}/44</p>
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Configurer</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Configurer</p>
                 )}
-                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
               </div>
             </div>
           </CardContent>
@@ -187,34 +187,34 @@ const Prevoyance = () => {
           className="glass border-border/50 cursor-pointer hover:border-primary/50 transition-all duration-300 group" 
           onClick={() => navigate('/prevoyance/lpp')}
         >
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
-                  <Shield className="h-6 w-6 text-orange-500" />
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors flex-shrink-0">
+                  <Shield className="h-5 w-5 md:h-6 md:w-6 text-orange-500" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">2ème Pilier - LPP</h3>
-                  <p className="text-sm text-muted-foreground">Prévoyance professionnelle</p>
+                <div className="min-w-0">
+                  <h3 className="text-sm md:text-lg font-semibold text-foreground truncate">2ème Pilier - LPP</h3>
+                  <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Prévoyance professionnelle</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-3 md:gap-8">
                 {lppSummary ? (
                   <>
-                    <div className="text-right hidden md:block">
-                      <p className="text-sm text-muted-foreground">Capital actuel</p>
-                      <p className="text-xl font-bold text-foreground">{formatCHF(lppSummary.total_current_savings)}</p>
+                    <div className="text-right hidden lg:block">
+                      <p className="text-xs md:text-sm text-muted-foreground">Capital actuel</p>
+                      <p className="text-lg md:text-xl font-bold text-foreground">{formatCHF(lppSummary.total_current_savings)}</p>
                     </div>
                     <div className="text-right hidden md:block">
-                      <p className="text-sm text-muted-foreground">Rente projetée</p>
-                      <p className="text-xl font-bold text-foreground">{formatCHF(lppSummary.total_annual_rent_65)}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">Rente projetée</p>
+                      <p className="text-lg md:text-xl font-bold text-foreground">{formatCHF(lppSummary.total_annual_rent_65)}</p>
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Configurer</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Configurer</p>
                 )}
-                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
               </div>
             </div>
           </CardContent>
@@ -225,34 +225,34 @@ const Prevoyance = () => {
           className="glass border-border/50 cursor-pointer hover:border-primary/50 transition-all duration-300 group" 
           onClick={() => navigate('/prevoyance/3e-pilier')}
         >
-          <CardContent className="p-6">
+          <CardContent className="p-4 md:p-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
-                  <PiggyBank className="h-6 w-6 text-emerald-500" />
+              <div className="flex items-center gap-3 md:gap-4">
+                <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors flex-shrink-0">
+                  <PiggyBank className="h-5 w-5 md:h-6 md:w-6 text-emerald-500" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">3ème Pilier</h3>
-                  <p className="text-sm text-muted-foreground">Prévoyance individuelle (3a / 3b)</p>
+                <div className="min-w-0">
+                  <h3 className="text-sm md:text-lg font-semibold text-foreground truncate">3ème Pilier</h3>
+                  <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Prévoyance individuelle (3a / 3b)</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-3 md:gap-8">
                 {thirdPillarSummary ? (
                   <>
-                    <div className="text-right hidden md:block">
-                      <p className="text-sm text-muted-foreground">Capital actuel</p>
-                      <p className="text-xl font-bold text-foreground">{formatCHF(thirdPillarSummary.totalCurrentAmount)}</p>
+                    <div className="text-right hidden lg:block">
+                      <p className="text-xs md:text-sm text-muted-foreground">Capital actuel</p>
+                      <p className="text-lg md:text-xl font-bold text-foreground">{formatCHF(thirdPillarSummary.totalCurrentAmount)}</p>
                     </div>
                     <div className="text-right hidden md:block">
-                      <p className="text-sm text-muted-foreground">Capital projeté</p>
-                      <p className="text-xl font-bold text-foreground">{formatCHF(thirdPillarSummary.totalProjectedAmount)}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">Capital projeté</p>
+                      <p className="text-lg md:text-xl font-bold text-foreground">{formatCHF(thirdPillarSummary.totalProjectedAmount)}</p>
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Configurer</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">Configurer</p>
                 )}
-                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
               </div>
             </div>
           </CardContent>
@@ -261,36 +261,36 @@ const Prevoyance = () => {
 
       {/* Retirement Overview Chart Placeholder */}
       {(avsAccounts.length > 0 || lppSummary || thirdPillarSummary) && (
-        <Card className="glass border-primary/50 mt-8">
-          <CardHeader>
-            <CardTitle>Répartition de votre prévoyance</CardTitle>
-            <CardDescription>Vue d'ensemble de vos revenus à la retraite (65 ans)</CardDescription>
+        <Card className="glass border-primary/50 mt-6 md:mt-8">
+          <CardHeader className="px-4 md:px-6 py-4 md:py-6">
+            <CardTitle className="text-base md:text-lg">Répartition de votre prévoyance</CardTitle>
+            <CardDescription className="text-xs md:text-sm">Vue d'ensemble de vos revenus à la retraite (65 ans)</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-center">
-                <p className="text-sm text-muted-foreground mb-1">1er Pilier AVS</p>
-                <p className="text-2xl font-bold text-yellow-500">{formatCHF(avsTotalRent)}</p>
-                <p className="text-xs text-muted-foreground">par an</p>
+          <CardContent className="px-4 md:px-6 pb-4 md:pb-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+              <div className="p-3 md:p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-center">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-1">1er Pilier AVS</p>
+                <p className="text-lg md:text-2xl font-bold text-yellow-500">{formatCHF(avsTotalRent)}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">par an</p>
               </div>
-              <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-center">
-                <p className="text-sm text-muted-foreground mb-1">2ème Pilier LPP</p>
-                <p className="text-2xl font-bold text-orange-500">
+              <div className="p-3 md:p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-center">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-1">2ème Pilier LPP</p>
+                <p className="text-lg md:text-2xl font-bold text-orange-500">
                   {lppSummary ? formatCHF(lppSummary.total_annual_rent_65) : formatCHF(0)}
                 </p>
-                <p className="text-xs text-muted-foreground">par an</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">par an</p>
               </div>
-              <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
-                <p className="text-sm text-muted-foreground mb-1">3ème Pilier</p>
-                <p className="text-2xl font-bold text-emerald-500">
+              <div className="p-3 md:p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-1">3ème Pilier</p>
+                <p className="text-lg md:text-2xl font-bold text-emerald-500">
                   {thirdPillarSummary ? formatCHF(thirdPillarSummary.totalProjectedAnnualRent) : formatCHF(0)}
                 </p>
-                <p className="text-xs text-muted-foreground">par an</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">par an</p>
               </div>
-              <div className="p-4 rounded-xl bg-primary/10 border border-primary/30 text-center">
-                <p className="text-sm text-muted-foreground mb-1">Total</p>
-                <p className="text-2xl font-bold text-primary">{formatCHF(totalProjectedRent)}</p>
-                <p className="text-xs text-muted-foreground">par an</p>
+              <div className="p-3 md:p-4 rounded-xl bg-primary/10 border border-primary/30 text-center col-span-2 md:col-span-1">
+                <p className="text-[10px] md:text-sm text-muted-foreground mb-1">Total</p>
+                <p className="text-lg md:text-2xl font-bold text-primary">{formatCHF(totalProjectedRent)}</p>
+                <p className="text-[10px] md:text-xs text-muted-foreground">par an</p>
               </div>
             </div>
           </CardContent>
