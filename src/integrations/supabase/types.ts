@@ -673,6 +673,78 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_other_revenues: {
+        Row: {
+          created_at: string
+          id: string
+          montant: number | null
+          month: number
+          nom: string
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          montant?: number | null
+          month: number
+          nom?: string
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          montant?: number | null
+          month?: number
+          nom?: string
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      monthly_salaries: {
+        Row: {
+          brut: number | null
+          charges: number | null
+          created_at: string
+          id: string
+          month: number
+          net: number | null
+          nom: string
+          updated_at: string
+          user_id: string
+          year: number
+        }
+        Insert: {
+          brut?: number | null
+          charges?: number | null
+          created_at?: string
+          id?: string
+          month: number
+          net?: number | null
+          nom?: string
+          updated_at?: string
+          user_id: string
+          year: number
+        }
+        Update: {
+          brut?: number | null
+          charges?: number | null
+          created_at?: string
+          id?: string
+          month?: number
+          net?: number | null
+          nom?: string
+          updated_at?: string
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
       prevoyance_data: {
         Row: {
           avs_1er_pilier: number | null
