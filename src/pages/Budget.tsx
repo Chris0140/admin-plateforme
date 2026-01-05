@@ -60,12 +60,19 @@ const Budget = () => {
   const [yearlyData, setYearlyData] = useState<any[]>([]);
 
   // Mode mensuel states
-  const [resteMoisPrecedent, setResteMoisPrecedent] = useState("");
-  const [salaireNet, setSalaireNet] = useState("");
-  const [salaireBrut, setSalaireBrut] = useState("");
-  const [chargesSociales, setChargesSociales] = useState("");
+  const [epargneADate, setEpargneADate] = useState("");
+  const [salaires, setSalaires] = useState<{ id: string; nom: string; brut: string; charges: string; net: string }[]>([]);
   const [showSalaryDialog, setShowSalaryDialog] = useState(false);
-  const [autresRevenus, setAutresRevenus] = useState("");
+  const [editingSalaryIndex, setEditingSalaryIndex] = useState<number | null>(null);
+  const [tempSalaireNom, setTempSalaireNom] = useState("");
+  const [tempSalaireBrut, setTempSalaireBrut] = useState("");
+  const [tempSalaireCharges, setTempSalaireCharges] = useState("");
+  const [tempSalaireNet, setTempSalaireNet] = useState("");
+  const [autresRevenus, setAutresRevenus] = useState<{ id: string; nom: string; montant: string }[]>([]);
+  const [showAutreRevenuDialog, setShowAutreRevenuDialog] = useState(false);
+  const [editingAutreRevenuIndex, setEditingAutreRevenuIndex] = useState<number | null>(null);
+  const [tempAutreRevenuNom, setTempAutreRevenuNom] = useState("");
+  const [tempAutreRevenuMontant, setTempAutreRevenuMontant] = useState("");
   const [depensesVariables, setDepensesVariables] = useState("");
   const [fraisFixesDettes, setFraisFixesDettes] = useState("");
   const [assurances, setAssurances] = useState("");
@@ -128,23 +135,28 @@ const Budget = () => {
       if (categoriesData) setMonthlyCategories(categoriesData);
 
       if (data) {
-        setResteMoisPrecedent(data.reste_mois_precedent?.toString() || "");
-        setSalaireNet(data.salaire_net?.toString() || "");
+        setEpargneADate(data.reste_mois_precedent?.toString() || "");
         const netSalary = data.salaire_net || 0;
-        const brutEstimate = netSalary * 1.15;
-        setSalaireBrut(brutEstimate.toString());
-        setChargesSociales((brutEstimate - netSalary).toString());
-        setAutresRevenus(data.autres_revenus?.toString() || "");
+        if (netSalary > 0) {
+          const brutEstimate = netSalary * 1.15;
+          setSalaires([{ id: "1", nom: "Salaire principal", brut: brutEstimate.toString(), charges: (brutEstimate - netSalary).toString(), net: netSalary.toString() }]);
+        } else {
+          setSalaires([]);
+        }
+        const autresRevenusValue = data.autres_revenus || 0;
+        if (autresRevenusValue > 0) {
+          setAutresRevenus([{ id: "1", nom: "Autre revenu", montant: autresRevenusValue.toString() }]);
+        } else {
+          setAutresRevenus([]);
+        }
         setDepensesVariables(data.depenses_variables?.toString() || "");
         setFraisFixesDettes(data.frais_fixes_dettes?.toString() || "");
         setAssurances(data.assurances?.toString() || "");
         setEpargneInvest(data.epargne_investissements?.toString() || "");
       } else {
-        setResteMoisPrecedent("");
-        setSalaireNet("");
-        setSalaireBrut("");
-        setChargesSociales("");
-        setAutresRevenus("");
+        setEpargneADate("");
+        setSalaires([]);
+        setAutresRevenus([]);
         setDepensesVariables("");
         setFraisFixesDettes("");
         setAssurances("");
@@ -213,21 +225,21 @@ const Budget = () => {
 
     setIsLoading(true);
     try {
-      const reste = parseFloat(resteMoisPrecedent) || 0;
-      const salaire = parseFloat(salaireNet) || 0;
-      const autres = parseFloat(autresRevenus) || 0;
+      const epargne = parseFloat(epargneADate) || 0;
+      const totalSalaires = salaires.reduce((sum, s) => sum + (parseFloat(s.net) || 0), 0);
+      const totalAutresRevenus = autresRevenus.reduce((sum, r) => sum + (parseFloat(r.montant) || 0), 0);
 
-      const totalRevenus = salaire + autres;
+      const totalRevenus = totalSalaires + totalAutresRevenus;
       const totalSorties = mCategoriesTotal;
-      const totalRestant = reste + totalRevenus - totalSorties;
+      const totalRestant = epargne + totalRevenus - totalSorties;
 
       const { error } = await supabase.from("budget_monthly").upsert({
         user_id: user.id,
         year: selectedYear,
         month: selectedMonth,
-        reste_mois_precedent: reste,
-        salaire_net: salaire,
-        autres_revenus: autres,
+        reste_mois_precedent: epargne,
+        salaire_net: totalSalaires,
+        autres_revenus: totalAutresRevenus,
         depenses_variables: 0,
         frais_fixes_dettes: 0,
         assurances: 0,
@@ -312,15 +324,15 @@ const Budget = () => {
     annualFixedExpenses;
   const annualSolde = annualRevenuNet - annualTotalDepenses;
 
-  const mReste = parseFloat(resteMoisPrecedent || "0") || 0;
-  const mSalaire = parseFloat(salaireNet || "0") || 0;
-  const mAutres = parseFloat(autresRevenus || "0") || 0;
+  const mEpargne = parseFloat(epargneADate || "0") || 0;
+  const mTotalSalaires = salaires.reduce((sum, s) => sum + (parseFloat(s.net) || 0), 0);
+  const mTotalAutresRevenus = autresRevenus.reduce((sum, r) => sum + (parseFloat(r.montant) || 0), 0);
   
   const mCategoriesTotal = monthlyCategories.reduce((sum, cat) => sum + (parseFloat(cat.amount) || 0), 0);
 
-  const mTotalRevenus = mSalaire + mAutres;
+  const mTotalRevenus = mTotalSalaires + mTotalAutresRevenus;
   const mTotalSorties = mCategoriesTotal;
-  const mTotalRestant = mReste + mTotalRevenus - mTotalSorties;
+  const mTotalRestant = mEpargne + mTotalRevenus - mTotalSorties;
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("fr-CH", {
@@ -432,8 +444,8 @@ const Budget = () => {
               <div className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Report</p>
-                    <p className="text-2xl font-bold">{formatCurrency(mReste)}</p>
+                    <p className="text-xs text-muted-foreground mb-1">Épargne</p>
+                    <p className="text-2xl font-bold">{formatCurrency(mEpargne)}</p>
                   </div>
                   <div className="p-2.5 rounded-xl bg-muted">
                     <Wallet className="h-5 w-5 text-muted-foreground" />
@@ -518,90 +530,268 @@ const Budget = () => {
                   <CollapsibleContent>
                     <CardContent className="space-y-4 pt-0">
                       <div className="space-y-2">
-                        <Label htmlFor="resteMoisPrecedent" className="text-sm text-muted-foreground">Report mois précédent</Label>
+                        <Label htmlFor="epargneADate" className="text-sm text-muted-foreground">Épargne à date</Label>
                         <Input 
-                          id="resteMoisPrecedent" 
+                          id="epargneADate" 
                           type="number" 
-                          value={resteMoisPrecedent} 
-                          onChange={(e) => setResteMoisPrecedent(e.target.value)} 
+                          value={epargneADate} 
+                          onChange={(e) => setEpargneADate(e.target.value)} 
                           placeholder="0" 
                           className="bg-background/50"
                         />
                       </div>
                       
+                      {/* Salaires Section */}
                       <div className="space-y-2">
-                        <Label className="text-sm text-muted-foreground">Salaire net</Label>
-                        <Dialog open={showSalaryDialog} onOpenChange={setShowSalaryDialog}>
+                        <Label className="text-sm text-muted-foreground">Salaires</Label>
+                        {salaires.length > 0 && (
+                          <div className="space-y-2">
+                            {salaires.map((salaire, index) => (
+                              <div
+                                key={salaire.id}
+                                className="group flex items-center justify-between py-2 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
+                                onClick={() => {
+                                  setEditingSalaryIndex(index);
+                                  setTempSalaireNom(salaire.nom);
+                                  setTempSalaireBrut(salaire.brut);
+                                  setTempSalaireCharges(salaire.charges);
+                                  setTempSalaireNet(salaire.net);
+                                  setShowSalaryDialog(true);
+                                }}
+                              >
+                                <div>
+                                  <p className="text-sm font-medium">{salaire.nom}</p>
+                                  <p className="text-xs text-muted-foreground">Net: {formatCurrency(parseFloat(salaire.net) || 0)}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold text-green-500">{formatCurrency(parseFloat(salaire.net) || 0)}</p>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSalaires(salaires.filter((_, i) => i !== index));
+                                    }}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <Dialog open={showSalaryDialog} onOpenChange={(open) => {
+                          setShowSalaryDialog(open);
+                          if (!open) {
+                            setEditingSalaryIndex(null);
+                            setTempSalaireNom("");
+                            setTempSalaireBrut("");
+                            setTempSalaireCharges("");
+                            setTempSalaireNet("");
+                          }
+                        }}>
                           <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start gap-2 bg-background/50 hover:bg-primary/10 border-dashed">
+                            <Button 
+                              variant="outline" 
+                              className="w-full justify-start gap-2 bg-background/50 hover:bg-primary/10 border-dashed"
+                              onClick={() => {
+                                setEditingSalaryIndex(null);
+                                setTempSalaireNom("");
+                                setTempSalaireBrut("");
+                                setTempSalaireCharges("");
+                                setTempSalaireNet("");
+                              }}
+                            >
                               <Plus className="h-4 w-4 text-primary" />
-                              {parseFloat(salaireNet) > 0 ? formatCurrency(parseFloat(salaireNet)) : "Ajouter salaire"}
+                              Ajouter un salaire
                             </Button>
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>Détails du salaire</DialogTitle>
-                              <DialogDescription>Entrez les détails de votre salaire</DialogDescription>
+                              <DialogTitle>{editingSalaryIndex !== null ? "Modifier le salaire" : "Ajouter un salaire"}</DialogTitle>
+                              <DialogDescription>Entrez les détails du salaire</DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
                               <div>
-                                <Label htmlFor="salaireBrut">Salaire brut</Label>
+                                <Label htmlFor="tempSalaireNom">Nom / Description</Label>
                                 <Input
-                                  id="salaireBrut"
+                                  id="tempSalaireNom"
+                                  value={tempSalaireNom}
+                                  onChange={(e) => setTempSalaireNom(e.target.value)}
+                                  placeholder="Ex: Salaire principal, Emploi secondaire..."
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="tempSalaireBrut">Salaire brut</Label>
+                                <Input
+                                  id="tempSalaireBrut"
                                   type="number"
-                                  value={salaireBrut}
+                                  value={tempSalaireBrut}
                                   onChange={(e) => {
-                                    setSalaireBrut(e.target.value);
+                                    setTempSalaireBrut(e.target.value);
                                     const brut = parseFloat(e.target.value) || 0;
-                                    const charges = parseFloat(chargesSociales) || 0;
-                                    setSalaireNet((brut - charges).toString());
+                                    const charges = parseFloat(tempSalaireCharges) || 0;
+                                    setTempSalaireNet((brut - charges).toString());
                                   }}
                                   placeholder="8000"
                                 />
                               </div>
                               <div>
-                                <Label htmlFor="chargesSociales">Charges sociales</Label>
+                                <Label htmlFor="tempSalaireCharges">Charges sociales</Label>
                                 <Input
-                                  id="chargesSociales"
+                                  id="tempSalaireCharges"
                                   type="number"
-                                  value={chargesSociales}
+                                  value={tempSalaireCharges}
                                   onChange={(e) => {
-                                    setChargesSociales(e.target.value);
-                                    const brut = parseFloat(salaireBrut) || 0;
+                                    setTempSalaireCharges(e.target.value);
+                                    const brut = parseFloat(tempSalaireBrut) || 0;
                                     const charges = parseFloat(e.target.value) || 0;
-                                    setSalaireNet((brut - charges).toString());
+                                    setTempSalaireNet((brut - charges).toString());
                                   }}
                                   placeholder="1200"
                                 />
                               </div>
                               <div>
-                                <Label htmlFor="salaireNetDialog">Salaire net</Label>
+                                <Label htmlFor="tempSalaireNet">Salaire net</Label>
                                 <Input
-                                  id="salaireNetDialog"
+                                  id="tempSalaireNet"
                                   type="number"
-                                  value={salaireNet}
-                                  onChange={(e) => setSalaireNet(e.target.value)}
+                                  value={tempSalaireNet}
+                                  onChange={(e) => setTempSalaireNet(e.target.value)}
                                   placeholder="6800"
                                 />
                               </div>
                             </div>
                             <DialogFooter>
-                              <Button onClick={() => setShowSalaryDialog(false)}>Enregistrer</Button>
+                              <Button onClick={() => {
+                                const newSalaire = {
+                                  id: editingSalaryIndex !== null ? salaires[editingSalaryIndex].id : Date.now().toString(),
+                                  nom: tempSalaireNom || "Salaire",
+                                  brut: tempSalaireBrut,
+                                  charges: tempSalaireCharges,
+                                  net: tempSalaireNet
+                                };
+                                if (editingSalaryIndex !== null) {
+                                  const updated = [...salaires];
+                                  updated[editingSalaryIndex] = newSalaire;
+                                  setSalaires(updated);
+                                } else {
+                                  setSalaires([...salaires, newSalaire]);
+                                }
+                                setShowSalaryDialog(false);
+                              }}>
+                                {editingSalaryIndex !== null ? "Modifier" : "Ajouter"}
+                              </Button>
                             </DialogFooter>
                           </DialogContent>
                         </Dialog>
                       </div>
                       
+                      {/* Autres Revenus Section */}
                       <div className="space-y-2">
-                        <Label htmlFor="autresRevenus" className="text-sm text-muted-foreground">Autres revenus</Label>
-                        <Input 
-                          id="autresRevenus" 
-                          type="number" 
-                          value={autresRevenus} 
-                          onChange={(e) => setAutresRevenus(e.target.value)} 
-                          placeholder="0" 
-                          className="bg-background/50"
-                        />
+                        <Label className="text-sm text-muted-foreground">Autres revenus</Label>
+                        {autresRevenus.length > 0 && (
+                          <div className="space-y-2">
+                            {autresRevenus.map((revenu, index) => (
+                              <div
+                                key={revenu.id}
+                                className="group flex items-center justify-between py-2 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
+                                onClick={() => {
+                                  setEditingAutreRevenuIndex(index);
+                                  setTempAutreRevenuNom(revenu.nom);
+                                  setTempAutreRevenuMontant(revenu.montant);
+                                  setShowAutreRevenuDialog(true);
+                                }}
+                              >
+                                <p className="text-sm font-medium">{revenu.nom}</p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold text-green-500">{formatCurrency(parseFloat(revenu.montant) || 0)}</p>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setAutresRevenus(autresRevenus.filter((_, i) => i !== index));
+                                    }}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <Dialog open={showAutreRevenuDialog} onOpenChange={(open) => {
+                          setShowAutreRevenuDialog(open);
+                          if (!open) {
+                            setEditingAutreRevenuIndex(null);
+                            setTempAutreRevenuNom("");
+                            setTempAutreRevenuMontant("");
+                          }
+                        }}>
+                          <DialogTrigger asChild>
+                            <Button 
+                              variant="outline" 
+                              className="w-full justify-start gap-2 bg-background/50 hover:bg-primary/10 border-dashed"
+                              onClick={() => {
+                                setEditingAutreRevenuIndex(null);
+                                setTempAutreRevenuNom("");
+                                setTempAutreRevenuMontant("");
+                              }}
+                            >
+                              <Plus className="h-4 w-4 text-primary" />
+                              Ajouter un autre revenu
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>{editingAutreRevenuIndex !== null ? "Modifier le revenu" : "Ajouter un autre revenu"}</DialogTitle>
+                              <DialogDescription>Entrez les détails du revenu</DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div>
+                                <Label htmlFor="tempAutreRevenuNom">Nom / Description</Label>
+                                <Input
+                                  id="tempAutreRevenuNom"
+                                  value={tempAutreRevenuNom}
+                                  onChange={(e) => setTempAutreRevenuNom(e.target.value)}
+                                  placeholder="Ex: Loyer perçu, Dividendes..."
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="tempAutreRevenuMontant">Montant</Label>
+                                <Input
+                                  id="tempAutreRevenuMontant"
+                                  type="number"
+                                  value={tempAutreRevenuMontant}
+                                  onChange={(e) => setTempAutreRevenuMontant(e.target.value)}
+                                  placeholder="500"
+                                />
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button onClick={() => {
+                                const newRevenu = {
+                                  id: editingAutreRevenuIndex !== null ? autresRevenus[editingAutreRevenuIndex].id : Date.now().toString(),
+                                  nom: tempAutreRevenuNom || "Autre revenu",
+                                  montant: tempAutreRevenuMontant
+                                };
+                                if (editingAutreRevenuIndex !== null) {
+                                  const updated = [...autresRevenus];
+                                  updated[editingAutreRevenuIndex] = newRevenu;
+                                  setAutresRevenus(updated);
+                                } else {
+                                  setAutresRevenus([...autresRevenus, newRevenu]);
+                                }
+                                setShowAutreRevenuDialog(false);
+                              }}>
+                                {editingAutreRevenuIndex !== null ? "Modifier" : "Ajouter"}
+                              </Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
                       </div>
                       
                       <div className="pt-4 border-t">
