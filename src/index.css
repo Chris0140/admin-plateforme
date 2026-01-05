@@ -2,57 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Finary-inspired Design System
+   - Ultra dark backgrounds
+   - Gold/amber accent colors
+   - Clean typography
+   - Glassmorphism effects
+   All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 7%;
-    --foreground: 35 20% 88%;
+    /* Core palette - Finary style dark */
+    --background: 220 20% 4%;
+    --foreground: 45 10% 95%;
 
-    --card: 0 0% 12%;
-    --card-foreground: 35 20% 88%;
+    --card: 220 15% 8%;
+    --card-foreground: 45 10% 95%;
 
-    --popover: 0 0% 10%;
-    --popover-foreground: 35 20% 88%;
+    --popover: 220 18% 6%;
+    --popover-foreground: 45 10% 95%;
 
-    --primary: 30 40% 45%;
-    --primary-foreground: 0 0% 98%;
+    /* Gold/Amber accent - Finary signature */
+    --primary: 38 90% 55%;
+    --primary-foreground: 220 20% 4%;
 
-    --secondary: 30 25% 28%;
-    --secondary-foreground: 35 20% 90%;
+    --secondary: 220 15% 15%;
+    --secondary-foreground: 45 10% 90%;
 
-    --muted: 0 0% 18%;
-    --muted-foreground: 35 15% 60%;
+    --muted: 220 15% 12%;
+    --muted-foreground: 220 10% 55%;
 
-    --accent: 35 50% 55%;
-    --accent-foreground: 0 0% 10%;
+    --accent: 38 85% 60%;
+    --accent-foreground: 220 20% 4%;
 
-    --destructive: 0 65% 50%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 30 15% 22%;
-    --input: 30 15% 22%;
-    --ring: 30 40% 45%;
+    /* Success color for positive values */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
 
-    --radius: 0.75rem;
+    --border: 220 15% 15%;
+    --input: 220 15% 12%;
+    --ring: 38 90% 55%;
 
-    /* Custom design tokens */
-    --bronze: 30 40% 45%;
-    --bronze-light: 35 50% 55%;
-    --bronze-dark: 30 25% 28%;
-    --warm-black: 0 0% 7%;
-    --charcoal: 0 0% 12%;
-    --warm-gray: 0 0% 18%;
+    --radius: 0.875rem;
+
+    /* Custom Finary-style tokens */
+    --gold: 38 90% 55%;
+    --gold-light: 45 85% 65%;
+    --gold-dark: 35 80% 45%;
+    --navy-deep: 220 20% 4%;
+    --navy-card: 220 15% 8%;
+    --navy-light: 220 15% 15%;
     
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(30 40% 45% / 0.1), hsl(35 50% 55% / 0.05));
-    --gradient-card: linear-gradient(180deg, hsl(0 0% 12%), hsl(0 0% 10%));
+    --gradient-hero: linear-gradient(135deg, hsl(38 90% 55% / 0.08), hsl(220 20% 4% / 0.95));
+    --gradient-card: linear-gradient(145deg, hsl(220 15% 10%), hsl(220 15% 6%));
+    --gradient-gold: linear-gradient(135deg, hsl(38 90% 55%), hsl(45 85% 65%));
+    --gradient-glow: radial-gradient(ellipse at 50% 0%, hsl(38 90% 55% / 0.15) 0%, transparent 60%);
     
     /* Shadows */
-    --shadow-bronze: 0 10px 40px -10px hsl(30 40% 30% / 0.3);
-    --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.4);
+    --shadow-gold: 0 10px 40px -10px hsl(38 90% 55% / 0.25);
+    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 60px hsl(38 90% 55% / 0.1);
   }
 }
 
@@ -62,6 +75,48 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-card/60 backdrop-blur-xl border border-border/50;
+  }
+
+  .glass-strong {
+    @apply bg-card/80 backdrop-blur-2xl border border-border/60;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+
+  .glow {
+    box-shadow: 0 0 40px hsl(38 90% 55% / 0.2);
+  }
+
+  .glow-sm {
+    box-shadow: 0 0 20px hsl(38 90% 55% / 0.15);
   }
 }

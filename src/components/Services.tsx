@@ -38,9 +38,22 @@ const Services = () => {
   ];
 
   return (
-    <section className="py-20 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <section className="py-24 bg-background relative">
+      {/* Subtle background glow */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/3 rounded-full blur-3xl" />
+      
+      <div className="container mx-auto px-4 relative z-10">
+        {/* Section header */}
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            Tous vos outils <span className="text-gradient">financiers</span>
+          </h2>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Une suite complète pour gérer, optimiser et visualiser vos finances
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {services.map((service, index) => (
             <ServiceCard key={index} {...service} />
           ))}
