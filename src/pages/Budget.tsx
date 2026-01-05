@@ -63,16 +63,18 @@ const Budget = () => {
   const [epargneADate, setEpargneADate] = useState("");
   const [salaires, setSalaires] = useState<{ id: string; nom: string; brut: string; charges: string; net: string }[]>([]);
   const [showSalaryDialog, setShowSalaryDialog] = useState(false);
-  const [editingSalaryIndex, setEditingSalaryIndex] = useState<number | null>(null);
+  const [editingSalaryId, setEditingSalaryId] = useState<string | null>(null);
   const [tempSalaireNom, setTempSalaireNom] = useState("");
   const [tempSalaireBrut, setTempSalaireBrut] = useState("");
   const [tempSalaireCharges, setTempSalaireCharges] = useState("");
   const [tempSalaireNet, setTempSalaireNet] = useState("");
+  const [selectedMonthsSalary, setSelectedMonthsSalary] = useState<number[]>([]);
   const [autresRevenus, setAutresRevenus] = useState<{ id: string; nom: string; montant: string }[]>([]);
   const [showAutreRevenuDialog, setShowAutreRevenuDialog] = useState(false);
-  const [editingAutreRevenuIndex, setEditingAutreRevenuIndex] = useState<number | null>(null);
+  const [editingAutreRevenuId, setEditingAutreRevenuId] = useState<string | null>(null);
   const [tempAutreRevenuNom, setTempAutreRevenuNom] = useState("");
   const [tempAutreRevenuMontant, setTempAutreRevenuMontant] = useState("");
+  const [selectedMonthsAutreRevenu, setSelectedMonthsAutreRevenu] = useState<number[]>([]);
   const [depensesVariables, setDepensesVariables] = useState("");
   const [fraisFixesDettes, setFraisFixesDettes] = useState("");
   const [assurances, setAssurances] = useState("");
@@ -134,29 +136,56 @@ const Budget = () => {
       if (categoriesError) throw categoriesError;
       if (categoriesData) setMonthlyCategories(categoriesData);
 
+      // Fetch salaries from new table
+      const { data: salariesData, error: salariesError } = await supabase
+        .from("monthly_salaries")
+        .select("*")
+        .eq("user_id", user?.id)
+        .eq("year", selectedYear)
+        .eq("month", selectedMonth)
+        .order("created_at", { ascending: false });
+
+      if (salariesError) throw salariesError;
+      if (salariesData) {
+        setSalaires(salariesData.map((s: any) => ({
+          id: s.id,
+          nom: s.nom,
+          brut: s.brut?.toString() || "0",
+          charges: s.charges?.toString() || "0",
+          net: s.net?.toString() || "0"
+        })));
+      } else {
+        setSalaires([]);
+      }
+
+      // Fetch other revenues from new table
+      const { data: revenusData, error: revenusError } = await supabase
+        .from("monthly_other_revenues")
+        .select("*")
+        .eq("user_id", user?.id)
+        .eq("year", selectedYear)
+        .eq("month", selectedMonth)
+        .order("created_at", { ascending: false });
+
+      if (revenusError) throw revenusError;
+      if (revenusData) {
+        setAutresRevenus(revenusData.map((r: any) => ({
+          id: r.id,
+          nom: r.nom,
+          montant: r.montant?.toString() || "0"
+        })));
+      } else {
+        setAutresRevenus([]);
+      }
+
       if (data) {
         setEpargneADate(data.reste_mois_precedent?.toString() || "");
-        const netSalary = data.salaire_net || 0;
-        if (netSalary > 0) {
-          const brutEstimate = netSalary * 1.15;
-          setSalaires([{ id: "1", nom: "Salaire principal", brut: brutEstimate.toString(), charges: (brutEstimate - netSalary).toString(), net: netSalary.toString() }]);
-        } else {
-          setSalaires([]);
-        }
-        const autresRevenusValue = data.autres_revenus || 0;
-        if (autresRevenusValue > 0) {
-          setAutresRevenus([{ id: "1", nom: "Autre revenu", montant: autresRevenusValue.toString() }]);
-        } else {
-          setAutresRevenus([]);
-        }
         setDepensesVariables(data.depenses_variables?.toString() || "");
         setFraisFixesDettes(data.frais_fixes_dettes?.toString() || "");
         setAssurances(data.assurances?.toString() || "");
         setEpargneInvest(data.epargne_investissements?.toString() || "");
       } else {
         setEpargneADate("");
-        setSalaires([]);
-        setAutresRevenus([]);
         setDepensesVariables("");
         setFraisFixesDettes("");
         setAssurances("");
@@ -546,16 +575,17 @@ const Budget = () => {
                         <Label className="text-sm text-muted-foreground">Salaires</Label>
                         {salaires.length > 0 && (
                           <div className="space-y-2">
-                            {salaires.map((salaire, index) => (
+                            {salaires.map((salaire) => (
                               <div
                                 key={salaire.id}
                                 className="group flex items-center justify-between py-2 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
                                 onClick={() => {
-                                  setEditingSalaryIndex(index);
+                                  setEditingSalaryId(salaire.id);
                                   setTempSalaireNom(salaire.nom);
                                   setTempSalaireBrut(salaire.brut);
                                   setTempSalaireCharges(salaire.charges);
                                   setTempSalaireNet(salaire.net);
+                                  setSelectedMonthsSalary([selectedMonth]);
                                   setShowSalaryDialog(true);
                                 }}
                               >
@@ -569,9 +599,15 @@ const Budget = () => {
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
-                                    onClick={(e) => {
+                                    onClick={async (e) => {
                                       e.stopPropagation();
-                                      setSalaires(salaires.filter((_, i) => i !== index));
+                                      try {
+                                        await supabase.from("monthly_salaries").delete().eq("id", salaire.id);
+                                        setSalaires(salaires.filter((s) => s.id !== salaire.id));
+                                        toast({ title: "Salaire supprimé" });
+                                      } catch (error) {
+                                        toast({ variant: "destructive", title: "Erreur" });
+                                      }
                                     }}
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
@@ -584,11 +620,12 @@ const Budget = () => {
                         <Dialog open={showSalaryDialog} onOpenChange={(open) => {
                           setShowSalaryDialog(open);
                           if (!open) {
-                            setEditingSalaryIndex(null);
+                            setEditingSalaryId(null);
                             setTempSalaireNom("");
                             setTempSalaireBrut("");
                             setTempSalaireCharges("");
                             setTempSalaireNet("");
+                            setSelectedMonthsSalary([selectedMonth]);
                           }
                         }}>
                           <DialogTrigger asChild>
@@ -596,11 +633,12 @@ const Budget = () => {
                               variant="outline" 
                               className="w-full justify-start gap-2 bg-background/50 hover:bg-primary/10 border-dashed"
                               onClick={() => {
-                                setEditingSalaryIndex(null);
+                                setEditingSalaryId(null);
                                 setTempSalaireNom("");
                                 setTempSalaireBrut("");
                                 setTempSalaireCharges("");
                                 setTempSalaireNet("");
+                                setSelectedMonthsSalary([selectedMonth]);
                               }}
                             >
                               <Plus className="h-4 w-4 text-primary" />
@@ -609,7 +647,7 @@ const Budget = () => {
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>{editingSalaryIndex !== null ? "Modifier le salaire" : "Ajouter un salaire"}</DialogTitle>
+                              <DialogTitle>{editingSalaryId ? "Modifier le salaire" : "Ajouter un salaire"}</DialogTitle>
                               <DialogDescription>Entrez les détails du salaire</DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
@@ -662,26 +700,97 @@ const Budget = () => {
                                   placeholder="6800"
                                 />
                               </div>
+                              
+                              {!editingSalaryId && (
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <Label className="text-xs">Appliquer aux mois</Label>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 text-xs"
+                                      onClick={() => {
+                                        if (selectedMonthsSalary.length === 12) {
+                                          setSelectedMonthsSalary([selectedMonth]);
+                                        } else {
+                                          setSelectedMonthsSalary([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                                        }
+                                      }}
+                                    >
+                                      {selectedMonthsSalary.length === 12 ? "Aucun" : "Tous"}
+                                    </Button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {months.map((m) => (
+                                      <button
+                                        key={m.value}
+                                        type="button"
+                                        onClick={() => {
+                                          if (selectedMonthsSalary.includes(m.value)) {
+                                            setSelectedMonthsSalary(selectedMonthsSalary.filter((month) => month !== m.value));
+                                          } else {
+                                            setSelectedMonthsSalary([...selectedMonthsSalary, m.value]);
+                                          }
+                                        }}
+                                        className={cn(
+                                          "px-2 py-1 text-xs rounded-md transition-all",
+                                          selectedMonthsSalary.includes(m.value)
+                                            ? "bg-primary/20 text-primary border border-primary/30"
+                                            : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                                        )}
+                                      >
+                                        {m.short}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                             <DialogFooter>
-                              <Button onClick={() => {
-                                const newSalaire = {
-                                  id: editingSalaryIndex !== null ? salaires[editingSalaryIndex].id : Date.now().toString(),
-                                  nom: tempSalaireNom || "Salaire",
-                                  brut: tempSalaireBrut,
-                                  charges: tempSalaireCharges,
-                                  net: tempSalaireNet
-                                };
-                                if (editingSalaryIndex !== null) {
-                                  const updated = [...salaires];
-                                  updated[editingSalaryIndex] = newSalaire;
-                                  setSalaires(updated);
-                                } else {
-                                  setSalaires([...salaires, newSalaire]);
+                              <Button onClick={async () => {
+                                if (!tempSalaireNet) {
+                                  toast({ variant: "destructive", title: "Erreur", description: "Entrez un salaire net" });
+                                  return;
                                 }
-                                setShowSalaryDialog(false);
+                                try {
+                                  if (editingSalaryId) {
+                                    // Update existing
+                                    await supabase.from("monthly_salaries").update({
+                                      nom: tempSalaireNom || "Salaire",
+                                      brut: parseFloat(tempSalaireBrut) || 0,
+                                      charges: parseFloat(tempSalaireCharges) || 0,
+                                      net: parseFloat(tempSalaireNet) || 0
+                                    }).eq("id", editingSalaryId);
+                                    await fetchMonthlyBudget();
+                                    toast({ title: "Salaire modifié" });
+                                  } else {
+                                    // Insert for selected months
+                                    if (selectedMonthsSalary.length === 0) {
+                                      toast({ variant: "destructive", title: "Erreur", description: "Sélectionnez au moins un mois" });
+                                      return;
+                                    }
+                                    const insertPromises = selectedMonthsSalary.map((month) =>
+                                      supabase.from("monthly_salaries").insert({
+                                        user_id: user?.id,
+                                        year: selectedYear,
+                                        month: month,
+                                        nom: tempSalaireNom || "Salaire",
+                                        brut: parseFloat(tempSalaireBrut) || 0,
+                                        charges: parseFloat(tempSalaireCharges) || 0,
+                                        net: parseFloat(tempSalaireNet) || 0
+                                      })
+                                    );
+                                    await Promise.all(insertPromises);
+                                    if (selectedMonthsSalary.includes(selectedMonth)) await fetchMonthlyBudget();
+                                    toast({ title: `Salaire ajouté à ${selectedMonthsSalary.length} mois` });
+                                  }
+                                  setShowSalaryDialog(false);
+                                } catch (error) {
+                                  toast({ variant: "destructive", title: "Erreur" });
+                                }
                               }}>
-                                {editingSalaryIndex !== null ? "Modifier" : "Ajouter"}
+                                {editingSalaryId ? "Modifier" : "Ajouter"}
                               </Button>
                             </DialogFooter>
                           </DialogContent>
@@ -693,14 +802,15 @@ const Budget = () => {
                         <Label className="text-sm text-muted-foreground">Autres revenus</Label>
                         {autresRevenus.length > 0 && (
                           <div className="space-y-2">
-                            {autresRevenus.map((revenu, index) => (
+                            {autresRevenus.map((revenu) => (
                               <div
                                 key={revenu.id}
                                 className="group flex items-center justify-between py-2 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
                                 onClick={() => {
-                                  setEditingAutreRevenuIndex(index);
+                                  setEditingAutreRevenuId(revenu.id);
                                   setTempAutreRevenuNom(revenu.nom);
                                   setTempAutreRevenuMontant(revenu.montant);
+                                  setSelectedMonthsAutreRevenu([selectedMonth]);
                                   setShowAutreRevenuDialog(true);
                                 }}
                               >
@@ -711,9 +821,15 @@ const Budget = () => {
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
-                                    onClick={(e) => {
+                                    onClick={async (e) => {
                                       e.stopPropagation();
-                                      setAutresRevenus(autresRevenus.filter((_, i) => i !== index));
+                                      try {
+                                        await supabase.from("monthly_other_revenues").delete().eq("id", revenu.id);
+                                        setAutresRevenus(autresRevenus.filter((r) => r.id !== revenu.id));
+                                        toast({ title: "Revenu supprimé" });
+                                      } catch (error) {
+                                        toast({ variant: "destructive", title: "Erreur" });
+                                      }
                                     }}
                                   >
                                     <Trash2 className="h-3.5 w-3.5" />
@@ -726,9 +842,10 @@ const Budget = () => {
                         <Dialog open={showAutreRevenuDialog} onOpenChange={(open) => {
                           setShowAutreRevenuDialog(open);
                           if (!open) {
-                            setEditingAutreRevenuIndex(null);
+                            setEditingAutreRevenuId(null);
                             setTempAutreRevenuNom("");
                             setTempAutreRevenuMontant("");
+                            setSelectedMonthsAutreRevenu([selectedMonth]);
                           }
                         }}>
                           <DialogTrigger asChild>
@@ -736,9 +853,10 @@ const Budget = () => {
                               variant="outline" 
                               className="w-full justify-start gap-2 bg-background/50 hover:bg-primary/10 border-dashed"
                               onClick={() => {
-                                setEditingAutreRevenuIndex(null);
+                                setEditingAutreRevenuId(null);
                                 setTempAutreRevenuNom("");
                                 setTempAutreRevenuMontant("");
+                                setSelectedMonthsAutreRevenu([selectedMonth]);
                               }}
                             >
                               <Plus className="h-4 w-4 text-primary" />
@@ -747,7 +865,7 @@ const Budget = () => {
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
-                              <DialogTitle>{editingAutreRevenuIndex !== null ? "Modifier le revenu" : "Ajouter un autre revenu"}</DialogTitle>
+                              <DialogTitle>{editingAutreRevenuId ? "Modifier le revenu" : "Ajouter un autre revenu"}</DialogTitle>
                               <DialogDescription>Entrez les détails du revenu</DialogDescription>
                             </DialogHeader>
                             <div className="space-y-4 py-4">
@@ -770,24 +888,93 @@ const Budget = () => {
                                   placeholder="500"
                                 />
                               </div>
+                              
+                              {!editingAutreRevenuId && (
+                                <div>
+                                  <div className="flex items-center justify-between mb-2">
+                                    <Label className="text-xs">Appliquer aux mois</Label>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 text-xs"
+                                      onClick={() => {
+                                        if (selectedMonthsAutreRevenu.length === 12) {
+                                          setSelectedMonthsAutreRevenu([selectedMonth]);
+                                        } else {
+                                          setSelectedMonthsAutreRevenu([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                                        }
+                                      }}
+                                    >
+                                      {selectedMonthsAutreRevenu.length === 12 ? "Aucun" : "Tous"}
+                                    </Button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {months.map((m) => (
+                                      <button
+                                        key={m.value}
+                                        type="button"
+                                        onClick={() => {
+                                          if (selectedMonthsAutreRevenu.includes(m.value)) {
+                                            setSelectedMonthsAutreRevenu(selectedMonthsAutreRevenu.filter((month) => month !== m.value));
+                                          } else {
+                                            setSelectedMonthsAutreRevenu([...selectedMonthsAutreRevenu, m.value]);
+                                          }
+                                        }}
+                                        className={cn(
+                                          "px-2 py-1 text-xs rounded-md transition-all",
+                                          selectedMonthsAutreRevenu.includes(m.value)
+                                            ? "bg-primary/20 text-primary border border-primary/30"
+                                            : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                                        )}
+                                      >
+                                        {m.short}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
                             </div>
                             <DialogFooter>
-                              <Button onClick={() => {
-                                const newRevenu = {
-                                  id: editingAutreRevenuIndex !== null ? autresRevenus[editingAutreRevenuIndex].id : Date.now().toString(),
-                                  nom: tempAutreRevenuNom || "Autre revenu",
-                                  montant: tempAutreRevenuMontant
-                                };
-                                if (editingAutreRevenuIndex !== null) {
-                                  const updated = [...autresRevenus];
-                                  updated[editingAutreRevenuIndex] = newRevenu;
-                                  setAutresRevenus(updated);
-                                } else {
-                                  setAutresRevenus([...autresRevenus, newRevenu]);
+                              <Button onClick={async () => {
+                                if (!tempAutreRevenuMontant) {
+                                  toast({ variant: "destructive", title: "Erreur", description: "Entrez un montant" });
+                                  return;
                                 }
-                                setShowAutreRevenuDialog(false);
+                                try {
+                                  if (editingAutreRevenuId) {
+                                    // Update existing
+                                    await supabase.from("monthly_other_revenues").update({
+                                      nom: tempAutreRevenuNom || "Autre revenu",
+                                      montant: parseFloat(tempAutreRevenuMontant) || 0
+                                    }).eq("id", editingAutreRevenuId);
+                                    await fetchMonthlyBudget();
+                                    toast({ title: "Revenu modifié" });
+                                  } else {
+                                    // Insert for selected months
+                                    if (selectedMonthsAutreRevenu.length === 0) {
+                                      toast({ variant: "destructive", title: "Erreur", description: "Sélectionnez au moins un mois" });
+                                      return;
+                                    }
+                                    const insertPromises = selectedMonthsAutreRevenu.map((month) =>
+                                      supabase.from("monthly_other_revenues").insert({
+                                        user_id: user?.id,
+                                        year: selectedYear,
+                                        month: month,
+                                        nom: tempAutreRevenuNom || "Autre revenu",
+                                        montant: parseFloat(tempAutreRevenuMontant) || 0
+                                      })
+                                    );
+                                    await Promise.all(insertPromises);
+                                    if (selectedMonthsAutreRevenu.includes(selectedMonth)) await fetchMonthlyBudget();
+                                    toast({ title: `Revenu ajouté à ${selectedMonthsAutreRevenu.length} mois` });
+                                  }
+                                  setShowAutreRevenuDialog(false);
+                                } catch (error) {
+                                  toast({ variant: "destructive", title: "Erreur" });
+                                }
                               }}>
-                                {editingAutreRevenuIndex !== null ? "Modifier" : "Ajouter"}
+                                {editingAutreRevenuId ? "Modifier" : "Ajouter"}
                               </Button>
                             </DialogFooter>
                           </DialogContent>
