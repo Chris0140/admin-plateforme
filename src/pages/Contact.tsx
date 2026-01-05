@@ -4,8 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { AppLayout } from "@/components/AppLayout";
+import { Card, CardContent } from "@/components/ui/card";
 import { Mail, Phone, MapPin } from "lucide-react";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
@@ -103,20 +103,8 @@ const Contact = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-
-      <main className="container mx-auto px-4 py-16">
-        <div className="max-w-6xl mx-auto">
-          {/* Header Section */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Contactez-nous
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Une question ? Besoin d'aide ? Notre équipe est à votre disposition pour vous accompagner.
-            </p>
-          </div>
+    <AppLayout title="Contactez-nous" subtitle="Une question ? Besoin d'aide ? Notre équipe est à votre disposition pour vous accompagner.">
+      <div className="max-w-6xl mx-auto">
 
           <div className="grid lg:grid-cols-2 gap-16">
             {/* Contact Information - Left Side */}
@@ -254,7 +242,7 @@ const Contact = () => {
                   type="submit"
                   disabled={loading}
                   size="lg"
-                  className="w-full bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze shadow-bronze h-12 text-base font-semibold"
+                  className="w-full bg-primary hover:bg-primary/90 h-12 text-base font-semibold"
                 >
                   {loading ? "Envoi en cours..." : "Envoyer le message"}
                 </Button>
@@ -262,10 +250,7 @@ const Contact = () => {
             </div>
           </div>
         </div>
-      </main>
-
-      <Footer />
-    </div>
+    </AppLayout>
   );
 };
 

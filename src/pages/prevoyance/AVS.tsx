@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus } from "lucide-react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { Plus } from "lucide-react";
+import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -192,32 +191,16 @@ const AVS = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-20">
-        <div className="max-w-6xl mx-auto">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/prevoyance')}
-            className="mb-6"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Retour à Prévoyance
+    <AppLayout title="1er Pilier - AVS" subtitle="Gérez vos comptes AVS et ceux de votre partenaire">
+      {/* Add button */}
+      {!showForm && (
+        <div className="flex justify-end mb-6">
+          <Button onClick={handleAddNew} className="bg-primary hover:bg-primary/90">
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter un compte
           </Button>
-
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-4xl font-bold text-foreground mb-2">1er Pilier - AVS</h1>
-              <p className="text-muted-foreground">Gérez vos comptes AVS et ceux de votre partenaire</p>
-            </div>
-            {!showForm && (
-              <Button onClick={handleAddNew} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Ajouter un compte
-              </Button>
-            )}
-          </div>
+        </div>
+      )}
 
           {showForm ? (
             <AVSAccountForm
@@ -254,11 +237,7 @@ const AVS = () => {
               )}
             </div>
           )}
-        </div>
-      </main>
-
-      <Footer />
-    </div>
+    </AppLayout>
   );
 };
 

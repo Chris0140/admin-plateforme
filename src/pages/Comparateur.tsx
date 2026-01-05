@@ -1,9 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import { Card } from "@/components/ui/card";
+import { AppLayout } from "@/components/AppLayout";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Car, PawPrint, Wallet, Home, Bike, Plane } from "lucide-react";
+import { Shield, Car, PawPrint, Wallet, Home, Bike, Plane, ChevronRight } from "lucide-react";
 
 const Comparateur = () => {
   const navigate = useNavigate();
@@ -14,90 +13,89 @@ const Comparateur = () => {
       title: "Assurance Maladie",
       description: "Comparez les assurances maladie et trouvez la meilleure couverture",
       path: "/comparateur/assurance-maladie",
+      color: "text-red-500",
+      bgColor: "bg-red-500/10",
     },
     {
       icon: Car,
       title: "Assurance Véhicule",
       description: "Trouvez la meilleure assurance pour votre véhicule",
       path: "/comparateur/assurance-vehicule",
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
     },
     {
       icon: Wallet,
       title: "3ème Pilier",
       description: "Comparez les solutions de prévoyance",
       path: "/comparateur/troisieme-pilier",
+      color: "text-emerald-500",
+      bgColor: "bg-emerald-500/10",
     },
     {
       icon: Home,
       title: "Assurance Inventaire Ménage",
       description: "Protégez vos biens avec la meilleure assurance",
       path: "/comparateur/assurance-inventaire-menage",
+      color: "text-purple-500",
+      bgColor: "bg-purple-500/10",
     },
     {
       icon: Bike,
       title: "Assurance Moto",
       description: "Trouvez la meilleure assurance pour votre moto",
       path: "/comparateur/assurance-moto",
+      color: "text-orange-500",
+      bgColor: "bg-orange-500/10",
     },
     {
       icon: Plane,
       title: "Assurance Voyage",
       description: "Voyagez l'esprit tranquille avec la meilleure couverture",
       path: "/comparateur/assurance-voyage",
+      color: "text-sky-500",
+      bgColor: "bg-sky-500/10",
     },
     {
       icon: PawPrint,
       title: "Assurance Animaux",
       description: "Protégez vos compagnons avec la meilleure assurance",
       path: "/comparateur/assurance-animaux",
+      color: "text-amber-500",
+      bgColor: "bg-amber-500/10",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-foreground mb-4">
-              Choisissez votre comparateur
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Sélectionnez le type de comparaison que vous souhaitez effectuer
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {comparateurs.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <Card
-                  key={index}
-                  className="p-4 md:p-6 hover:border-primary transition-all cursor-pointer group"
-                  onClick={() => navigate(item.path)}
-                >
-                  <div className="flex flex-col items-center text-center space-y-3 md:space-y-4">
-                    <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/10 rounded-2xl flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                      <Icon className="w-6 h-6 md:w-8 md:h-8 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg md:text-xl font-bold text-foreground mb-2">
-                        {item.title}
-                      </h3>
-                      <p className="text-sm md:text-base text-muted-foreground">{item.description}</p>
-                    </div>
-                    <Button className="w-full">
-                      Comparer
-                    </Button>
+    <AppLayout title="Comparateur" subtitle="Sélectionnez le type de comparaison que vous souhaitez effectuer">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {comparateurs.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <Card
+              key={index}
+              className="glass border-border/50 hover:border-primary/50 transition-all duration-300 cursor-pointer group overflow-hidden"
+              onClick={() => navigate(item.path)}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className={`w-12 h-12 ${item.bgColor} rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
+                    <Icon className={`w-6 h-6 ${item.color}`} />
                   </div>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </main>
-      <Footer />
-    </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </AppLayout>
   );
 };
 
