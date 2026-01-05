@@ -429,63 +429,63 @@ const Budget = () => {
 
             {/* Summary Cards - Top */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 p-5 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10">
+              <div className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Report</p>
                     <p className="text-2xl font-bold">{formatCurrency(mReste)}</p>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-blue-500/20">
-                    <Wallet className="h-5 w-5 text-blue-400" />
+                  <div className="p-2.5 rounded-xl bg-muted">
+                    <Wallet className="h-5 w-5 text-muted-foreground" />
                   </div>
                 </div>
               </div>
               
-              <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 p-5 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10">
+              <div className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Revenus</p>
-                    <p className="text-2xl font-bold text-emerald-400">{formatCurrency(mTotalRevenus)}</p>
+                    <p className="text-2xl font-bold text-green-500">{formatCurrency(mTotalRevenus)}</p>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-emerald-500/20">
-                    <ArrowUpRight className="h-5 w-5 text-emerald-400" />
+                  <div className="p-2.5 rounded-xl bg-green-500/10">
+                    <ArrowUpRight className="h-5 w-5 text-green-500" />
                   </div>
                 </div>
               </div>
               
-              <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500/10 to-rose-600/5 border border-rose-500/20 p-5 transition-all duration-300 hover:shadow-lg hover:shadow-rose-500/10">
+              <div className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Dépenses</p>
-                    <p className="text-2xl font-bold text-rose-400">{formatCurrency(mTotalSorties)}</p>
+                    <p className="text-2xl font-bold text-red-500">{formatCurrency(mTotalSorties)}</p>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-rose-500/20">
-                    <ArrowDownRight className="h-5 w-5 text-rose-400" />
+                  <div className="p-2.5 rounded-xl bg-red-500/10">
+                    <ArrowDownRight className="h-5 w-5 text-red-500" />
                   </div>
                 </div>
               </div>
               
               <div className={cn(
-                "group relative overflow-hidden rounded-2xl p-5 transition-all duration-300",
+                "group relative overflow-hidden rounded-2xl p-5 transition-all duration-300 bg-card border",
                 mTotalRestant >= 0 
-                  ? "bg-gradient-to-br from-primary/10 to-amber-500/5 border border-primary/20 hover:shadow-lg hover:shadow-primary/10"
-                  : "bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20 hover:shadow-lg hover:shadow-red-500/10"
+                  ? "border-green-500/30 hover:shadow-lg hover:shadow-green-500/10"
+                  : "border-red-500/30 hover:shadow-lg hover:shadow-red-500/10"
               )}>
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Solde</p>
                     <p className={cn(
                       "text-2xl font-bold",
-                      mTotalRestant >= 0 ? "text-primary" : "text-red-400"
+                      mTotalRestant >= 0 ? "text-green-500" : "text-red-500"
                     )}>{formatCurrency(mTotalRestant)}</p>
                   </div>
                   <div className={cn(
                     "p-2.5 rounded-xl",
-                    mTotalRestant >= 0 ? "bg-primary/20" : "bg-red-500/20"
+                    mTotalRestant >= 0 ? "bg-green-500/10" : "bg-red-500/10"
                   )}>
                     <PiggyBank className={cn(
                       "h-5 w-5",
-                      mTotalRestant >= 0 ? "text-primary" : "text-red-400"
+                      mTotalRestant >= 0 ? "text-green-500" : "text-red-500"
                     )} />
                   </div>
                 </div>
@@ -496,12 +496,12 @@ const Budget = () => {
             <div className="grid md:grid-cols-2 gap-6">
               {/* Revenus Card */}
               <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen}>
-                <Card className="overflow-hidden border-emerald-500/20 bg-gradient-to-br from-card to-emerald-500/5">
+                <Card className="overflow-hidden">
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-emerald-500/20">
-                          <TrendingUp className="h-5 w-5 text-emerald-400" />
+                        <div className="p-2.5 rounded-xl bg-green-500/10">
+                          <TrendingUp className="h-5 w-5 text-green-500" />
                         </div>
                         <div>
                           <CardTitle className="text-lg">Entrées</CardTitle>
@@ -533,8 +533,8 @@ const Budget = () => {
                         <Label className="text-sm text-muted-foreground">Salaire net</Label>
                         <Dialog open={showSalaryDialog} onOpenChange={setShowSalaryDialog}>
                           <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full justify-start gap-2 bg-background/50 hover:bg-emerald-500/10 border-dashed">
-                              <Plus className="h-4 w-4 text-emerald-400" />
+                            <Button variant="outline" className="w-full justify-start gap-2 bg-background/50 hover:bg-primary/10 border-dashed">
+                              <Plus className="h-4 w-4 text-primary" />
                               {parseFloat(salaireNet) > 0 ? formatCurrency(parseFloat(salaireNet)) : "Ajouter salaire"}
                             </Button>
                           </DialogTrigger>
@@ -604,10 +604,10 @@ const Budget = () => {
                         />
                       </div>
                       
-                      <div className="pt-4 border-t border-emerald-500/20">
+                      <div className="pt-4 border-t">
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-muted-foreground">Total revenus</p>
-                          <p className="text-2xl font-bold text-emerald-400">{formatCurrency(mTotalRevenus)}</p>
+                          <p className="text-2xl font-bold text-green-500">{formatCurrency(mTotalRevenus)}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -617,12 +617,12 @@ const Budget = () => {
 
               {/* Dépenses Card */}
               <Collapsible open={depensesOpen} onOpenChange={setDepensesOpen}>
-                <Card className="overflow-hidden border-rose-500/20 bg-gradient-to-br from-card to-rose-500/5">
+                <Card className="overflow-hidden">
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-rose-500/20">
-                          <TrendingDown className="h-5 w-5 text-rose-400" />
+                        <div className="p-2.5 rounded-xl bg-red-500/10">
+                          <TrendingDown className="h-5 w-5 text-red-500" />
                         </div>
                         <div>
                           <CardTitle className="text-lg">Sorties</CardTitle>
@@ -643,11 +643,11 @@ const Budget = () => {
                           {monthlyCategories.map((cat) => (
                             <div
                               key={cat.id}
-                              className="group flex items-center justify-between py-3 px-4 rounded-xl bg-background/50 border border-border/50 hover:border-rose-500/30 transition-all"
-                            >
+                            className="group flex items-center justify-between py-3 px-4 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all"
+                          >
                               <div className="flex items-center gap-3">
-                                <div className="p-1.5 rounded-lg bg-rose-500/10">
-                                  <Receipt className="h-4 w-4 text-rose-400" />
+                                <div className="p-1.5 rounded-lg bg-muted">
+                                  <Receipt className="h-4 w-4 text-muted-foreground" />
                                 </div>
                                 <div>
                                   <p className="text-sm font-medium">{cat.name}</p>
@@ -679,7 +679,7 @@ const Budget = () => {
                       )}
 
                       {showAddMonthlyCategory ? (
-                        <div className="space-y-4 p-4 rounded-xl bg-background/50 border border-dashed border-rose-500/30">
+                        <div className="space-y-4 p-4 rounded-xl bg-background/50 border border-dashed border-border">
                           <div className="grid grid-cols-2 gap-3">
                             <div>
                               <Label className="text-xs">Nom</Label>
@@ -745,7 +745,7 @@ const Budget = () => {
                                   className={cn(
                                     "px-2 py-1 text-xs rounded-md transition-all",
                                     selectedMonths.includes(m.value)
-                                      ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                                      ? "bg-primary/20 text-primary border border-primary/30"
                                       : "bg-muted/50 text-muted-foreground hover:bg-muted"
                                   )}
                                 >
@@ -812,18 +812,18 @@ const Budget = () => {
                       ) : (
                         <Button
                           variant="outline"
-                          className="w-full gap-2 border-dashed border-rose-500/30 hover:bg-rose-500/10 hover:border-rose-500/50"
+                          className="w-full gap-2 border-dashed hover:bg-primary/10 hover:border-primary/50"
                           onClick={() => setShowAddMonthlyCategory(true)}
                         >
-                          <Plus className="h-4 w-4 text-rose-400" />
+                          <Plus className="h-4 w-4 text-primary" />
                           Ajouter une dépense
                         </Button>
                       )}
 
-                      <div className="pt-4 border-t border-rose-500/20">
+                      <div className="pt-4 border-t">
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-muted-foreground">Total sorties</p>
-                          <p className="text-2xl font-bold text-rose-400">{formatCurrency(mTotalSorties)}</p>
+                          <p className="text-2xl font-bold text-red-500">{formatCurrency(mTotalSorties)}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -871,51 +871,51 @@ const Budget = () => {
 
             {/* Summary Cards */}
             <div className="grid md:grid-cols-3 gap-4">
-              <div className="rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 p-6">
+              <div className="rounded-2xl bg-card border border-border/50 p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-xl bg-emerald-500/20">
-                    <TrendingUp className="h-5 w-5 text-emerald-400" />
+                  <div className="p-2 rounded-xl bg-green-500/10">
+                    <TrendingUp className="h-5 w-5 text-green-500" />
                   </div>
                   <p className="text-sm text-muted-foreground">Revenus annuels</p>
                 </div>
-                <p className="text-3xl font-bold text-emerald-400">
+                <p className="text-3xl font-bold text-green-500">
                   {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_revenus || 0), 0))}
                 </p>
               </div>
               
-              <div className="rounded-2xl bg-gradient-to-br from-rose-500/10 to-rose-600/5 border border-rose-500/20 p-6">
+              <div className="rounded-2xl bg-card border border-border/50 p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 rounded-xl bg-rose-500/20">
-                    <TrendingDown className="h-5 w-5 text-rose-400" />
+                  <div className="p-2 rounded-xl bg-red-500/10">
+                    <TrendingDown className="h-5 w-5 text-red-500" />
                   </div>
                   <p className="text-sm text-muted-foreground">Dépenses annuelles</p>
                 </div>
-                <p className="text-3xl font-bold text-rose-400">
+                <p className="text-3xl font-bold text-red-500">
                   {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_sorties || 0), 0))}
                 </p>
               </div>
               
               <div className={cn(
-                "rounded-2xl p-6 border",
+                "rounded-2xl p-6 bg-card border",
                 yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0
-                  ? "bg-gradient-to-br from-primary/10 to-amber-500/5 border-primary/20"
-                  : "bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/20"
+                  ? "border-green-500/30"
+                  : "border-red-500/30"
               )}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className={cn(
                     "p-2 rounded-xl",
-                    yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "bg-primary/20" : "bg-red-500/20"
+                    yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "bg-green-500/10" : "bg-red-500/10"
                   )}>
                     <PiggyBank className={cn(
                       "h-5 w-5",
-                      yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "text-primary" : "text-red-400"
+                      yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "text-green-500" : "text-red-500"
                     )} />
                   </div>
                   <p className="text-sm text-muted-foreground">Solde annuel</p>
                 </div>
                 <p className={cn(
                   "text-3xl font-bold",
-                  yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "text-primary" : "text-red-400"
+                  yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "text-green-500" : "text-red-500"
                 )}>
                   {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0))}
                 </p>
@@ -934,8 +934,8 @@ const Budget = () => {
                     <thead>
                       <tr className="border-b border-border/50">
                         <th className="text-left py-3 px-4 font-semibold text-sm">Mois</th>
-                        <th className="text-right py-3 px-4 font-semibold text-sm text-emerald-400">Revenus</th>
-                        <th className="text-right py-3 px-4 font-semibold text-sm text-rose-400">Sorties</th>
+                        <th className="text-right py-3 px-4 font-semibold text-sm text-green-500">Revenus</th>
+                        <th className="text-right py-3 px-4 font-semibold text-sm text-red-500">Sorties</th>
                         <th className="text-right py-3 px-4 font-semibold text-sm">Solde</th>
                       </tr>
                     </thead>
@@ -953,24 +953,24 @@ const Budget = () => {
                             <td className="text-right py-3 px-4 text-sm">{formatCurrency(sorties)}</td>
                             <td className={cn(
                               "text-right py-3 px-4 text-sm font-semibold",
-                              solde >= 0 ? "text-emerald-400" : "text-red-400"
+                              solde >= 0 ? "text-green-500" : "text-red-500"
                             )}>
                               {formatCurrency(solde)}
                             </td>
                           </tr>
                         );
                       })}
-                      <tr className="font-bold bg-muted/30">
-                        <td className="py-4 px-4 text-sm">Total</td>
-                        <td className="text-right py-4 px-4 text-sm text-emerald-400">
-                          {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_revenus || 0), 0))}
-                        </td>
-                        <td className="text-right py-4 px-4 text-sm text-rose-400">
-                          {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_sorties || 0), 0))}
-                        </td>
-                        <td className={cn(
-                          "text-right py-4 px-4 text-sm",
-                          yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "text-emerald-400" : "text-red-400"
+                        <tr className="font-bold bg-muted/30">
+                          <td className="py-4 px-4 text-sm">Total</td>
+                          <td className="text-right py-4 px-4 text-sm text-green-500">
+                            {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_revenus || 0), 0))}
+                          </td>
+                          <td className="text-right py-4 px-4 text-sm text-red-500">
+                            {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_sorties || 0), 0))}
+                          </td>
+                          <td className={cn(
+                            "text-right py-4 px-4 text-sm",
+                            yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "text-green-500" : "text-red-500"
                         )}>
                           {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0))}
                         </td>
@@ -989,12 +989,12 @@ const Budget = () => {
             <div className="grid md:grid-cols-2 gap-6">
               {/* Revenus Card */}
               <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen}>
-                <Card className="overflow-hidden border-emerald-500/20 bg-gradient-to-br from-card to-emerald-500/5">
+                <Card className="overflow-hidden">
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-emerald-500/20">
-                          <TrendingUp className="h-5 w-5 text-emerald-400" />
+                        <div className="p-2.5 rounded-xl bg-green-500/10">
+                          <TrendingUp className="h-5 w-5 text-green-500" />
                         </div>
                         <div>
                           <CardTitle className="text-lg">Revenus annuels</CardTitle>
@@ -1030,10 +1030,10 @@ const Budget = () => {
                           className="bg-background/50"
                         />
                       </div>
-                      <div className="pt-4 border-t border-emerald-500/20">
+                      <div className="pt-4 border-t">
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-muted-foreground">Revenu net annuel</p>
-                          <p className="text-2xl font-bold text-emerald-400">{formatCurrency(annualRevenuNet)}</p>
+                          <p className="text-2xl font-bold text-green-500">{formatCurrency(annualRevenuNet)}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -1043,12 +1043,12 @@ const Budget = () => {
 
               {/* Dépenses Card */}
               <Collapsible open={depensesOpen} onOpenChange={setDepensesOpen}>
-                <Card className="overflow-hidden border-rose-500/20 bg-gradient-to-br from-card to-rose-500/5">
+                <Card className="overflow-hidden">
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2.5 rounded-xl bg-rose-500/20">
-                          <TrendingDown className="h-5 w-5 text-rose-400" />
+                        <div className="p-2.5 rounded-xl bg-red-500/10">
+                          <TrendingDown className="h-5 w-5 text-red-500" />
                         </div>
                         <div>
                           <CardTitle className="text-lg">Dépenses annuelles</CardTitle>
@@ -1079,10 +1079,10 @@ const Budget = () => {
                         <div className="space-y-2">
                           <p className="text-sm font-medium text-muted-foreground">Dépenses additionnelles</p>
                           {fixedExpenses.map((exp) => (
-                            <div key={exp.id} className="group flex items-center justify-between py-3 px-4 rounded-xl bg-background/50 border border-border/50 hover:border-rose-500/30 transition-all">
+                            <div key={exp.id} className="group flex items-center justify-between py-3 px-4 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all">
                               <div className="flex items-center gap-3">
-                                <div className="p-1.5 rounded-lg bg-rose-500/10">
-                                  <Receipt className="h-4 w-4 text-rose-400" />
+                                <div className="p-1.5 rounded-lg bg-muted">
+                                  <Receipt className="h-4 w-4 text-muted-foreground" />
                                 </div>
                                 <p className="text-sm font-medium">{exp.name}</p>
                               </div>
@@ -1111,7 +1111,7 @@ const Budget = () => {
                       )}
 
                       {showAddExpense ? (
-                        <div className="space-y-3 p-4 rounded-xl bg-background/50 border border-dashed border-rose-500/30">
+                        <div className="space-y-3 p-4 rounded-xl bg-background/50 border border-dashed border-border">
                           <div>
                             <Label className="text-xs">Nom</Label>
                             <Input value={newExpenseName} onChange={(e) => setNewExpenseName(e.target.value)} placeholder="Ex: Netflix" className="mt-1" />
@@ -1154,18 +1154,18 @@ const Budget = () => {
                       ) : (
                         <Button 
                           variant="outline" 
-                          className="w-full gap-2 border-dashed border-rose-500/30 hover:bg-rose-500/10 hover:border-rose-500/50"
+                          className="w-full gap-2 border-dashed hover:bg-primary/10 hover:border-primary/50"
                           onClick={() => setShowAddExpense(true)}
                         >
-                          <Plus className="h-4 w-4 text-rose-400" />
+                          <Plus className="h-4 w-4 text-primary" />
                           Ajouter une dépense
                         </Button>
                       )}
 
-                      <div className="pt-4 border-t border-rose-500/20">
+                      <div className="pt-4 border-t">
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-muted-foreground">Total dépenses</p>
-                          <p className="text-2xl font-bold text-rose-400">{formatCurrency(annualTotalDepenses)}</p>
+                          <p className="text-2xl font-bold text-red-500">{formatCurrency(annualTotalDepenses)}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -1191,24 +1191,24 @@ const Budget = () => {
 
             {/* Summary */}
             <div className="grid md:grid-cols-3 gap-4">
-              <div className="rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 p-6 text-center">
+              <div className="rounded-2xl bg-card border border-border/50 p-6 text-center">
                 <p className="text-sm text-muted-foreground mb-2">Revenu net annuel</p>
-                <p className="text-3xl font-bold text-emerald-400">{formatCurrency(annualRevenuNet)}</p>
+                <p className="text-3xl font-bold text-green-500">{formatCurrency(annualRevenuNet)}</p>
               </div>
-              <div className="rounded-2xl bg-gradient-to-br from-rose-500/10 to-rose-600/5 border border-rose-500/20 p-6 text-center">
+              <div className="rounded-2xl bg-card border border-border/50 p-6 text-center">
                 <p className="text-sm text-muted-foreground mb-2">Total dépenses</p>
-                <p className="text-3xl font-bold text-rose-400">{formatCurrency(annualTotalDepenses)}</p>
+                <p className="text-3xl font-bold text-red-500">{formatCurrency(annualTotalDepenses)}</p>
               </div>
               <div className={cn(
-                "rounded-2xl p-6 text-center border",
+                "rounded-2xl p-6 text-center bg-card border",
                 annualSolde >= 0 
-                  ? "bg-gradient-to-br from-primary/10 to-amber-500/5 border-primary/20"
-                  : "bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/20"
+                  ? "border-green-500/30"
+                  : "border-red-500/30"
               )}>
                 <p className="text-sm text-muted-foreground mb-2">Solde annuel</p>
                 <p className={cn(
                   "text-3xl font-bold",
-                  annualSolde >= 0 ? "text-primary" : "text-red-400"
+                  annualSolde >= 0 ? "text-green-500" : "text-red-500"
                 )}>{formatCurrency(annualSolde)}</p>
               </div>
             </div>
