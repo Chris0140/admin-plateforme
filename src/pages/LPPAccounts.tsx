@@ -43,7 +43,10 @@ export default function LPPAccounts() {
   }, [profileId]);
 
   const loadProfile = async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     
     try {
       const { data, error } = await supabase
@@ -55,11 +58,8 @@ export default function LPPAccounts() {
       if (error) throw error;
       setProfileId(data.id);
     } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger votre profil",
-        variant: "destructive"
-      });
+      console.error('Error loading profile:', error);
+      setLoading(false);
     }
   };
 
@@ -71,11 +71,7 @@ export default function LPPAccounts() {
       const result = await calculateLPPAnalysis(profileId);
       setAnalysis(result);
     } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger l'analyse LPP",
-        variant: "destructive"
-      });
+      console.error('Error loading LPP analysis:', error);
     } finally {
       setLoading(false);
     }
