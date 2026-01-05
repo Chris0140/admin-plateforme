@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -318,15 +317,8 @@ const Budget = () => {
     }).format(isNaN(value) ? 0 : value);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-20">
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-4xl font-bold text-foreground mb-4">Gestion de Budget</h1>
-          <p className="text-muted-foreground mb-8">
-            Suivez votre budget <span className="font-semibold">mois par mois</span> ou faites une{" "}
-            <span className="font-semibold">projection annuelle simple</span>.
-          </p>
+    <AppLayout title="Gestion de Budget" subtitle="Suivez votre budget mois par mois ou faites une projection annuelle simple">
+      <div className="max-w-6xl mx-auto">
 
           <div className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="w-full md:w-auto">
@@ -1091,9 +1083,7 @@ const Budget = () => {
             </div>
           )}
         </div>
-      </main>
-      <Footer />
-    </div>
+      </AppLayout>
   );
 };
 
