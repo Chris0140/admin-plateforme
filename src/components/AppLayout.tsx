@@ -43,10 +43,10 @@ export function AppLayout({ children, title, subtitle }: AppLayoutProps) {
         <div className="p-6 lg:p-10">
           {/* Page header */}
           {title && (
-            <div className="mb-8">
-              <h1 className="text-3xl lg:text-4xl font-bold text-foreground">{title}</h1>
+            <div className="mb-8 text-center lg:text-left">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground">{title}</h1>
               {subtitle && (
-                <p className="text-muted-foreground mt-2">{subtitle}</p>
+                <p className="text-sm sm:text-base text-muted-foreground mt-2">{subtitle}</p>
               )}
             </div>
           )}
