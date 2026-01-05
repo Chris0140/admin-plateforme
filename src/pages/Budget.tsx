@@ -69,12 +69,14 @@ const Budget = () => {
   const [tempSalaireCharges, setTempSalaireCharges] = useState("");
   const [tempSalaireNet, setTempSalaireNet] = useState("");
   const [selectedMonthsSalary, setSelectedMonthsSalary] = useState<number[]>([]);
+  const [initialMonthsSalary, setInitialMonthsSalary] = useState<number[]>([]);
   const [autresRevenus, setAutresRevenus] = useState<{ id: string; nom: string; montant: string }[]>([]);
   const [showAutreRevenuDialog, setShowAutreRevenuDialog] = useState(false);
   const [editingAutreRevenuId, setEditingAutreRevenuId] = useState<string | null>(null);
   const [tempAutreRevenuNom, setTempAutreRevenuNom] = useState("");
   const [tempAutreRevenuMontant, setTempAutreRevenuMontant] = useState("");
   const [selectedMonthsAutreRevenu, setSelectedMonthsAutreRevenu] = useState<number[]>([]);
+  const [initialMonthsAutreRevenu, setInitialMonthsAutreRevenu] = useState<number[]>([]);
   const [depensesVariables, setDepensesVariables] = useState("");
   const [fraisFixesDettes, setFraisFixesDettes] = useState("");
   const [assurances, setAssurances] = useState("");
@@ -99,6 +101,7 @@ const Budget = () => {
   const [newMonthlyCategoryType, setNewMonthlyCategoryType] = useState("");
   const [newMonthlyCategoryAmount, setNewMonthlyCategoryAmount] = useState("");
   const [selectedMonths, setSelectedMonths] = useState<number[]>([selectedMonth]);
+  const [initialMonthsExpense, setInitialMonthsExpense] = useState<number[]>([]);
 
   const [revenusOpen, setRevenusOpen] = useState(true);
   const [depensesOpen, setDepensesOpen] = useState(true);
@@ -581,13 +584,22 @@ const Budget = () => {
                               <div
                                 key={salaire.id}
                                 className="group flex items-center justify-between py-2 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
-                                onClick={() => {
+                                onClick={async () => {
                                   setEditingSalaryId(salaire.id);
                                   setTempSalaireNom(salaire.nom);
                                   setTempSalaireBrut(salaire.brut);
                                   setTempSalaireCharges(salaire.charges);
                                   setTempSalaireNet(salaire.net);
-                                  setSelectedMonthsSalary([selectedMonth]);
+                                  // Fetch all months where this salary exists
+                                  const { data: existingMonths } = await supabase
+                                    .from("monthly_salaries")
+                                    .select("month")
+                                    .eq("user_id", user?.id)
+                                    .eq("year", selectedYear)
+                                    .eq("nom", salaire.nom);
+                                  const monthsList = existingMonths?.map(e => e.month) || [selectedMonth];
+                                  setSelectedMonthsSalary(monthsList);
+                                  setInitialMonthsSalary(monthsList);
                                   setShowSalaryDialog(true);
                                 }}
                               >
@@ -755,24 +767,28 @@ const Budget = () => {
                                 }
                                 try {
                                   if (editingSalaryId) {
-                                    // Update current month
-                                    await supabase.from("monthly_salaries").update({
-                                      nom: tempSalaireNom || "Salaire",
-                                      brut: parseFloat(tempSalaireBrut) || 0,
-                                      charges: parseFloat(tempSalaireCharges) || 0,
-                                      net: parseFloat(tempSalaireNet) || 0
-                                    }).eq("id", editingSalaryId);
+                                    const salaryName = tempSalaireNom || "Salaire";
                                     
-                                    // Insert/update for other selected months
-                                    const otherMonths = selectedMonthsSalary.filter(m => m !== selectedMonth);
-                                    for (const month of otherMonths) {
+                                    // Delete from deselected months
+                                    const monthsToDelete = initialMonthsSalary.filter(m => !selectedMonthsSalary.includes(m));
+                                    for (const month of monthsToDelete) {
+                                      await supabase.from("monthly_salaries")
+                                        .delete()
+                                        .eq("user_id", user?.id)
+                                        .eq("year", selectedYear)
+                                        .eq("month", month)
+                                        .eq("nom", salaryName);
+                                    }
+                                    
+                                    // Update/insert for selected months
+                                    for (const month of selectedMonthsSalary) {
                                       const { data: existing } = await supabase
                                         .from("monthly_salaries")
                                         .select("id")
                                         .eq("user_id", user?.id)
                                         .eq("year", selectedYear)
                                         .eq("month", month)
-                                        .eq("nom", tempSalaireNom || "Salaire")
+                                        .eq("nom", salaryName)
                                         .maybeSingle();
                                       
                                       if (existing) {
@@ -786,7 +802,7 @@ const Budget = () => {
                                           user_id: user?.id,
                                           year: selectedYear,
                                           month: month,
-                                          nom: tempSalaireNom || "Salaire",
+                                          nom: salaryName,
                                           brut: parseFloat(tempSalaireBrut) || 0,
                                           charges: parseFloat(tempSalaireCharges) || 0,
                                           net: parseFloat(tempSalaireNet) || 0
@@ -796,7 +812,15 @@ const Budget = () => {
                                     
                                     await fetchMonthlyBudget();
                                     setSelectedMonthsSalary([selectedMonth]);
-                                    toast({ title: selectedMonthsSalary.length > 1 ? `Salaire modifié sur ${selectedMonthsSalary.length} mois` : "Salaire modifié" });
+                                    setInitialMonthsSalary([]);
+                                    
+                                    const added = selectedMonthsSalary.filter(m => !initialMonthsSalary.includes(m)).length;
+                                    const removed = monthsToDelete.length;
+                                    let msg = "Salaire modifié";
+                                    if (added > 0 && removed > 0) msg = `Salaire: +${added} mois, -${removed} mois`;
+                                    else if (added > 0) msg = `Salaire ajouté à ${added} nouveau(x) mois`;
+                                    else if (removed > 0) msg = `Salaire retiré de ${removed} mois`;
+                                    toast({ title: msg });
                                   } else {
                                     // Insert for selected months
                                     if (selectedMonthsSalary.length === 0) {
@@ -839,11 +863,20 @@ const Budget = () => {
                               <div
                                 key={revenu.id}
                                 className="group flex items-center justify-between py-2 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
-                                onClick={() => {
+                                onClick={async () => {
                                   setEditingAutreRevenuId(revenu.id);
                                   setTempAutreRevenuNom(revenu.nom);
                                   setTempAutreRevenuMontant(revenu.montant);
-                                  setSelectedMonthsAutreRevenu([selectedMonth]);
+                                  // Fetch all months where this revenue exists
+                                  const { data: existingMonths } = await supabase
+                                    .from("monthly_other_revenues")
+                                    .select("month")
+                                    .eq("user_id", user?.id)
+                                    .eq("year", selectedYear)
+                                    .eq("nom", revenu.nom);
+                                  const monthsList = existingMonths?.map(e => e.month) || [selectedMonth];
+                                  setSelectedMonthsAutreRevenu(monthsList);
+                                  setInitialMonthsAutreRevenu(monthsList);
                                   setShowAutreRevenuDialog(true);
                                 }}
                               >
@@ -974,22 +1007,28 @@ const Budget = () => {
                                 }
                                 try {
                                   if (editingAutreRevenuId) {
-                                    // Update current month
-                                    await supabase.from("monthly_other_revenues").update({
-                                      nom: tempAutreRevenuNom || "Autre revenu",
-                                      montant: parseFloat(tempAutreRevenuMontant) || 0
-                                    }).eq("id", editingAutreRevenuId);
+                                    const revenuName = tempAutreRevenuNom || "Autre revenu";
                                     
-                                    // Insert/update for other selected months
-                                    const otherMonths = selectedMonthsAutreRevenu.filter(m => m !== selectedMonth);
-                                    for (const month of otherMonths) {
+                                    // Delete from deselected months
+                                    const monthsToDelete = initialMonthsAutreRevenu.filter(m => !selectedMonthsAutreRevenu.includes(m));
+                                    for (const month of monthsToDelete) {
+                                      await supabase.from("monthly_other_revenues")
+                                        .delete()
+                                        .eq("user_id", user?.id)
+                                        .eq("year", selectedYear)
+                                        .eq("month", month)
+                                        .eq("nom", revenuName);
+                                    }
+                                    
+                                    // Update/insert for selected months
+                                    for (const month of selectedMonthsAutreRevenu) {
                                       const { data: existing } = await supabase
                                         .from("monthly_other_revenues")
                                         .select("id")
                                         .eq("user_id", user?.id)
                                         .eq("year", selectedYear)
                                         .eq("month", month)
-                                        .eq("nom", tempAutreRevenuNom || "Autre revenu")
+                                        .eq("nom", revenuName)
                                         .maybeSingle();
                                       
                                       if (existing) {
@@ -1001,7 +1040,7 @@ const Budget = () => {
                                           user_id: user?.id,
                                           year: selectedYear,
                                           month: month,
-                                          nom: tempAutreRevenuNom || "Autre revenu",
+                                          nom: revenuName,
                                           montant: parseFloat(tempAutreRevenuMontant) || 0
                                         });
                                       }
@@ -1009,7 +1048,15 @@ const Budget = () => {
                                     
                                     await fetchMonthlyBudget();
                                     setSelectedMonthsAutreRevenu([selectedMonth]);
-                                    toast({ title: selectedMonthsAutreRevenu.length > 1 ? `Revenu modifié sur ${selectedMonthsAutreRevenu.length} mois` : "Revenu modifié" });
+                                    setInitialMonthsAutreRevenu([]);
+                                    
+                                    const added = selectedMonthsAutreRevenu.filter(m => !initialMonthsAutreRevenu.includes(m)).length;
+                                    const removed = monthsToDelete.length;
+                                    let msg = "Revenu modifié";
+                                    if (added > 0 && removed > 0) msg = `Revenu: +${added} mois, -${removed} mois`;
+                                    else if (added > 0) msg = `Revenu ajouté à ${added} nouveau(x) mois`;
+                                    else if (removed > 0) msg = `Revenu retiré de ${removed} mois`;
+                                    toast({ title: msg });
                                   } else {
                                     // Insert for selected months
                                     if (selectedMonthsAutreRevenu.length === 0) {
@@ -1087,11 +1134,21 @@ const Budget = () => {
                               <div
                                 key={cat.id}
                                 className="group flex items-center justify-between py-2.5 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
-                                onClick={() => {
+                                onClick={async () => {
                                   setEditingExpenseId(cat.id);
                                   setNewMonthlyCategoryName(cat.name);
                                   setNewMonthlyCategoryAmount(cat.amount?.toString() || "0");
                                   setNewMonthlyCategoryType(cat.category);
+                                  // Fetch all months where this expense exists
+                                  const { data: existingMonths } = await supabase
+                                    .from("monthly_expense_categories")
+                                    .select("month")
+                                    .eq("user_id", user?.id)
+                                    .eq("year", selectedYear)
+                                    .eq("name", cat.name);
+                                  const monthsList = existingMonths?.map(e => e.month) || [selectedMonth];
+                                  setSelectedMonths(monthsList);
+                                  setInitialMonthsExpense(monthsList);
                                   setShowExpenseDialog(true);
                                 }}
                               >
@@ -1280,11 +1337,21 @@ const Budget = () => {
                               <div
                                 key={cat.id}
                                 className="group flex items-center justify-between py-2.5 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
-                                onClick={() => {
+                                onClick={async () => {
                                   setEditingExpenseId(cat.id);
                                   setNewMonthlyCategoryName(cat.name);
                                   setNewMonthlyCategoryAmount(cat.amount?.toString() || "0");
                                   setNewMonthlyCategoryType(cat.category);
+                                  // Fetch all months where this expense exists
+                                  const { data: existingMonths } = await supabase
+                                    .from("monthly_expense_categories")
+                                    .select("month")
+                                    .eq("user_id", user?.id)
+                                    .eq("year", selectedYear)
+                                    .eq("name", cat.name);
+                                  const monthsList = existingMonths?.map(e => e.month) || [selectedMonth];
+                                  setSelectedMonths(monthsList);
+                                  setInitialMonthsExpense(monthsList);
                                   setShowExpenseDialog(true);
                                 }}
                               >
@@ -1570,24 +1637,28 @@ const Budget = () => {
                                 return;
                               }
                               try {
-                                // Update current month
-                                await supabase.from("monthly_expense_categories").update({
-                                  name: newMonthlyCategoryName,
-                                  amount: parseFloat(newMonthlyCategoryAmount),
-                                  category: newMonthlyCategoryType || "Autre"
-                                }).eq("id", editingExpenseId);
+                                const expenseName = newMonthlyCategoryName;
                                 
-                                // Insert/update for other selected months
-                                const otherMonths = selectedMonths.filter(m => m !== selectedMonth);
-                                for (const month of otherMonths) {
-                                  // Check if expense with same name exists for that month
+                                // Delete from deselected months
+                                const monthsToDelete = initialMonthsExpense.filter(m => !selectedMonths.includes(m));
+                                for (const month of monthsToDelete) {
+                                  await supabase.from("monthly_expense_categories")
+                                    .delete()
+                                    .eq("user_id", user?.id)
+                                    .eq("year", selectedYear)
+                                    .eq("month", month)
+                                    .eq("name", expenseName);
+                                }
+                                
+                                // Update/insert for selected months
+                                for (const month of selectedMonths) {
                                   const { data: existing } = await supabase
                                     .from("monthly_expense_categories")
                                     .select("id")
                                     .eq("user_id", user?.id)
                                     .eq("year", selectedYear)
                                     .eq("month", month)
-                                    .eq("name", newMonthlyCategoryName)
+                                    .eq("name", expenseName)
                                     .maybeSingle();
                                   
                                   if (existing) {
@@ -1600,7 +1671,7 @@ const Budget = () => {
                                       user_id: user?.id,
                                       year: selectedYear,
                                       month: month,
-                                      name: newMonthlyCategoryName,
+                                      name: expenseName,
                                       amount: parseFloat(newMonthlyCategoryAmount),
                                       category: newMonthlyCategoryType || "Autre"
                                     });
@@ -1610,7 +1681,15 @@ const Budget = () => {
                                 await fetchMonthlyBudget();
                                 setShowExpenseDialog(false);
                                 setSelectedMonths([selectedMonth]);
-                                toast({ title: selectedMonths.length > 1 ? `Dépense modifiée sur ${selectedMonths.length} mois` : "Dépense modifiée" });
+                                setInitialMonthsExpense([]);
+                                
+                                const added = selectedMonths.filter(m => !initialMonthsExpense.includes(m)).length;
+                                const removed = monthsToDelete.length;
+                                let msg = "Dépense modifiée";
+                                if (added > 0 && removed > 0) msg = `Dépense: +${added} mois, -${removed} mois`;
+                                else if (added > 0) msg = `Dépense ajoutée à ${added} nouveau(x) mois`;
+                                else if (removed > 0) msg = `Dépense retirée de ${removed} mois`;
+                                toast({ title: msg });
                               } catch (error) {
                                 toast({ variant: "destructive", title: "Erreur" });
                               }
