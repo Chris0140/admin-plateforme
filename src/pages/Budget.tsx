@@ -93,6 +93,8 @@ const Budget = () => {
   // Monthly custom categories
   const [monthlyCategories, setMonthlyCategories] = useState<any[]>([]);
   const [showAddMonthlyCategory, setShowAddMonthlyCategory] = useState(false);
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [showExpenseDialog, setShowExpenseDialog] = useState(false);
   const [newMonthlyCategoryName, setNewMonthlyCategoryName] = useState("");
   const [newMonthlyCategoryType, setNewMonthlyCategoryType] = useState("");
   const [newMonthlyCategoryAmount, setNewMonthlyCategoryAmount] = useState("");
@@ -1026,7 +1028,14 @@ const Budget = () => {
                             {monthlyCategories.filter(cat => cat.category === "Fixe").map((cat) => (
                               <div
                                 key={cat.id}
-                                className="group flex items-center justify-between py-2.5 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all"
+                                className="group flex items-center justify-between py-2.5 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
+                                onClick={() => {
+                                  setEditingExpenseId(cat.id);
+                                  setNewMonthlyCategoryName(cat.name);
+                                  setNewMonthlyCategoryAmount(cat.amount?.toString() || "0");
+                                  setNewMonthlyCategoryType(cat.category);
+                                  setShowExpenseDialog(true);
+                                }}
                               >
                                 <div className="flex items-center gap-3">
                                   <div className="p-1.5 rounded-lg bg-red-500/10">
@@ -1040,7 +1049,8 @@ const Budget = () => {
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
-                                    onClick={async () => {
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
                                       try {
                                         await supabase.from("monthly_expense_categories").delete().eq("id", cat.id);
                                         setMonthlyCategories(monthlyCategories.filter((c) => c.id !== cat.id));
@@ -1211,7 +1221,14 @@ const Budget = () => {
                             {monthlyCategories.filter(cat => cat.category !== "Fixe").map((cat) => (
                               <div
                                 key={cat.id}
-                                className="group flex items-center justify-between py-2.5 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all"
+                                className="group flex items-center justify-between py-2.5 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all cursor-pointer"
+                                onClick={() => {
+                                  setEditingExpenseId(cat.id);
+                                  setNewMonthlyCategoryName(cat.name);
+                                  setNewMonthlyCategoryAmount(cat.amount?.toString() || "0");
+                                  setNewMonthlyCategoryType(cat.category);
+                                  setShowExpenseDialog(true);
+                                }}
                               >
                                 <div className="flex items-center gap-3">
                                   <div className="p-1.5 rounded-lg bg-orange-500/10">
@@ -1230,7 +1247,8 @@ const Budget = () => {
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
-                                    onClick={async () => {
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
                                       try {
                                         await supabase.from("monthly_expense_categories").delete().eq("id", cat.id);
                                         setMonthlyCategories(monthlyCategories.filter((c) => c.id !== cat.id));
@@ -1395,6 +1413,78 @@ const Budget = () => {
                           </Button>
                         )}
                       </div>
+
+                      {/* Dialog pour modifier une dépense */}
+                      <Dialog open={showExpenseDialog} onOpenChange={(open) => {
+                        setShowExpenseDialog(open);
+                        if (!open) {
+                          setEditingExpenseId(null);
+                          setNewMonthlyCategoryName("");
+                          setNewMonthlyCategoryAmount("");
+                          setNewMonthlyCategoryType("");
+                        }
+                      }}>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Modifier la dépense</DialogTitle>
+                            <DialogDescription>Modifiez les détails de la dépense</DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div>
+                              <Label htmlFor="editExpenseName">Nom</Label>
+                              <Input
+                                id="editExpenseName"
+                                value={newMonthlyCategoryName}
+                                onChange={(e) => setNewMonthlyCategoryName(e.target.value)}
+                                placeholder="Nom de la dépense"
+                              />
+                            </div>
+                            <div>
+                              <Label htmlFor="editExpenseAmount">Montant</Label>
+                              <Input
+                                id="editExpenseAmount"
+                                type="number"
+                                value={newMonthlyCategoryAmount}
+                                onChange={(e) => setNewMonthlyCategoryAmount(e.target.value)}
+                                placeholder="0"
+                              />
+                            </div>
+                            {newMonthlyCategoryType !== "Fixe" && (
+                              <div>
+                                <Label htmlFor="editExpenseType">Type (optionnel)</Label>
+                                <Input
+                                  id="editExpenseType"
+                                  value={newMonthlyCategoryType === "Autre" ? "" : newMonthlyCategoryType}
+                                  onChange={(e) => setNewMonthlyCategoryType(e.target.value || "Autre")}
+                                  placeholder="Ex: Loisirs, Sorties..."
+                                />
+                              </div>
+                            )}
+                          </div>
+                          <DialogFooter>
+                            <Button onClick={async () => {
+                              if (!newMonthlyCategoryName || !newMonthlyCategoryAmount) {
+                                toast({ variant: "destructive", title: "Erreur", description: "Remplissez les champs requis" });
+                                return;
+                              }
+                              try {
+                                await supabase.from("monthly_expense_categories").update({
+                                  name: newMonthlyCategoryName,
+                                  amount: parseFloat(newMonthlyCategoryAmount),
+                                  category: newMonthlyCategoryType || "Autre"
+                                }).eq("id", editingExpenseId);
+                                await fetchMonthlyBudget();
+                                setShowExpenseDialog(false);
+                                toast({ title: "Dépense modifiée" });
+                              } catch (error) {
+                                toast({ variant: "destructive", title: "Erreur" });
+                              }
+                            }}>
+                              Enregistrer
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
 
                       {/* Total */}
                       <div className="pt-4 border-t">
