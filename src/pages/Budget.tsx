@@ -203,15 +203,44 @@ const Budget = () => {
 
   const fetchYearlyDetailed = async () => {
     try {
-      const { data, error } = await supabase
-        .from("budget_monthly")
-        .select("*")
-        .eq("user_id", user?.id)
-        .eq("year", selectedYear)
-        .order("month", { ascending: true });
+      // Fetch all monthly data for the year from source tables
+      const [salariesRes, revenusRes, expensesRes, budgetRes] = await Promise.all([
+        supabase.from("monthly_salaries").select("month, net").eq("user_id", user?.id).eq("year", selectedYear),
+        supabase.from("monthly_other_revenues").select("month, montant").eq("user_id", user?.id).eq("year", selectedYear),
+        supabase.from("monthly_expense_categories").select("month, amount").eq("user_id", user?.id).eq("year", selectedYear),
+        supabase.from("budget_monthly").select("month, reste_mois_precedent").eq("user_id", user?.id).eq("year", selectedYear)
+      ]);
 
-      if (error) throw error;
-      setYearlyData(data || []);
+      // Calculate totals per month
+      const monthlyTotals = months.map(m => {
+        const salairesTotal = (salariesRes.data || [])
+          .filter(s => s.month === m.value)
+          .reduce((sum, s) => sum + (parseFloat(s.net?.toString()) || 0), 0);
+        
+        const autresRevenusTotal = (revenusRes.data || [])
+          .filter(r => r.month === m.value)
+          .reduce((sum, r) => sum + (parseFloat(r.montant?.toString()) || 0), 0);
+        
+        const expensesTotal = (expensesRes.data || [])
+          .filter(e => e.month === m.value)
+          .reduce((sum, e) => sum + (parseFloat(e.amount?.toString()) || 0), 0);
+        
+        const budgetData = (budgetRes.data || []).find(b => b.month === m.value);
+        const epargne = parseFloat(budgetData?.reste_mois_precedent?.toString() || "0") || 0;
+        
+        const totalRevenus = salairesTotal + autresRevenusTotal;
+        const totalSorties = expensesTotal;
+        const totalRestant = epargne + totalRevenus - totalSorties;
+
+        return {
+          month: m.value,
+          total_revenus: totalRevenus,
+          total_sorties: totalSorties,
+          total_restant: totalRestant
+        };
+      });
+
+      setYearlyData(monthlyTotals);
     } catch (err) {
       console.error("Erreur chargement année détaillée:", err);
     }
