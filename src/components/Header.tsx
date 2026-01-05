@@ -42,15 +42,17 @@ const Header = () => {
       navigate("/");
     }
   };
-  return <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+  return <header className="border-b border-border/50 glass-strong sticky top-0 z-50">
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <img src={adminLogo} alt="Admin Logo" className="h-12 w-12 object-contain" />
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity group">
+            <div className="relative">
+              <img src={adminLogo} alt="Admin Logo" className="h-10 w-10 object-contain" />
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
             <div>
-              <h1 className="text-xl font-bold text-foreground">admin.</h1>
-              <p className="text-xs text-muted-foreground">Plateforme d'administration</p>
+              <h1 className="text-lg font-bold text-foreground">admin<span className="text-primary">.</span></h1>
             </div>
           </Link>
 
@@ -157,16 +159,19 @@ const Header = () => {
 
           {/* Account Button/Menu - Desktop */}
           <div className="hidden lg:flex items-center">
-            {loading ? <Button disabled className="bg-gradient-to-r from-bronze to-bronze-light">
+            {loading ? (
+              <Button disabled className="bg-primary/50">
                 Chargement...
-              </Button> : user ? <DropdownMenu>
+              </Button>
+            ) : user ? (
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
+                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium">
                     Mon compte
                     <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-card border-border z-50">
+                <DropdownMenuContent align="end" className="w-56 glass-strong border-border z-50">
                   <DropdownMenuItem asChild>
                     <Link to="/profil" className="flex items-center cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
@@ -191,10 +196,10 @@ const Header = () => {
                       <DropdownMenuItem asChild>
                         <Link 
                           to="/admin" 
-                          className="flex items-center cursor-pointer bg-gradient-to-r from-accent/20 to-accent/10 hover:from-accent/30 hover:to-accent/20 transition-all duration-300 animate-fade-in rounded-sm"
+                          className="flex items-center cursor-pointer bg-gradient-to-r from-primary/20 to-primary/10 hover:from-primary/30 hover:to-primary/20 transition-all duration-300 rounded-sm"
                         >
-                          <Shield className="mr-2 h-4 w-4 text-accent" />
-                          <span className="font-semibold text-accent">Administration</span>
+                          <Shield className="mr-2 h-4 w-4 text-primary" />
+                          <span className="font-semibold text-primary">Administration</span>
                         </Link>
                       </DropdownMenuItem>
                     </>
@@ -205,11 +210,14 @@ const Header = () => {
                     <span>Se déconnecter</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu> : <Link to="/login">
-                <Button className="bg-gradient-to-r from-bronze to-bronze-light hover:from-bronze-dark hover:to-bronze">
-                  Connexion / Inscription
+              </DropdownMenu>
+            ) : (
+              <Link to="/login">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium">
+                  Connexion
                 </Button>
-              </Link>}
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu */}
