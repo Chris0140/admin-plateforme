@@ -4,30 +4,46 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ChevronDown, Save, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { 
+  ChevronDown, 
+  Save, 
+  Plus, 
+  Trash2, 
+  ChevronLeft, 
+  ChevronRight,
+  Calendar,
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  PiggyBank,
+  Receipt,
+  ArrowUpRight,
+  ArrowDownRight,
+  Sparkles
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 type BudgetMode = "mensuel" | "annuel" | "yearly-detailed";
 
 const months = [
-  { value: 1, label: "Janvier" },
-  { value: 2, label: "Février" },
-  { value: 3, label: "Mars" },
-  { value: 4, label: "Avril" },
-  { value: 5, label: "Mai" },
-  { value: 6, label: "Juin" },
-  { value: 7, label: "Juillet" },
-  { value: 8, label: "Août" },
-  { value: 9, label: "Septembre" },
-  { value: 10, label: "Octobre" },
-  { value: 11, label: "Novembre" },
-  { value: 12, label: "Décembre" },
+  { value: 1, label: "Janvier", short: "Jan" },
+  { value: 2, label: "Février", short: "Fév" },
+  { value: 3, label: "Mars", short: "Mar" },
+  { value: 4, label: "Avril", short: "Avr" },
+  { value: 5, label: "Mai", short: "Mai" },
+  { value: 6, label: "Juin", short: "Juin" },
+  { value: 7, label: "Juillet", short: "Juil" },
+  { value: 8, label: "Août", short: "Août" },
+  { value: 9, label: "Septembre", short: "Sep" },
+  { value: 10, label: "Octobre", short: "Oct" },
+  { value: 11, label: "Novembre", short: "Nov" },
+  { value: 12, label: "Décembre", short: "Déc" },
 ];
 
 const Budget = () => {
@@ -80,7 +96,7 @@ const Budget = () => {
     if (!user) return;
     if (mode === "mensuel") {
       fetchMonthlyBudget();
-      setSelectedMonths([selectedMonth]); // Reset selected months when changing month
+      setSelectedMonths([selectedMonth]);
     } else if (mode === "annuel") {
       fetchAnnualProjection();
     } else if (mode === "yearly-detailed") {
@@ -100,7 +116,6 @@ const Budget = () => {
 
       if (error && error.code !== "PGRST116") throw error;
 
-      // Load monthly categories
       const { data: categoriesData, error: categoriesError } = await supabase
         .from("monthly_expense_categories")
         .select("*")
@@ -115,9 +130,8 @@ const Budget = () => {
       if (data) {
         setResteMoisPrecedent(data.reste_mois_precedent?.toString() || "");
         setSalaireNet(data.salaire_net?.toString() || "");
-        // Try to extract charges from existing data if available
         const netSalary = data.salaire_net || 0;
-        const brutEstimate = netSalary * 1.15; // rough estimate if not stored
+        const brutEstimate = netSalary * 1.15;
         setSalaireBrut(brutEstimate.toString());
         setChargesSociales((brutEstimate - netSalary).toString());
         setAutresRevenus(data.autres_revenus?.toString() || "");
@@ -316,491 +330,76 @@ const Budget = () => {
       maximumFractionDigits: 0,
     }).format(isNaN(value) ? 0 : value);
 
+  const modeButtons = [
+    { id: "mensuel" as BudgetMode, label: "Mensuel", icon: Calendar, description: "Suivi détaillé" },
+    { id: "yearly-detailed" as BudgetMode, label: "Année", icon: TrendingUp, description: "Vue complète" },
+    { id: "annuel" as BudgetMode, label: "Projection", icon: Sparkles, description: "Prévisionnel" },
+  ];
+
   return (
-    <AppLayout title="Gestion de Budget" subtitle="Suivez votre budget mois par mois ou faites une projection annuelle simple">
-      <div className="max-w-6xl mx-auto">
-
-          <div className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="w-full md:w-auto">
-              <Button
-                variant="default"
-                onClick={() => setMode("annuel")}
-                className={`w-full md:w-auto px-6 ${mode === "annuel" ? "" : "opacity-70"}`}
-              >
-                Projection annuelle simple
-              </Button>
-            </div>
-            
-            <div className="flex gap-2">
-              <Button
-                variant="default"
-                onClick={() => setMode("mensuel")}
-                className={`px-6 ${mode === "mensuel" ? "" : "opacity-70"}`}
-              >
-                Suivi mensuel détaillé
-              </Button>
-              <Button
-                variant="default"
-                onClick={() => setMode("yearly-detailed")}
-                className={`px-6 ${mode === "yearly-detailed" ? "" : "opacity-70"}`}
-              >
-                Année en cours
-              </Button>
-            </div>
+    <AppLayout title="Budget" subtitle="Gérez vos finances avec précision">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
+        {/* Mode Switcher - Modern Pill Design */}
+        <div className="flex justify-center">
+          <div className="inline-flex items-center gap-2 p-1.5 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 shadow-lg">
+            {modeButtons.map((btn) => {
+              const Icon = btn.icon;
+              const isActive = mode === btn.id;
+              return (
+                <button
+                  key={btn.id}
+                  onClick={() => setMode(btn.id)}
+                  className={cn(
+                    "relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
+                    isActive 
+                      ? "bg-primary text-primary-foreground shadow-md" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <Icon className={cn("h-4 w-4", isActive && "animate-pulse")} />
+                  <span className="hidden sm:inline">{btn.label}</span>
+                </button>
+              );
+            })}
           </div>
+        </div>
 
-          {mode === "mensuel" && (
-            <div className="space-y-6">
-              <div className="flex flex-col md:flex-row gap-4 mb-4">
-                <div className="w-full md:w-1/2">
-                  <Label>Année</Label>
-                  <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
-                        <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="w-full md:w-1/2">
-                  <Label>Mois</Label>
-                  <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {months.map((m) => (
-                        <SelectItem key={m.value} value={m.value.toString()}>{m.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen} className="md:contents">
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>Entrées</CardTitle>
-                          <CardDescription>Reste + revenus du mois</CardDescription>
-                        </div>
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="sm" className="md:hidden">
-                            <ChevronDown className={`h-4 w-4 transition-transform ${revenusOpen ? "rotate-180" : ""}`} />
-                          </Button>
-                        </CollapsibleTrigger>
-                      </div>
-                    </CardHeader>
-                    <CollapsibleContent>
-                      <CardContent className="space-y-4">
-                        <div>
-                          <Label htmlFor="resteMoisPrecedent">État du compte/ Épargne du mois avant salaire</Label>
-                          <Input id="resteMoisPrecedent" type="number" value={resteMoisPrecedent} onChange={(e) => setResteMoisPrecedent(e.target.value)} placeholder="Ex: 500" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="salaireNet">Salaire net</Label>
-                          <Dialog open={showSalaryDialog} onOpenChange={setShowSalaryDialog}>
-                            <DialogTrigger asChild>
-                              <Button variant="outline" className="w-full">
-                                <Plus className="h-4 w-4 mr-1" />
-                                Ajouter salaire
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>Détails du salaire</DialogTitle>
-                                <DialogDescription>
-                                  Entrez les détails de votre salaire
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4 py-4">
-                                <div>
-                                  <Label htmlFor="salaireBrut">Salaire brut</Label>
-                                  <Input
-                                    id="salaireBrut"
-                                    type="number"
-                                    value={salaireBrut}
-                                    onChange={(e) => {
-                                      setSalaireBrut(e.target.value);
-                                      const brut = parseFloat(e.target.value) || 0;
-                                      const charges = parseFloat(chargesSociales) || 0;
-                                      setSalaireNet((brut - charges).toString());
-                                    }}
-                                    placeholder="Ex: 8'000"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="chargesSociales">Charges sociales</Label>
-                                  <Input
-                                    id="chargesSociales"
-                                    type="number"
-                                    value={chargesSociales}
-                                    onChange={(e) => {
-                                      setChargesSociales(e.target.value);
-                                      const brut = parseFloat(salaireBrut) || 0;
-                                      const charges = parseFloat(e.target.value) || 0;
-                                      setSalaireNet((brut - charges).toString());
-                                    }}
-                                    placeholder="Ex: 1'200"
-                                  />
-                                </div>
-                                <div>
-                                  <Label htmlFor="salaireNetDialog">Salaire net</Label>
-                                  <Input
-                                    id="salaireNetDialog"
-                                    type="number"
-                                    value={salaireNet}
-                                    onChange={(e) => setSalaireNet(e.target.value)}
-                                    placeholder="Ex: 6'800"
-                                  />
-                                </div>
-                              </div>
-                              <DialogFooter>
-                                <Button onClick={() => setShowSalaryDialog(false)}>
-                                  Enregistrer
-                                </Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
-                          {parseFloat(salaireNet) > 0 && parseFloat(chargesSociales) > 0 && (
-                            <div className="text-xs text-muted-foreground space-y-0.5 pt-1">
-                              <div>Salaire net: {formatCurrency(parseFloat(salaireNet))}</div>
-                              <div>Charges sociales: {formatCurrency(parseFloat(chargesSociales))}</div>
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <Label htmlFor="autresRevenus">Autres revenus</Label>
-                          <Input id="autresRevenus" type="number" value={autresRevenus} onChange={(e) => setAutresRevenus(e.target.value)} placeholder="Ex: 200" />
-                        </div>
-                        <div className="pt-4 border-t space-y-1">
-                          <p className="text-sm text-muted-foreground">Total revenus du mois</p>
-                          <p className="text-2xl font-bold text-primary">{formatCurrency(mTotalRevenus)}</p>
-                        </div>
-                      </CardContent>
-                    </CollapsibleContent>
-                  </Card>
-                </Collapsible>
-
-                <Collapsible open={depensesOpen} onOpenChange={setDepensesOpen} className="md:contents">
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>Sorties</CardTitle>
-                          <CardDescription>Dépenses du mois</CardDescription>
-                        </div>
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="sm" className="md:hidden">
-                            <ChevronDown className={`h-4 w-4 transition-transform ${depensesOpen ? "rotate-180" : ""}`} />
-                          </Button>
-                        </CollapsibleTrigger>
-                      </div>
-                    </CardHeader>
-                    <CollapsibleContent>
-                      <CardContent className="space-y-4">
-                        {/* Catégories de dépenses */}
-                        {monthlyCategories.length > 0 && (
-                          <div className="space-y-3">
-                            <p className="text-sm font-medium">Catégories de dépenses</p>
-                            {monthlyCategories.map((cat) => (
-                              <div
-                                key={cat.id}
-                                className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-md"
-                              >
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium">{cat.name}</p>
-                                  <p className="text-xs text-muted-foreground">{cat.category}</p>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-semibold">
-                                    {formatCurrency(parseFloat(cat.amount) || 0)}
-                                  </p>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={async () => {
-                                      try {
-                                        await supabase
-                                          .from("monthly_expense_categories")
-                                          .delete()
-                                          .eq("id", cat.id);
-                                        setMonthlyCategories(monthlyCategories.filter((c) => c.id !== cat.id));
-                                        toast({
-                                          title: "Catégorie supprimée",
-                                          description: "La catégorie a été supprimée avec succès",
-                                        });
-                                      } catch (error) {
-                                        console.error(error);
-                                        toast({
-                                          variant: "destructive",
-                                          title: "Erreur",
-                                          description: "Impossible de supprimer la catégorie",
-                                        });
-                                      }
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Formulaire ajout catégorie */}
-                        {showAddMonthlyCategory ? (
-                          <div className="pt-4 border-t space-y-3">
-                            <p className="text-sm font-medium">Nouvelle dépense</p>
-                            <div>
-                              <Label htmlFor="newMonthlyCategoryName">Nom</Label>
-                              <Input
-                                id="newMonthlyCategoryName"
-                                placeholder="Ex: Loisirs"
-                                value={newMonthlyCategoryName}
-                                onChange={(e) => setNewMonthlyCategoryName(e.target.value)}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="newMonthlyCategoryType">Type</Label>
-                              <Input
-                                id="newMonthlyCategoryType"
-                                placeholder="Ex: Sorties"
-                                value={newMonthlyCategoryType}
-                                onChange={(e) => setNewMonthlyCategoryType(e.target.value)}
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="newMonthlyCategoryAmount">Montant (CHF)</Label>
-                              <Input
-                                id="newMonthlyCategoryAmount"
-                                type="number"
-                                placeholder="100"
-                                value={newMonthlyCategoryAmount}
-                                onChange={(e) => setNewMonthlyCategoryAmount(e.target.value)}
-                              />
-                            </div>
-                            
-                            <div>
-                              <div className="flex items-center justify-between mb-2">
-                                <Label>Appliquer aux mois</Label>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (selectedMonths.length === 12) {
-                                      setSelectedMonths([selectedMonth]);
-                                    } else {
-                                      setSelectedMonths([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-                                    }
-                                  }}
-                                >
-                                  {selectedMonths.length === 12 ? "Désélectionner tout" : "Tous les mois"}
-                                </Button>
-                              </div>
-                              <div className="grid grid-cols-3 gap-2">
-                                {months.map((m) => (
-                                  <label
-                                    key={m.value}
-                                    className="flex items-center space-x-2 cursor-pointer p-2 rounded hover:bg-muted/50"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedMonths.includes(m.value)}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setSelectedMonths([...selectedMonths, m.value]);
-                                        } else {
-                                          setSelectedMonths(selectedMonths.filter((month) => month !== m.value));
-                                        }
-                                      }}
-                                      className="rounded border-input"
-                                    />
-                                    <span className="text-sm">{m.label}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            </div>
-                            
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={async () => {
-                                  if (!newMonthlyCategoryName || !newMonthlyCategoryAmount) {
-                                    toast({
-                                      variant: "destructive",
-                                      title: "Erreur",
-                                      description: "Veuillez remplir tous les champs",
-                                    });
-                                    return;
-                                  }
-                                  if (selectedMonths.length === 0) {
-                                    toast({
-                                      variant: "destructive",
-                                      title: "Erreur",
-                                      description: "Veuillez sélectionner au moins un mois",
-                                    });
-                                    return;
-                                  }
-                                  try {
-                                    const insertPromises = selectedMonths.map((month) =>
-                                      supabase
-                                        .from("monthly_expense_categories")
-                                        .insert({
-                                          user_id: user?.id,
-                                          year: selectedYear,
-                                          month: month,
-                                          name: newMonthlyCategoryName,
-                                          category: newMonthlyCategoryType || "Autre",
-                                          amount: parseFloat(newMonthlyCategoryAmount),
-                                        })
-                                    );
-
-                                    await Promise.all(insertPromises);
-
-                                    // Refresh current month categories if one of the selected months is current
-                                    if (selectedMonths.includes(selectedMonth)) {
-                                      await fetchMonthlyBudget();
-                                    }
-
-                                    setNewMonthlyCategoryName("");
-                                    setNewMonthlyCategoryType("");
-                                    setNewMonthlyCategoryAmount("");
-                                    setSelectedMonths([selectedMonth]);
-                                    setShowAddMonthlyCategory(false);
-                                    toast({
-                                      title: "Dépense ajoutée",
-                                      description: `La dépense a été ajoutée à ${selectedMonths.length} mois`,
-                                    });
-                                  } catch (error) {
-                                    console.error(error);
-                                    toast({
-                                      variant: "destructive",
-                                      title: "Erreur",
-                                      description: "Impossible d'ajouter la dépense",
-                                    });
-                                  }
-                                }}
-                              >
-                                Ajouter
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setShowAddMonthlyCategory(false);
-                                  setNewMonthlyCategoryName("");
-                                  setNewMonthlyCategoryType("");
-                                  setNewMonthlyCategoryAmount("");
-                                  setSelectedMonths([selectedMonth]);
-                                }}
-                              >
-                                Annuler
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full gap-2"
-                            onClick={() => setShowAddMonthlyCategory(true)}
-                          >
-                            <Plus className="h-4 w-4" />
-                            Ajouter une dépense
-                          </Button>
-                        )}
-
-                        <div className="pt-4 border-t space-y-1">
-                          <p className="text-sm text-muted-foreground">Total sorties du mois</p>
-                          <p className="text-2xl font-bold text-primary">{formatCurrency(mTotalSorties)}</p>
-                        </div>
-                      </CardContent>
-                    </CollapsibleContent>
-                  </Card>
-                </Collapsible>
-              </div>
-
-              {user && (
-                <div className="flex justify-center items-center gap-4 mb-4">
-                  <Button
-                    onClick={() => {
-                      if (selectedMonth === 1) {
-                        setSelectedMonth(12);
-                        setSelectedYear(selectedYear - 1);
-                      } else {
-                        setSelectedMonth(selectedMonth - 1);
-                      }
-                    }}
-                    variant="outline"
-                    size="icon"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  
-                  <Button onClick={saveMonthlyBudget} disabled={isLoading} className="gap-2">
-                    <Save className="h-4 w-4" />
-                    Enregistrer le mois
-                  </Button>
-                  
-                  <Button
-                    onClick={() => {
-                      if (selectedMonth === 12) {
-                        setSelectedMonth(1);
-                        setSelectedYear(selectedYear + 1);
-                      } else {
-                        setSelectedMonth(selectedMonth + 1);
-                      }
-                    }}
-                    variant="outline"
-                    size="icon"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    Résumé du mois - {months.find(m => m.value === selectedMonth)?.label} {selectedYear}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-4 gap-4">
-                    <div className="p-4 bg-muted rounded-lg text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Reste mois précédent</p>
-                      <p className="text-xl font-semibold">{formatCurrency(mReste)}</p>
-                    </div>
-                    <div className="p-4 bg-muted rounded-lg text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Total revenus</p>
-                      <p className="text-xl font-semibold">{formatCurrency(mTotalRevenus)}</p>
-                    </div>
-                    <div className="p-4 bg-muted rounded-lg text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Total sorties</p>
-                      <p className="text-xl font-semibold">{formatCurrency(mTotalSorties)}</p>
-                    </div>
-                    <div className="p-4 bg-muted rounded-lg text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Total restant</p>
-                      <p className={`text-xl font-bold ${mTotalRestant >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {formatCurrency(mTotalRestant)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {mode === "yearly-detailed" && (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Année {selectedYear}</h2>
+        {/* Monthly Mode */}
+        {mode === "mensuel" && (
+          <div className="space-y-6 animate-fade-in">
+            {/* Month/Year Selector - Compact Design */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button
+                onClick={() => {
+                  if (selectedMonth === 1) {
+                    setSelectedMonth(12);
+                    setSelectedYear(selectedYear - 1);
+                  } else {
+                    setSelectedMonth(selectedMonth - 1);
+                  }
+                }}
+                variant="ghost"
+                size="icon"
+                className="rounded-full h-10 w-10 border border-border/50 hover:bg-primary/10 hover:border-primary/50"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              
+              <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
+                <Calendar className="h-5 w-5 text-primary" />
+                <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+                  <SelectTrigger className="w-28 border-0 bg-transparent shadow-none focus:ring-0">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {months.map((m) => (
+                      <SelectItem key={m.value} value={m.value.toString()}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-20 border-0 bg-transparent shadow-none focus:ring-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -810,280 +409,813 @@ const Budget = () => {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="grid md:grid-cols-3 gap-6 mb-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Revenus annuels</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-primary">
-                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_revenus || 0), 0))}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Dépenses annuelles</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-3xl font-bold text-primary">
-                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_sorties || 0), 0))}
-                    </p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Solde annuel</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className={`text-3xl font-bold ${
-                      yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 
-                        ? 'text-green-600' 
-                        : 'text-red-600'
-                    }`}>
-                      {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0))}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Récapitulatif des mois de {selectedYear}</CardTitle>
-                  <CardDescription>Données réelles enregistrées par mois</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-3 px-2 font-semibold text-sm">Mois</th>
-                          <th className="text-right py-3 px-2 font-semibold text-sm">Revenus</th>
-                          <th className="text-right py-3 px-2 font-semibold text-sm">Sorties</th>
-                          <th className="text-right py-3 px-2 font-semibold text-sm">Solde</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {months.map((month) => {
-                          const monthData = yearlyData.find(d => d.month === month.value);
-                          const revenus = monthData?.total_revenus || 0;
-                          const sorties = monthData?.total_sorties || 0;
-                          const solde = monthData?.total_restant || 0;
-                          
-                          return (
-                            <tr key={month.value} className="border-b hover:bg-muted/50">
-                              <td className="py-3 px-2 text-sm">{month.label}</td>
-                              <td className="text-right py-3 px-2 text-sm">{formatCurrency(revenus)}</td>
-                              <td className="text-right py-3 px-2 text-sm">{formatCurrency(sorties)}</td>
-                              <td className={`text-right py-3 px-2 text-sm font-semibold ${solde >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {formatCurrency(solde)}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                        <tr className="font-bold border-t-2">
-                          <td className="py-3 px-2 text-sm">Total</td>
-                          <td className="text-right py-3 px-2 text-sm">
-                            {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_revenus || 0), 0))}
-                          </td>
-                          <td className="text-right py-3 px-2 text-sm">
-                            {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_sorties || 0), 0))}
-                          </td>
-                          <td className={`text-right py-3 px-2 text-sm ${
-                            yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 
-                              ? 'text-green-600' 
-                              : 'text-red-600'
-                          }`}>
-                            {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0))}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
+              
+              <Button
+                onClick={() => {
+                  if (selectedMonth === 12) {
+                    setSelectedMonth(1);
+                    setSelectedYear(selectedYear + 1);
+                  } else {
+                    setSelectedMonth(selectedMonth + 1);
+                  }
+                }}
+                variant="ghost"
+                size="icon"
+                className="rounded-full h-10 w-10 border border-border/50 hover:bg-primary/10 hover:border-primary/50"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
             </div>
-          )}
 
-          {mode === "annuel" && (
-            <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen} className="md:contents">
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>Revenus annuels</CardTitle>
-                          <CardDescription>Projection sur l'année</CardDescription>
+            {/* Summary Cards - Top */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/5 border border-blue-500/20 p-5 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Report</p>
+                    <p className="text-2xl font-bold">{formatCurrency(mReste)}</p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-blue-500/20">
+                    <Wallet className="h-5 w-5 text-blue-400" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 p-5 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/10">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Revenus</p>
+                    <p className="text-2xl font-bold text-emerald-400">{formatCurrency(mTotalRevenus)}</p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-emerald-500/20">
+                    <ArrowUpRight className="h-5 w-5 text-emerald-400" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-500/10 to-rose-600/5 border border-rose-500/20 p-5 transition-all duration-300 hover:shadow-lg hover:shadow-rose-500/10">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Dépenses</p>
+                    <p className="text-2xl font-bold text-rose-400">{formatCurrency(mTotalSorties)}</p>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-rose-500/20">
+                    <ArrowDownRight className="h-5 w-5 text-rose-400" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className={cn(
+                "group relative overflow-hidden rounded-2xl p-5 transition-all duration-300",
+                mTotalRestant >= 0 
+                  ? "bg-gradient-to-br from-primary/10 to-amber-500/5 border border-primary/20 hover:shadow-lg hover:shadow-primary/10"
+                  : "bg-gradient-to-br from-red-500/10 to-red-600/5 border border-red-500/20 hover:shadow-lg hover:shadow-red-500/10"
+              )}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Solde</p>
+                    <p className={cn(
+                      "text-2xl font-bold",
+                      mTotalRestant >= 0 ? "text-primary" : "text-red-400"
+                    )}>{formatCurrency(mTotalRestant)}</p>
+                  </div>
+                  <div className={cn(
+                    "p-2.5 rounded-xl",
+                    mTotalRestant >= 0 ? "bg-primary/20" : "bg-red-500/20"
+                  )}>
+                    <PiggyBank className={cn(
+                      "h-5 w-5",
+                      mTotalRestant >= 0 ? "text-primary" : "text-red-400"
+                    )} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Input Cards */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Revenus Card */}
+              <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen}>
+                <Card className="overflow-hidden border-emerald-500/20 bg-gradient-to-br from-card to-emerald-500/5">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-emerald-500/20">
+                          <TrendingUp className="h-5 w-5 text-emerald-400" />
                         </div>
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="sm" className="md:hidden">
-                            <ChevronDown className={`h-4 w-4 transition-transform ${revenusOpen ? "rotate-180" : ""}`} />
-                          </Button>
-                        </CollapsibleTrigger>
+                        <div>
+                          <CardTitle className="text-lg">Entrées</CardTitle>
+                          <CardDescription>Revenus du mois</CardDescription>
+                        </div>
                       </div>
-                    </CardHeader>
-                    <CollapsibleContent>
-                      <CardContent className="space-y-4">
-                        <div>
-                          <Label htmlFor="revenuBrutAnnuel">Revenu brut annuel</Label>
-                          <Input id="revenuBrutAnnuel" type="number" value={revenuBrutAnnuel} onChange={(e) => setRevenuBrutAnnuel(e.target.value)} placeholder="Ex: 82'000" />
-                        </div>
-                        <div>
-                          <Label htmlFor="chargesSocialesAnnuel">Charges sociales annuelles</Label>
-                          <Input id="chargesSocialesAnnuel" type="number" value={chargesSocialesAnnuel} onChange={(e) => setChargesSocialesAnnuel(e.target.value)} placeholder="AVS, LPP, etc." />
-                        </div>
-                        <div className="pt-4 border-t space-y-1">
-                          <p className="text-sm text-muted-foreground">Revenu net annuel</p>
-                          <p className="text-2xl font-bold text-primary">{formatCurrency(annualRevenuNet)}</p>
-                        </div>
-                      </CardContent>
-                    </CollapsibleContent>
-                  </Card>
-                </Collapsible>
-
-                <Collapsible open={depensesOpen} onOpenChange={setDepensesOpen} className="md:contents">
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>Dépenses annuelles</CardTitle>
-                          <CardDescription>Par grandes catégories</CardDescription>
-                        </div>
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="sm" className="md:hidden">
-                            <ChevronDown className={`h-4 w-4 transition-transform ${depensesOpen ? "rotate-180" : ""}`} />
-                          </Button>
-                        </CollapsibleTrigger>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="rounded-full">
+                          <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", revenusOpen && "rotate-180")} />
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
+                  </CardHeader>
+                  <CollapsibleContent>
+                    <CardContent className="space-y-4 pt-0">
+                      <div className="space-y-2">
+                        <Label htmlFor="resteMoisPrecedent" className="text-sm text-muted-foreground">Report mois précédent</Label>
+                        <Input 
+                          id="resteMoisPrecedent" 
+                          type="number" 
+                          value={resteMoisPrecedent} 
+                          onChange={(e) => setResteMoisPrecedent(e.target.value)} 
+                          placeholder="0" 
+                          className="bg-background/50"
+                        />
                       </div>
-                    </CardHeader>
-                    <CollapsibleContent>
-                      <CardContent className="space-y-4">
-                        <div>
-                          <Label htmlFor="depensesAnnuel">Dépenses fixes (annuel)</Label>
-                          <Input id="depensesAnnuel" type="number" value={depensesAnnuel} onChange={(e) => setDepensesAnnuel(e.target.value)} placeholder="Ex: 50'000" />
+                      
+                      <div className="space-y-2">
+                        <Label className="text-sm text-muted-foreground">Salaire net</Label>
+                        <Dialog open={showSalaryDialog} onOpenChange={setShowSalaryDialog}>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start gap-2 bg-background/50 hover:bg-emerald-500/10 border-dashed">
+                              <Plus className="h-4 w-4 text-emerald-400" />
+                              {parseFloat(salaireNet) > 0 ? formatCurrency(parseFloat(salaireNet)) : "Ajouter salaire"}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Détails du salaire</DialogTitle>
+                              <DialogDescription>Entrez les détails de votre salaire</DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div>
+                                <Label htmlFor="salaireBrut">Salaire brut</Label>
+                                <Input
+                                  id="salaireBrut"
+                                  type="number"
+                                  value={salaireBrut}
+                                  onChange={(e) => {
+                                    setSalaireBrut(e.target.value);
+                                    const brut = parseFloat(e.target.value) || 0;
+                                    const charges = parseFloat(chargesSociales) || 0;
+                                    setSalaireNet((brut - charges).toString());
+                                  }}
+                                  placeholder="8000"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="chargesSociales">Charges sociales</Label>
+                                <Input
+                                  id="chargesSociales"
+                                  type="number"
+                                  value={chargesSociales}
+                                  onChange={(e) => {
+                                    setChargesSociales(e.target.value);
+                                    const brut = parseFloat(salaireBrut) || 0;
+                                    const charges = parseFloat(e.target.value) || 0;
+                                    setSalaireNet((brut - charges).toString());
+                                  }}
+                                  placeholder="1200"
+                                />
+                              </div>
+                              <div>
+                                <Label htmlFor="salaireNetDialog">Salaire net</Label>
+                                <Input
+                                  id="salaireNetDialog"
+                                  type="number"
+                                  value={salaireNet}
+                                  onChange={(e) => setSalaireNet(e.target.value)}
+                                  placeholder="6800"
+                                />
+                              </div>
+                            </div>
+                            <DialogFooter>
+                              <Button onClick={() => setShowSalaryDialog(false)}>Enregistrer</Button>
+                            </DialogFooter>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor="autresRevenus" className="text-sm text-muted-foreground">Autres revenus</Label>
+                        <Input 
+                          id="autresRevenus" 
+                          type="number" 
+                          value={autresRevenus} 
+                          onChange={(e) => setAutresRevenus(e.target.value)} 
+                          placeholder="0" 
+                          className="bg-background/50"
+                        />
+                      </div>
+                      
+                      <div className="pt-4 border-t border-emerald-500/20">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-muted-foreground">Total revenus</p>
+                          <p className="text-2xl font-bold text-emerald-400">{formatCurrency(mTotalRevenus)}</p>
                         </div>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
 
-                        {fixedExpenses.length > 0 && (
-                          <div className="pt-4 border-t space-y-3">
-                            <p className="text-sm font-medium">Dépenses fixes additionnelles</p>
-                            {fixedExpenses.map((exp) => (
-                              <div key={exp.id} className="flex items-center justify-between py-2 px-3 bg-muted/50 rounded-md">
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium">{exp.name}</p>
+              {/* Dépenses Card */}
+              <Collapsible open={depensesOpen} onOpenChange={setDepensesOpen}>
+                <Card className="overflow-hidden border-rose-500/20 bg-gradient-to-br from-card to-rose-500/5">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-rose-500/20">
+                          <TrendingDown className="h-5 w-5 text-rose-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">Sorties</CardTitle>
+                          <CardDescription>Dépenses du mois</CardDescription>
+                        </div>
+                      </div>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="rounded-full">
+                          <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", depensesOpen && "rotate-180")} />
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
+                  </CardHeader>
+                  <CollapsibleContent>
+                    <CardContent className="space-y-4 pt-0">
+                      {monthlyCategories.length > 0 && (
+                        <div className="space-y-2">
+                          {monthlyCategories.map((cat) => (
+                            <div
+                              key={cat.id}
+                              className="group flex items-center justify-between py-3 px-4 rounded-xl bg-background/50 border border-border/50 hover:border-rose-500/30 transition-all"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="p-1.5 rounded-lg bg-rose-500/10">
+                                  <Receipt className="h-4 w-4 text-rose-400" />
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-semibold">{formatCurrency(exp.amount || 0)}</p>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8"
-                                    onClick={async () => {
-                                      try {
-                                        await supabase.from("fixed_expenses").delete().eq("id", exp.id);
-                                        setFixedExpenses(fixedExpenses.filter((e) => e.id !== exp.id));
-                                        toast({ title: "Dépense supprimée" });
-                                      } catch (err) {
-                                        toast({ variant: "destructive", title: "Erreur" });
-                                      }
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                <div>
+                                  <p className="text-sm font-medium">{cat.name}</p>
+                                  <p className="text-xs text-muted-foreground">{cat.category}</p>
                                 </div>
                               </div>
-                            ))}
-                          </div>
-                        )}
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold">{formatCurrency(parseFloat(cat.amount) || 0)}</p>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
+                                  onClick={async () => {
+                                    try {
+                                      await supabase.from("monthly_expense_categories").delete().eq("id", cat.id);
+                                      setMonthlyCategories(monthlyCategories.filter((c) => c.id !== cat.id));
+                                      toast({ title: "Catégorie supprimée" });
+                                    } catch (error) {
+                                      toast({ variant: "destructive", title: "Erreur" });
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
-                        {showAddExpense ? (
-                          <div className="pt-4 border-t space-y-3">
-                            <p className="text-sm font-medium">Nouvelle dépense</p>
-                            <div><Label>Nom</Label><Input value={newExpenseName} onChange={(e) => setNewExpenseName(e.target.value)} placeholder="Ex: Netflix" /></div>
-                            <div><Label>Montant annuel</Label><Input type="number" value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} placeholder="Ex: 1200" /></div>
-                            <div className="flex gap-2">
-                              <Button size="sm" onClick={async () => {
-                                if (!newExpenseName || !newExpenseAmount) {
-                                  toast({ variant: "destructive", title: "Erreur", description: "Veuillez remplir tous les champs" });
+                      {showAddMonthlyCategory ? (
+                        <div className="space-y-4 p-4 rounded-xl bg-background/50 border border-dashed border-rose-500/30">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Nom</Label>
+                              <Input
+                                placeholder="Ex: Loisirs"
+                                value={newMonthlyCategoryName}
+                                onChange={(e) => setNewMonthlyCategoryName(e.target.value)}
+                                className="mt-1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Montant</Label>
+                              <Input
+                                type="number"
+                                placeholder="100"
+                                value={newMonthlyCategoryAmount}
+                                onChange={(e) => setNewMonthlyCategoryAmount(e.target.value)}
+                                className="mt-1"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-xs">Type (optionnel)</Label>
+                            <Input
+                              placeholder="Ex: Sorties"
+                              value={newMonthlyCategoryType}
+                              onChange={(e) => setNewMonthlyCategoryType(e.target.value)}
+                              className="mt-1"
+                            />
+                          </div>
+                          
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <Label className="text-xs">Appliquer aux mois</Label>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 text-xs"
+                                onClick={() => {
+                                  if (selectedMonths.length === 12) {
+                                    setSelectedMonths([selectedMonth]);
+                                  } else {
+                                    setSelectedMonths([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                                  }
+                                }}
+                              >
+                                {selectedMonths.length === 12 ? "Aucun" : "Tous"}
+                              </Button>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {months.map((m) => (
+                                <button
+                                  key={m.value}
+                                  type="button"
+                                  onClick={() => {
+                                    if (selectedMonths.includes(m.value)) {
+                                      setSelectedMonths(selectedMonths.filter((month) => month !== m.value));
+                                    } else {
+                                      setSelectedMonths([...selectedMonths, m.value]);
+                                    }
+                                  }}
+                                  className={cn(
+                                    "px-2 py-1 text-xs rounded-md transition-all",
+                                    selectedMonths.includes(m.value)
+                                      ? "bg-rose-500/20 text-rose-400 border border-rose-500/30"
+                                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                                  )}
+                                >
+                                  {m.short}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1"
+                              onClick={async () => {
+                                if (!newMonthlyCategoryName || !newMonthlyCategoryAmount) {
+                                  toast({ variant: "destructive", title: "Erreur", description: "Remplissez les champs requis" });
+                                  return;
+                                }
+                                if (selectedMonths.length === 0) {
+                                  toast({ variant: "destructive", title: "Erreur", description: "Sélectionnez au moins un mois" });
                                   return;
                                 }
                                 try {
-                                  const { data } = await supabase.from("fixed_expenses").insert({
-                                    user_id: user?.id,
-                                    name: newExpenseName,
-                                    category: "Autre",
-                                    amount: parseFloat(newExpenseAmount),
-                                    frequency: "annuel",
-                                    is_active: true,
-                                  }).select().single();
-                                  if (data) setFixedExpenses([...fixedExpenses, data]);
-                                  setNewExpenseName("");
-                                  setNewExpenseAmount("");
-                                  setShowAddExpense(false);
-                                  toast({ title: "Dépense ajoutée" });
-                                } catch (err) {
+                                  const insertPromises = selectedMonths.map((month) =>
+                                    supabase.from("monthly_expense_categories").insert({
+                                      user_id: user?.id,
+                                      year: selectedYear,
+                                      month: month,
+                                      name: newMonthlyCategoryName,
+                                      category: newMonthlyCategoryType || "Autre",
+                                      amount: parseFloat(newMonthlyCategoryAmount),
+                                    })
+                                  );
+                                  await Promise.all(insertPromises);
+                                  if (selectedMonths.includes(selectedMonth)) await fetchMonthlyBudget();
+                                  setNewMonthlyCategoryName("");
+                                  setNewMonthlyCategoryType("");
+                                  setNewMonthlyCategoryAmount("");
+                                  setSelectedMonths([selectedMonth]);
+                                  setShowAddMonthlyCategory(false);
+                                  toast({ title: `Dépense ajoutée à ${selectedMonths.length} mois` });
+                                } catch (error) {
                                   toast({ variant: "destructive", title: "Erreur" });
                                 }
-                              }}>Ajouter</Button>
-                              <Button size="sm" variant="outline" onClick={() => {
-                                setShowAddExpense(false);
+                              }}
+                            >
+                              Ajouter
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setShowAddMonthlyCategory(false);
+                                setNewMonthlyCategoryName("");
+                                setNewMonthlyCategoryType("");
+                                setNewMonthlyCategoryAmount("");
+                                setSelectedMonths([selectedMonth]);
+                              }}
+                            >
+                              Annuler
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2 border-dashed border-rose-500/30 hover:bg-rose-500/10 hover:border-rose-500/50"
+                          onClick={() => setShowAddMonthlyCategory(true)}
+                        >
+                          <Plus className="h-4 w-4 text-rose-400" />
+                          Ajouter une dépense
+                        </Button>
+                      )}
+
+                      <div className="pt-4 border-t border-rose-500/20">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-muted-foreground">Total sorties</p>
+                          <p className="text-2xl font-bold text-rose-400">{formatCurrency(mTotalSorties)}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
+            </div>
+
+            {/* Save Button */}
+            {user && (
+              <div className="flex justify-center">
+                <Button 
+                  onClick={saveMonthlyBudget} 
+                  disabled={isLoading} 
+                  size="lg"
+                  className="gap-2 px-8 rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+                >
+                  <Save className="h-4 w-4" />
+                  Enregistrer
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Yearly Detailed Mode */}
+        {mode === "yearly-detailed" && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Calendar className="h-6 w-6 text-primary" />
+                Année {selectedYear}
+              </h2>
+              <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
+                    <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-xl bg-emerald-500/20">
+                    <TrendingUp className="h-5 w-5 text-emerald-400" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Revenus annuels</p>
+                </div>
+                <p className="text-3xl font-bold text-emerald-400">
+                  {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_revenus || 0), 0))}
+                </p>
+              </div>
+              
+              <div className="rounded-2xl bg-gradient-to-br from-rose-500/10 to-rose-600/5 border border-rose-500/20 p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-xl bg-rose-500/20">
+                    <TrendingDown className="h-5 w-5 text-rose-400" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Dépenses annuelles</p>
+                </div>
+                <p className="text-3xl font-bold text-rose-400">
+                  {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_sorties || 0), 0))}
+                </p>
+              </div>
+              
+              <div className={cn(
+                "rounded-2xl p-6 border",
+                yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0
+                  ? "bg-gradient-to-br from-primary/10 to-amber-500/5 border-primary/20"
+                  : "bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/20"
+              )}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={cn(
+                    "p-2 rounded-xl",
+                    yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "bg-primary/20" : "bg-red-500/20"
+                  )}>
+                    <PiggyBank className={cn(
+                      "h-5 w-5",
+                      yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "text-primary" : "text-red-400"
+                    )} />
+                  </div>
+                  <p className="text-sm text-muted-foreground">Solde annuel</p>
+                </div>
+                <p className={cn(
+                  "text-3xl font-bold",
+                  yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "text-primary" : "text-red-400"
+                )}>
+                  {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0))}
+                </p>
+              </div>
+            </div>
+
+            {/* Monthly Table */}
+            <Card className="overflow-hidden">
+              <CardHeader>
+                <CardTitle>Récapitulatif mensuel</CardTitle>
+                <CardDescription>Données enregistrées par mois</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border/50">
+                        <th className="text-left py-3 px-4 font-semibold text-sm">Mois</th>
+                        <th className="text-right py-3 px-4 font-semibold text-sm text-emerald-400">Revenus</th>
+                        <th className="text-right py-3 px-4 font-semibold text-sm text-rose-400">Sorties</th>
+                        <th className="text-right py-3 px-4 font-semibold text-sm">Solde</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {months.map((month) => {
+                        const monthData = yearlyData.find(d => d.month === month.value);
+                        const revenus = monthData?.total_revenus || 0;
+                        const sorties = monthData?.total_sorties || 0;
+                        const solde = monthData?.total_restant || 0;
+                        
+                        return (
+                          <tr key={month.value} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
+                            <td className="py-3 px-4 text-sm font-medium">{month.label}</td>
+                            <td className="text-right py-3 px-4 text-sm">{formatCurrency(revenus)}</td>
+                            <td className="text-right py-3 px-4 text-sm">{formatCurrency(sorties)}</td>
+                            <td className={cn(
+                              "text-right py-3 px-4 text-sm font-semibold",
+                              solde >= 0 ? "text-emerald-400" : "text-red-400"
+                            )}>
+                              {formatCurrency(solde)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      <tr className="font-bold bg-muted/30">
+                        <td className="py-4 px-4 text-sm">Total</td>
+                        <td className="text-right py-4 px-4 text-sm text-emerald-400">
+                          {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_revenus || 0), 0))}
+                        </td>
+                        <td className="text-right py-4 px-4 text-sm text-rose-400">
+                          {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_sorties || 0), 0))}
+                        </td>
+                        <td className={cn(
+                          "text-right py-4 px-4 text-sm",
+                          yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0) >= 0 ? "text-emerald-400" : "text-red-400"
+                        )}>
+                          {formatCurrency(yearlyData.reduce((sum, d) => sum + (d.total_restant || 0), 0))}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Annual Projection Mode */}
+        {mode === "annuel" && (
+          <div className="space-y-6 animate-fade-in">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Revenus Card */}
+              <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen}>
+                <Card className="overflow-hidden border-emerald-500/20 bg-gradient-to-br from-card to-emerald-500/5">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-emerald-500/20">
+                          <TrendingUp className="h-5 w-5 text-emerald-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">Revenus annuels</CardTitle>
+                          <CardDescription>Projection sur l'année</CardDescription>
+                        </div>
+                      </div>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="rounded-full">
+                          <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", revenusOpen && "rotate-180")} />
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
+                  </CardHeader>
+                  <CollapsibleContent>
+                    <CardContent className="space-y-4 pt-0">
+                      <div className="space-y-2">
+                        <Label className="text-sm text-muted-foreground">Revenu brut annuel</Label>
+                        <Input 
+                          type="number" 
+                          value={revenuBrutAnnuel} 
+                          onChange={(e) => setRevenuBrutAnnuel(e.target.value)} 
+                          placeholder="82000" 
+                          className="bg-background/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm text-muted-foreground">Charges sociales annuelles</Label>
+                        <Input 
+                          type="number" 
+                          value={chargesSocialesAnnuel} 
+                          onChange={(e) => setChargesSocialesAnnuel(e.target.value)} 
+                          placeholder="AVS, LPP, etc." 
+                          className="bg-background/50"
+                        />
+                      </div>
+                      <div className="pt-4 border-t border-emerald-500/20">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-muted-foreground">Revenu net annuel</p>
+                          <p className="text-2xl font-bold text-emerald-400">{formatCurrency(annualRevenuNet)}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
+
+              {/* Dépenses Card */}
+              <Collapsible open={depensesOpen} onOpenChange={setDepensesOpen}>
+                <Card className="overflow-hidden border-rose-500/20 bg-gradient-to-br from-card to-rose-500/5">
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-rose-500/20">
+                          <TrendingDown className="h-5 w-5 text-rose-400" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-lg">Dépenses annuelles</CardTitle>
+                          <CardDescription>Par grandes catégories</CardDescription>
+                        </div>
+                      </div>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="rounded-full">
+                          <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", depensesOpen && "rotate-180")} />
+                        </Button>
+                      </CollapsibleTrigger>
+                    </div>
+                  </CardHeader>
+                  <CollapsibleContent>
+                    <CardContent className="space-y-4 pt-0">
+                      <div className="space-y-2">
+                        <Label className="text-sm text-muted-foreground">Dépenses fixes (annuel)</Label>
+                        <Input 
+                          type="number" 
+                          value={depensesAnnuel} 
+                          onChange={(e) => setDepensesAnnuel(e.target.value)} 
+                          placeholder="50000" 
+                          className="bg-background/50"
+                        />
+                      </div>
+
+                      {fixedExpenses.length > 0 && (
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium text-muted-foreground">Dépenses additionnelles</p>
+                          {fixedExpenses.map((exp) => (
+                            <div key={exp.id} className="group flex items-center justify-between py-3 px-4 rounded-xl bg-background/50 border border-border/50 hover:border-rose-500/30 transition-all">
+                              <div className="flex items-center gap-3">
+                                <div className="p-1.5 rounded-lg bg-rose-500/10">
+                                  <Receipt className="h-4 w-4 text-rose-400" />
+                                </div>
+                                <p className="text-sm font-medium">{exp.name}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-semibold">{formatCurrency(exp.amount || 0)}</p>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
+                                  onClick={async () => {
+                                    try {
+                                      await supabase.from("fixed_expenses").delete().eq("id", exp.id);
+                                      setFixedExpenses(fixedExpenses.filter((e) => e.id !== exp.id));
+                                      toast({ title: "Dépense supprimée" });
+                                    } catch (err) {
+                                      toast({ variant: "destructive", title: "Erreur" });
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {showAddExpense ? (
+                        <div className="space-y-3 p-4 rounded-xl bg-background/50 border border-dashed border-rose-500/30">
+                          <div>
+                            <Label className="text-xs">Nom</Label>
+                            <Input value={newExpenseName} onChange={(e) => setNewExpenseName(e.target.value)} placeholder="Ex: Netflix" className="mt-1" />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Montant annuel</Label>
+                            <Input type="number" value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} placeholder="1200" className="mt-1" />
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" className="flex-1" onClick={async () => {
+                              if (!newExpenseName || !newExpenseAmount) {
+                                toast({ variant: "destructive", title: "Erreur", description: "Remplissez les champs" });
+                                return;
+                              }
+                              try {
+                                const { data } = await supabase.from("fixed_expenses").insert({
+                                  user_id: user?.id,
+                                  name: newExpenseName,
+                                  category: "Autre",
+                                  amount: parseFloat(newExpenseAmount),
+                                  frequency: "annuel",
+                                  is_active: true,
+                                }).select().single();
+                                if (data) setFixedExpenses([...fixedExpenses, data]);
                                 setNewExpenseName("");
                                 setNewExpenseAmount("");
-                              }}>Annuler</Button>
-                            </div>
+                                setShowAddExpense(false);
+                                toast({ title: "Dépense ajoutée" });
+                              } catch (err) {
+                                toast({ variant: "destructive", title: "Erreur" });
+                              }
+                            }}>Ajouter</Button>
+                            <Button size="sm" variant="outline" onClick={() => {
+                              setShowAddExpense(false);
+                              setNewExpenseName("");
+                              setNewExpenseAmount("");
+                            }}>Annuler</Button>
                           </div>
-                        ) : (
-                          <Button variant="outline" size="sm" className="w-full gap-2 mt-2" onClick={() => setShowAddExpense(true)}>
-                            <Plus className="h-4 w-4" />
-                            Ajouter une dépense
-                          </Button>
-                        )}
-
-                        <div className="pt-4 border-t space-y-1">
-                          <p className="text-sm text-muted-foreground">Total des dépenses annuelles</p>
-                          <p className="text-2xl font-bold text-primary">{formatCurrency(annualTotalDepenses)}</p>
                         </div>
-                      </CardContent>
-                    </CollapsibleContent>
-                  </Card>
-                </Collapsible>
-              </div>
+                      ) : (
+                        <Button 
+                          variant="outline" 
+                          className="w-full gap-2 border-dashed border-rose-500/30 hover:bg-rose-500/10 hover:border-rose-500/50"
+                          onClick={() => setShowAddExpense(true)}
+                        >
+                          <Plus className="h-4 w-4 text-rose-400" />
+                          Ajouter une dépense
+                        </Button>
+                      )}
 
-              {user && (
-                <div className="flex justify-center mb-4">
-                  <Button onClick={saveAnnualProjection} disabled={isLoading} className="gap-2">
-                    <Save className="h-4 w-4" />
-                    Enregistrer la projection annuelle
-                  </Button>
-                </div>
-              )}
-
-              <Card>
-                <CardHeader><CardTitle>Résumé annuel</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="grid md:grid-cols-3 gap-6">
-                    <div className="p-4 bg-muted rounded-lg text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Revenu net annuel</p>
-                      <p className="text-2xl font-bold">{formatCurrency(annualRevenuNet)}</p>
-                    </div>
-                    <div className="p-4 bg-muted rounded-lg text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Total dépenses annuelles</p>
-                      <p className="text-2xl font-bold">{formatCurrency(annualTotalDepenses)}</p>
-                    </div>
-                    <div className="p-4 bg-muted rounded-lg text-center">
-                      <p className="text-xs text-muted-foreground mb-1">Solde annuel</p>
-                      <p className={`text-2xl font-bold ${annualSolde >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {formatCurrency(annualSolde)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                      <div className="pt-4 border-t border-rose-500/20">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm text-muted-foreground">Total dépenses</p>
+                          <p className="text-2xl font-bold text-rose-400">{formatCurrency(annualTotalDepenses)}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
             </div>
-          )}
-        </div>
-      </AppLayout>
+
+            {/* Save Button */}
+            {user && (
+              <div className="flex justify-center">
+                <Button 
+                  onClick={saveAnnualProjection} 
+                  disabled={isLoading} 
+                  size="lg"
+                  className="gap-2 px-8 rounded-full shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+                >
+                  <Save className="h-4 w-4" />
+                  Enregistrer la projection
+                </Button>
+              </div>
+            )}
+
+            {/* Summary */}
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border border-emerald-500/20 p-6 text-center">
+                <p className="text-sm text-muted-foreground mb-2">Revenu net annuel</p>
+                <p className="text-3xl font-bold text-emerald-400">{formatCurrency(annualRevenuNet)}</p>
+              </div>
+              <div className="rounded-2xl bg-gradient-to-br from-rose-500/10 to-rose-600/5 border border-rose-500/20 p-6 text-center">
+                <p className="text-sm text-muted-foreground mb-2">Total dépenses</p>
+                <p className="text-3xl font-bold text-rose-400">{formatCurrency(annualTotalDepenses)}</p>
+              </div>
+              <div className={cn(
+                "rounded-2xl p-6 text-center border",
+                annualSolde >= 0 
+                  ? "bg-gradient-to-br from-primary/10 to-amber-500/5 border-primary/20"
+                  : "bg-gradient-to-br from-red-500/10 to-red-600/5 border-red-500/20"
+              )}>
+                <p className="text-sm text-muted-foreground mb-2">Solde annuel</p>
+                <p className={cn(
+                  "text-3xl font-bold",
+                  annualSolde >= 0 ? "text-primary" : "text-red-400"
+                )}>{formatCurrency(annualSolde)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </AppLayout>
   );
 };
 
