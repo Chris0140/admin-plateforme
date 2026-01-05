@@ -417,7 +417,7 @@ const Budget = () => {
         
         {/* Mode Switcher - Modern Pill Design */}
         <div className="flex justify-center">
-          <div className="inline-flex items-center gap-2 p-1.5 rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 shadow-lg">
+          <div className="inline-flex items-center gap-1 md:gap-1.5 p-1 md:p-1.5 rounded-xl md:rounded-2xl bg-card/50 backdrop-blur-sm border border-border/50 shadow-lg">
             {modeButtons.map((btn) => {
               const Icon = btn.icon;
               const isActive = mode === btn.id;
@@ -426,14 +426,14 @@ const Budget = () => {
                   key={btn.id}
                   onClick={() => setMode(btn.id)}
                   className={cn(
-                    "relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
+                    "relative flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-lg md:rounded-xl text-xs md:text-sm font-medium transition-all duration-300",
                     isActive 
                       ? "bg-primary text-primary-foreground shadow-md" 
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   )}
                 >
-                  <Icon className={cn("h-4 w-4", isActive && "animate-pulse")} />
-                  <span className="hidden sm:inline">{btn.label}</span>
+                  <Icon className={cn("h-3.5 w-3.5 md:h-4 md:w-4", isActive && "animate-pulse")} />
+                  <span className="hidden xs:inline sm:inline">{btn.label}</span>
                 </button>
               );
             })}
@@ -442,9 +442,9 @@ const Budget = () => {
 
         {/* Monthly Mode */}
         {mode === "mensuel" && (
-          <div className="space-y-6 animate-fade-in">
+          <div className="space-y-4 md:space-y-6 animate-fade-in">
             {/* Month/Year Selector - Compact Design */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex items-center justify-center gap-2 md:gap-4">
               <Button
                 onClick={() => {
                   if (selectedMonth === 1) {
@@ -456,15 +456,15 @@ const Budget = () => {
                 }}
                 variant="ghost"
                 size="icon"
-                className="rounded-full h-10 w-10 border border-border/50 hover:bg-primary/10 hover:border-primary/50"
+                className="rounded-full h-8 w-8 md:h-10 md:w-10 border border-border/50 hover:bg-primary/10 hover:border-primary/50"
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
               
-              <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
-                <Calendar className="h-5 w-5 text-primary" />
+              <div className="flex items-center gap-2 md:gap-3 px-3 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
+                <Calendar className="h-4 w-4 md:h-5 md:w-5 text-primary hidden sm:block" />
                 <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
-                  <SelectTrigger className="w-28 border-0 bg-transparent shadow-none focus:ring-0">
+                  <SelectTrigger className="w-20 md:w-28 border-0 bg-transparent shadow-none focus:ring-0 text-xs md:text-sm h-8 md:h-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -474,7 +474,7 @@ const Budget = () => {
                   </SelectContent>
                 </Select>
                 <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
-                  <SelectTrigger className="w-20 border-0 bg-transparent shadow-none focus:ring-0">
+                  <SelectTrigger className="w-16 md:w-20 border-0 bg-transparent shadow-none focus:ring-0 text-xs md:text-sm h-8 md:h-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -496,70 +496,70 @@ const Budget = () => {
                 }}
                 variant="ghost"
                 size="icon"
-                className="rounded-full h-10 w-10 border border-border/50 hover:bg-primary/10 hover:border-primary/50"
+                className="rounded-full h-8 w-8 md:h-10 md:w-10 border border-border/50 hover:bg-primary/10 hover:border-primary/50"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
             </div>
 
             {/* Summary Cards - Top */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+              <div className="group relative overflow-hidden rounded-xl md:rounded-2xl bg-card border border-border/50 p-3 md:p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Épargne</p>
-                    <p className="text-2xl font-bold">{formatCurrency(mEpargne)}</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">Épargne</p>
+                    <p className="text-lg md:text-2xl font-bold">{formatCurrency(mEpargne)}</p>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-muted">
-                    <Wallet className="h-5 w-5 text-muted-foreground" />
+                  <div className="p-1.5 md:p-2.5 rounded-lg md:rounded-xl bg-muted">
+                    <Wallet className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                   </div>
                 </div>
               </div>
               
-              <div className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
+              <div className="group relative overflow-hidden rounded-xl md:rounded-2xl bg-card border border-border/50 p-3 md:p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Revenus</p>
-                    <p className="text-2xl font-bold text-green-500">{formatCurrency(mTotalRevenus)}</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">Revenus</p>
+                    <p className="text-lg md:text-2xl font-bold text-green-500">{formatCurrency(mTotalRevenus)}</p>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-green-500/10">
-                    <ArrowUpRight className="h-5 w-5 text-green-500" />
+                  <div className="p-1.5 md:p-2.5 rounded-lg md:rounded-xl bg-green-500/10">
+                    <ArrowUpRight className="h-4 w-4 md:h-5 md:w-5 text-green-500" />
                   </div>
                 </div>
               </div>
               
-              <div className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
+              <div className="group relative overflow-hidden rounded-xl md:rounded-2xl bg-card border border-border/50 p-3 md:p-5 transition-all duration-300 hover:shadow-lg hover:border-primary/30">
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Dépenses</p>
-                    <p className="text-2xl font-bold text-red-500">{formatCurrency(mTotalSorties)}</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">Dépenses</p>
+                    <p className="text-lg md:text-2xl font-bold text-red-500">{formatCurrency(mTotalSorties)}</p>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-red-500/10">
-                    <ArrowDownRight className="h-5 w-5 text-red-500" />
+                  <div className="p-1.5 md:p-2.5 rounded-lg md:rounded-xl bg-red-500/10">
+                    <ArrowDownRight className="h-4 w-4 md:h-5 md:w-5 text-red-500" />
                   </div>
                 </div>
               </div>
               
               <div className={cn(
-                "group relative overflow-hidden rounded-2xl p-5 transition-all duration-300 bg-card border",
+                "group relative overflow-hidden rounded-xl md:rounded-2xl p-3 md:p-5 transition-all duration-300 bg-card border",
                 mTotalRestant >= 0 
                   ? "border-green-500/30 hover:shadow-lg hover:shadow-green-500/10"
                   : "border-red-500/30 hover:shadow-lg hover:shadow-red-500/10"
               )}>
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-1">Solde</p>
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-0.5 md:mb-1">Solde</p>
                     <p className={cn(
-                      "text-2xl font-bold",
+                      "text-lg md:text-2xl font-bold",
                       mTotalRestant >= 0 ? "text-green-500" : "text-red-500"
                     )}>{formatCurrency(mTotalRestant)}</p>
                   </div>
                   <div className={cn(
-                    "p-2.5 rounded-xl",
+                    "p-1.5 md:p-2.5 rounded-lg md:rounded-xl",
                     mTotalRestant >= 0 ? "bg-green-500/10" : "bg-red-500/10"
                   )}>
                     <PiggyBank className={cn(
-                      "h-5 w-5",
+                      "h-4 w-4 md:h-5 md:w-5",
                       mTotalRestant >= 0 ? "text-green-500" : "text-red-500"
                     )} />
                   </div>
@@ -568,7 +568,7 @@ const Budget = () => {
             </div>
 
             {/* Input Cards */}
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-4 md:gap-6">
               {/* Revenus Card */}
               <Collapsible open={revenusOpen} onOpenChange={setRevenusOpen}>
                 <Card className="overflow-hidden">
