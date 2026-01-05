@@ -24,6 +24,7 @@ import {
   ArrowDownRight,
   Sparkles
 } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -1890,6 +1891,83 @@ const Budget = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Dynamic Chart */}
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold mb-4 text-muted-foreground">Évolution mensuelle</h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={months.map((month) => {
+                      const monthData = yearlyData.find(d => d.month === month.value);
+                      return {
+                        name: month.short,
+                        revenus: monthData?.total_revenus || 0,
+                        depenses: monthData?.total_sorties || 0,
+                        solde: monthData?.total_restant || 0
+                      };
+                    })}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                    barGap={2}
+                  >
+                    <XAxis 
+                      dataKey="name" 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                    />
+                    <YAxis 
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }}
+                      tickFormatter={(value) => value >= 1000 ? `${(value / 1000).toFixed(0)}k` : value}
+                      width={45}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--popover))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '0.75rem',
+                        boxShadow: 'var(--shadow-card)'
+                      }}
+                      labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: 4 }}
+                      formatter={(value: number, name: string) => [
+                        formatCurrency(value),
+                        name === 'revenus' ? 'Revenus' : name === 'depenses' ? 'Dépenses' : 'Solde'
+                      ]}
+                    />
+                    <Bar 
+                      dataKey="revenus" 
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={24}
+                    >
+                      {months.map((_, index) => (
+                        <Cell key={`rev-${index}`} fill="hsl(142, 71%, 45%)" fillOpacity={0.85} />
+                      ))}
+                    </Bar>
+                    <Bar 
+                      dataKey="depenses" 
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={24}
+                    >
+                      {months.map((_, index) => (
+                        <Cell key={`dep-${index}`} fill="hsl(0, 72%, 51%)" fillOpacity={0.85} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex justify-center gap-6 mt-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-green-500/85" />
+                  <span className="text-sm text-muted-foreground">Revenus</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-red-500/85" />
+                  <span className="text-sm text-muted-foreground">Dépenses</span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
