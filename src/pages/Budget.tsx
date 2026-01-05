@@ -703,51 +703,49 @@ const Budget = () => {
                                 />
                               </div>
                               
-                              {!editingSalaryId && (
-                                <div>
-                                  <div className="flex items-center justify-between mb-2">
-                                    <Label className="text-xs">Appliquer aux mois</Label>
-                                    <Button
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <Label className="text-xs">Appliquer aux mois</Label>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 text-xs"
+                                    onClick={() => {
+                                      if (selectedMonthsSalary.length === 12) {
+                                        setSelectedMonthsSalary([selectedMonth]);
+                                      } else {
+                                        setSelectedMonthsSalary([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                                      }
+                                    }}
+                                  >
+                                    {selectedMonthsSalary.length === 12 ? "Aucun" : "Tous"}
+                                  </Button>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {months.map((m) => (
+                                    <button
+                                      key={m.value}
                                       type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 text-xs"
                                       onClick={() => {
-                                        if (selectedMonthsSalary.length === 12) {
-                                          setSelectedMonthsSalary([selectedMonth]);
+                                        if (selectedMonthsSalary.includes(m.value)) {
+                                          setSelectedMonthsSalary(selectedMonthsSalary.filter((month) => month !== m.value));
                                         } else {
-                                          setSelectedMonthsSalary([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                                          setSelectedMonthsSalary([...selectedMonthsSalary, m.value]);
                                         }
                                       }}
+                                      className={cn(
+                                        "px-2 py-1 text-xs rounded-md transition-all",
+                                        selectedMonthsSalary.includes(m.value)
+                                          ? "bg-primary/20 text-primary border border-primary/30"
+                                          : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                                      )}
                                     >
-                                      {selectedMonthsSalary.length === 12 ? "Aucun" : "Tous"}
-                                    </Button>
-                                  </div>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {months.map((m) => (
-                                      <button
-                                        key={m.value}
-                                        type="button"
-                                        onClick={() => {
-                                          if (selectedMonthsSalary.includes(m.value)) {
-                                            setSelectedMonthsSalary(selectedMonthsSalary.filter((month) => month !== m.value));
-                                          } else {
-                                            setSelectedMonthsSalary([...selectedMonthsSalary, m.value]);
-                                          }
-                                        }}
-                                        className={cn(
-                                          "px-2 py-1 text-xs rounded-md transition-all",
-                                          selectedMonthsSalary.includes(m.value)
-                                            ? "bg-primary/20 text-primary border border-primary/30"
-                                            : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                                        )}
-                                      >
-                                        {m.short}
-                                      </button>
-                                    ))}
-                                  </div>
+                                      {m.short}
+                                    </button>
+                                  ))}
                                 </div>
-                              )}
+                              </div>
                             </div>
                             <DialogFooter>
                               <Button onClick={async () => {
@@ -757,15 +755,48 @@ const Budget = () => {
                                 }
                                 try {
                                   if (editingSalaryId) {
-                                    // Update existing
+                                    // Update current month
                                     await supabase.from("monthly_salaries").update({
                                       nom: tempSalaireNom || "Salaire",
                                       brut: parseFloat(tempSalaireBrut) || 0,
                                       charges: parseFloat(tempSalaireCharges) || 0,
                                       net: parseFloat(tempSalaireNet) || 0
                                     }).eq("id", editingSalaryId);
+                                    
+                                    // Insert/update for other selected months
+                                    const otherMonths = selectedMonthsSalary.filter(m => m !== selectedMonth);
+                                    for (const month of otherMonths) {
+                                      const { data: existing } = await supabase
+                                        .from("monthly_salaries")
+                                        .select("id")
+                                        .eq("user_id", user?.id)
+                                        .eq("year", selectedYear)
+                                        .eq("month", month)
+                                        .eq("nom", tempSalaireNom || "Salaire")
+                                        .maybeSingle();
+                                      
+                                      if (existing) {
+                                        await supabase.from("monthly_salaries").update({
+                                          brut: parseFloat(tempSalaireBrut) || 0,
+                                          charges: parseFloat(tempSalaireCharges) || 0,
+                                          net: parseFloat(tempSalaireNet) || 0
+                                        }).eq("id", existing.id);
+                                      } else {
+                                        await supabase.from("monthly_salaries").insert({
+                                          user_id: user?.id,
+                                          year: selectedYear,
+                                          month: month,
+                                          nom: tempSalaireNom || "Salaire",
+                                          brut: parseFloat(tempSalaireBrut) || 0,
+                                          charges: parseFloat(tempSalaireCharges) || 0,
+                                          net: parseFloat(tempSalaireNet) || 0
+                                        });
+                                      }
+                                    }
+                                    
                                     await fetchMonthlyBudget();
-                                    toast({ title: "Salaire modifié" });
+                                    setSelectedMonthsSalary([selectedMonth]);
+                                    toast({ title: selectedMonthsSalary.length > 1 ? `Salaire modifié sur ${selectedMonthsSalary.length} mois` : "Salaire modifié" });
                                   } else {
                                     // Insert for selected months
                                     if (selectedMonthsSalary.length === 0) {
@@ -891,51 +922,49 @@ const Budget = () => {
                                 />
                               </div>
                               
-                              {!editingAutreRevenuId && (
-                                <div>
-                                  <div className="flex items-center justify-between mb-2">
-                                    <Label className="text-xs">Appliquer aux mois</Label>
-                                    <Button
+                              <div>
+                                <div className="flex items-center justify-between mb-2">
+                                  <Label className="text-xs">Appliquer aux mois</Label>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 text-xs"
+                                    onClick={() => {
+                                      if (selectedMonthsAutreRevenu.length === 12) {
+                                        setSelectedMonthsAutreRevenu([selectedMonth]);
+                                      } else {
+                                        setSelectedMonthsAutreRevenu([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                                      }
+                                    }}
+                                  >
+                                    {selectedMonthsAutreRevenu.length === 12 ? "Aucun" : "Tous"}
+                                  </Button>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {months.map((m) => (
+                                    <button
+                                      key={m.value}
                                       type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-6 text-xs"
                                       onClick={() => {
-                                        if (selectedMonthsAutreRevenu.length === 12) {
-                                          setSelectedMonthsAutreRevenu([selectedMonth]);
+                                        if (selectedMonthsAutreRevenu.includes(m.value)) {
+                                          setSelectedMonthsAutreRevenu(selectedMonthsAutreRevenu.filter((month) => month !== m.value));
                                         } else {
-                                          setSelectedMonthsAutreRevenu([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                                          setSelectedMonthsAutreRevenu([...selectedMonthsAutreRevenu, m.value]);
                                         }
                                       }}
+                                      className={cn(
+                                        "px-2 py-1 text-xs rounded-md transition-all",
+                                        selectedMonthsAutreRevenu.includes(m.value)
+                                          ? "bg-primary/20 text-primary border border-primary/30"
+                                          : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                                      )}
                                     >
-                                      {selectedMonthsAutreRevenu.length === 12 ? "Aucun" : "Tous"}
-                                    </Button>
-                                  </div>
-                                  <div className="flex flex-wrap gap-1.5">
-                                    {months.map((m) => (
-                                      <button
-                                        key={m.value}
-                                        type="button"
-                                        onClick={() => {
-                                          if (selectedMonthsAutreRevenu.includes(m.value)) {
-                                            setSelectedMonthsAutreRevenu(selectedMonthsAutreRevenu.filter((month) => month !== m.value));
-                                          } else {
-                                            setSelectedMonthsAutreRevenu([...selectedMonthsAutreRevenu, m.value]);
-                                          }
-                                        }}
-                                        className={cn(
-                                          "px-2 py-1 text-xs rounded-md transition-all",
-                                          selectedMonthsAutreRevenu.includes(m.value)
-                                            ? "bg-primary/20 text-primary border border-primary/30"
-                                            : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                                        )}
-                                      >
-                                        {m.short}
-                                      </button>
-                                    ))}
-                                  </div>
+                                      {m.short}
+                                    </button>
+                                  ))}
                                 </div>
-                              )}
+                              </div>
                             </div>
                             <DialogFooter>
                               <Button onClick={async () => {
@@ -945,13 +974,42 @@ const Budget = () => {
                                 }
                                 try {
                                   if (editingAutreRevenuId) {
-                                    // Update existing
+                                    // Update current month
                                     await supabase.from("monthly_other_revenues").update({
                                       nom: tempAutreRevenuNom || "Autre revenu",
                                       montant: parseFloat(tempAutreRevenuMontant) || 0
                                     }).eq("id", editingAutreRevenuId);
+                                    
+                                    // Insert/update for other selected months
+                                    const otherMonths = selectedMonthsAutreRevenu.filter(m => m !== selectedMonth);
+                                    for (const month of otherMonths) {
+                                      const { data: existing } = await supabase
+                                        .from("monthly_other_revenues")
+                                        .select("id")
+                                        .eq("user_id", user?.id)
+                                        .eq("year", selectedYear)
+                                        .eq("month", month)
+                                        .eq("nom", tempAutreRevenuNom || "Autre revenu")
+                                        .maybeSingle();
+                                      
+                                      if (existing) {
+                                        await supabase.from("monthly_other_revenues").update({
+                                          montant: parseFloat(tempAutreRevenuMontant) || 0
+                                        }).eq("id", existing.id);
+                                      } else {
+                                        await supabase.from("monthly_other_revenues").insert({
+                                          user_id: user?.id,
+                                          year: selectedYear,
+                                          month: month,
+                                          nom: tempAutreRevenuNom || "Autre revenu",
+                                          montant: parseFloat(tempAutreRevenuMontant) || 0
+                                        });
+                                      }
+                                    }
+                                    
                                     await fetchMonthlyBudget();
-                                    toast({ title: "Revenu modifié" });
+                                    setSelectedMonthsAutreRevenu([selectedMonth]);
+                                    toast({ title: selectedMonthsAutreRevenu.length > 1 ? `Revenu modifié sur ${selectedMonthsAutreRevenu.length} mois` : "Revenu modifié" });
                                   } else {
                                     // Insert for selected months
                                     if (selectedMonthsAutreRevenu.length === 0) {
