@@ -1014,189 +1014,389 @@ const Budget = () => {
                     </div>
                   </CardHeader>
                   <CollapsibleContent>
-                    <CardContent className="space-y-4 pt-0">
-                      {monthlyCategories.length > 0 && (
-                        <div className="space-y-2">
-                          {monthlyCategories.map((cat) => (
-                            <div
-                              key={cat.id}
-                            className="group flex items-center justify-between py-3 px-4 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all"
-                          >
-                              <div className="flex items-center gap-3">
-                                <div className="p-1.5 rounded-lg bg-muted">
-                                  <Receipt className="h-4 w-4 text-muted-foreground" />
-                                </div>
-                                <div>
+                    <CardContent className="space-y-6 pt-0">
+                      {/* Dépenses Fixes Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                          <Label className="text-sm font-medium">Dépenses fixes</Label>
+                        </div>
+                        {monthlyCategories.filter(cat => cat.category === "Fixe").length > 0 && (
+                          <div className="space-y-2">
+                            {monthlyCategories.filter(cat => cat.category === "Fixe").map((cat) => (
+                              <div
+                                key={cat.id}
+                                className="group flex items-center justify-between py-2.5 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="p-1.5 rounded-lg bg-red-500/10">
+                                    <Receipt className="h-3.5 w-3.5 text-red-500" />
+                                  </div>
                                   <p className="text-sm font-medium">{cat.name}</p>
-                                  <p className="text-xs text-muted-foreground">{cat.category}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold text-red-500">{formatCurrency(parseFloat(cat.amount) || 0)}</p>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
+                                    onClick={async () => {
+                                      try {
+                                        await supabase.from("monthly_expense_categories").delete().eq("id", cat.id);
+                                        setMonthlyCategories(monthlyCategories.filter((c) => c.id !== cat.id));
+                                        toast({ title: "Dépense supprimée" });
+                                      } catch (error) {
+                                        toast({ variant: "destructive", title: "Erreur" });
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-semibold">{formatCurrency(parseFloat(cat.amount) || 0)}</p>
+                            ))}
+                          </div>
+                        )}
+
+                        {showAddMonthlyCategory && newMonthlyCategoryType === "Fixe" ? (
+                          <div className="space-y-3 p-3 rounded-xl bg-background/50 border border-dashed border-border">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-xs">Nom</Label>
+                                <Input
+                                  placeholder="Ex: Loyer, Assurance..."
+                                  value={newMonthlyCategoryName}
+                                  onChange={(e) => setNewMonthlyCategoryName(e.target.value)}
+                                  className="mt-1 h-9"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs">Montant</Label>
+                                <Input
+                                  type="number"
+                                  placeholder="1500"
+                                  value={newMonthlyCategoryAmount}
+                                  onChange={(e) => setNewMonthlyCategoryAmount(e.target.value)}
+                                  className="mt-1 h-9"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label className="text-xs">Appliquer aux mois</Label>
                                 <Button
+                                  type="button"
                                   variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
-                                  onClick={async () => {
-                                    try {
-                                      await supabase.from("monthly_expense_categories").delete().eq("id", cat.id);
-                                      setMonthlyCategories(monthlyCategories.filter((c) => c.id !== cat.id));
-                                      toast({ title: "Catégorie supprimée" });
-                                    } catch (error) {
-                                      toast({ variant: "destructive", title: "Erreur" });
+                                  size="sm"
+                                  className="h-5 text-xs px-2"
+                                  onClick={() => {
+                                    if (selectedMonths.length === 12) {
+                                      setSelectedMonths([selectedMonth]);
+                                    } else {
+                                      setSelectedMonths([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
                                     }
                                   }}
                                 >
-                                  <Trash2 className="h-4 w-4" />
+                                  {selectedMonths.length === 12 ? "Aucun" : "Tous"}
                                 </Button>
                               </div>
+                              <div className="flex flex-wrap gap-1">
+                                {months.map((m) => (
+                                  <button
+                                    key={m.value}
+                                    type="button"
+                                    onClick={() => {
+                                      if (selectedMonths.includes(m.value)) {
+                                        setSelectedMonths(selectedMonths.filter((month) => month !== m.value));
+                                      } else {
+                                        setSelectedMonths([...selectedMonths, m.value]);
+                                      }
+                                    }}
+                                    className={cn(
+                                      "px-1.5 py-0.5 text-xs rounded transition-all",
+                                      selectedMonths.includes(m.value)
+                                        ? "bg-primary/20 text-primary border border-primary/30"
+                                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                                    )}
+                                  >
+                                    {m.short}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {showAddMonthlyCategory ? (
-                        <div className="space-y-4 p-4 rounded-xl bg-background/50 border border-dashed border-border">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <Label className="text-xs">Nom</Label>
-                              <Input
-                                placeholder="Ex: Loisirs"
-                                value={newMonthlyCategoryName}
-                                onChange={(e) => setNewMonthlyCategoryName(e.target.value)}
-                                className="mt-1"
-                              />
-                            </div>
-                            <div>
-                              <Label className="text-xs">Montant</Label>
-                              <Input
-                                type="number"
-                                placeholder="100"
-                                value={newMonthlyCategoryAmount}
-                                onChange={(e) => setNewMonthlyCategoryAmount(e.target.value)}
-                                className="mt-1"
-                              />
-                            </div>
-                          </div>
-                          <div>
-                            <Label className="text-xs">Type (optionnel)</Label>
-                            <Input
-                              placeholder="Ex: Sorties"
-                              value={newMonthlyCategoryType}
-                              onChange={(e) => setNewMonthlyCategoryType(e.target.value)}
-                              className="mt-1"
-                            />
-                          </div>
-                          
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <Label className="text-xs">Appliquer aux mois</Label>
+                            
+                            <div className="flex gap-2">
                               <Button
-                                type="button"
-                                variant="ghost"
                                 size="sm"
-                                className="h-6 text-xs"
-                                onClick={() => {
-                                  if (selectedMonths.length === 12) {
+                                className="flex-1 h-8"
+                                onClick={async () => {
+                                  if (!newMonthlyCategoryName || !newMonthlyCategoryAmount) {
+                                    toast({ variant: "destructive", title: "Erreur", description: "Remplissez les champs requis" });
+                                    return;
+                                  }
+                                  if (selectedMonths.length === 0) {
+                                    toast({ variant: "destructive", title: "Erreur", description: "Sélectionnez au moins un mois" });
+                                    return;
+                                  }
+                                  try {
+                                    const insertPromises = selectedMonths.map((month) =>
+                                      supabase.from("monthly_expense_categories").insert({
+                                        user_id: user?.id,
+                                        year: selectedYear,
+                                        month: month,
+                                        name: newMonthlyCategoryName,
+                                        category: "Fixe",
+                                        amount: parseFloat(newMonthlyCategoryAmount),
+                                      })
+                                    );
+                                    await Promise.all(insertPromises);
+                                    if (selectedMonths.includes(selectedMonth)) await fetchMonthlyBudget();
+                                    setNewMonthlyCategoryName("");
+                                    setNewMonthlyCategoryType("");
+                                    setNewMonthlyCategoryAmount("");
                                     setSelectedMonths([selectedMonth]);
-                                  } else {
-                                    setSelectedMonths([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                                    setShowAddMonthlyCategory(false);
+                                    toast({ title: `Dépense fixe ajoutée à ${selectedMonths.length} mois` });
+                                  } catch (error) {
+                                    toast({ variant: "destructive", title: "Erreur" });
                                   }
                                 }}
                               >
-                                {selectedMonths.length === 12 ? "Aucun" : "Tous"}
+                                Ajouter
                               </Button>
-                            </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {months.map((m) => (
-                                <button
-                                  key={m.value}
-                                  type="button"
-                                  onClick={() => {
-                                    if (selectedMonths.includes(m.value)) {
-                                      setSelectedMonths(selectedMonths.filter((month) => month !== m.value));
-                                    } else {
-                                      setSelectedMonths([...selectedMonths, m.value]);
-                                    }
-                                  }}
-                                  className={cn(
-                                    "px-2 py-1 text-xs rounded-md transition-all",
-                                    selectedMonths.includes(m.value)
-                                      ? "bg-primary/20 text-primary border border-primary/30"
-                                      : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                                  )}
-                                >
-                                  {m.short}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              className="flex-1"
-                              onClick={async () => {
-                                if (!newMonthlyCategoryName || !newMonthlyCategoryAmount) {
-                                  toast({ variant: "destructive", title: "Erreur", description: "Remplissez les champs requis" });
-                                  return;
-                                }
-                                if (selectedMonths.length === 0) {
-                                  toast({ variant: "destructive", title: "Erreur", description: "Sélectionnez au moins un mois" });
-                                  return;
-                                }
-                                try {
-                                  const insertPromises = selectedMonths.map((month) =>
-                                    supabase.from("monthly_expense_categories").insert({
-                                      user_id: user?.id,
-                                      year: selectedYear,
-                                      month: month,
-                                      name: newMonthlyCategoryName,
-                                      category: newMonthlyCategoryType || "Autre",
-                                      amount: parseFloat(newMonthlyCategoryAmount),
-                                    })
-                                  );
-                                  await Promise.all(insertPromises);
-                                  if (selectedMonths.includes(selectedMonth)) await fetchMonthlyBudget();
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8"
+                                onClick={() => {
+                                  setShowAddMonthlyCategory(false);
                                   setNewMonthlyCategoryName("");
                                   setNewMonthlyCategoryType("");
                                   setNewMonthlyCategoryAmount("");
                                   setSelectedMonths([selectedMonth]);
-                                  setShowAddMonthlyCategory(false);
-                                  toast({ title: `Dépense ajoutée à ${selectedMonths.length} mois` });
-                                } catch (error) {
-                                  toast({ variant: "destructive", title: "Erreur" });
-                                }
-                              }}
-                            >
-                              Ajouter
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setShowAddMonthlyCategory(false);
-                                setNewMonthlyCategoryName("");
-                                setNewMonthlyCategoryType("");
-                                setNewMonthlyCategoryAmount("");
-                                setSelectedMonths([selectedMonth]);
-                              }}
-                            >
-                              Annuler
-                            </Button>
+                                }}
+                              >
+                                Annuler
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          className="w-full gap-2 border-dashed hover:bg-primary/10 hover:border-primary/50"
-                          onClick={() => setShowAddMonthlyCategory(true)}
-                        >
-                          <Plus className="h-4 w-4 text-primary" />
-                          Ajouter une dépense
-                        </Button>
-                      )}
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full gap-2 border-dashed hover:bg-primary/10 hover:border-primary/50"
+                            onClick={() => {
+                              setNewMonthlyCategoryType("Fixe");
+                              setShowAddMonthlyCategory(true);
+                            }}
+                          >
+                            <Plus className="h-3.5 w-3.5 text-primary" />
+                            Ajouter une dépense fixe
+                          </Button>
+                        )}
+                      </div>
 
+                      {/* Separator */}
+                      <div className="border-t border-border/50" />
+
+                      {/* Autres Dépenses Section */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-1.5 rounded-full bg-orange-500" />
+                          <Label className="text-sm font-medium">Autres dépenses</Label>
+                        </div>
+                        {monthlyCategories.filter(cat => cat.category !== "Fixe").length > 0 && (
+                          <div className="space-y-2">
+                            {monthlyCategories.filter(cat => cat.category !== "Fixe").map((cat) => (
+                              <div
+                                key={cat.id}
+                                className="group flex items-center justify-between py-2.5 px-3 rounded-xl bg-background/50 border border-border/50 hover:border-primary/30 transition-all"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div className="p-1.5 rounded-lg bg-orange-500/10">
+                                    <Receipt className="h-3.5 w-3.5 text-orange-500" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium">{cat.name}</p>
+                                    {cat.category && cat.category !== "Autre" && (
+                                      <p className="text-xs text-muted-foreground">{cat.category}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-semibold text-orange-500">{formatCurrency(parseFloat(cat.amount) || 0)}</p>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/10 hover:text-red-400"
+                                    onClick={async () => {
+                                      try {
+                                        await supabase.from("monthly_expense_categories").delete().eq("id", cat.id);
+                                        setMonthlyCategories(monthlyCategories.filter((c) => c.id !== cat.id));
+                                        toast({ title: "Dépense supprimée" });
+                                      } catch (error) {
+                                        toast({ variant: "destructive", title: "Erreur" });
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {showAddMonthlyCategory && newMonthlyCategoryType !== "Fixe" && newMonthlyCategoryType !== "" ? (
+                          <div className="space-y-3 p-3 rounded-xl bg-background/50 border border-dashed border-border">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label className="text-xs">Nom</Label>
+                                <Input
+                                  placeholder="Ex: Restaurant, Shopping..."
+                                  value={newMonthlyCategoryName}
+                                  onChange={(e) => setNewMonthlyCategoryName(e.target.value)}
+                                  className="mt-1 h-9"
+                                />
+                              </div>
+                              <div>
+                                <Label className="text-xs">Montant</Label>
+                                <Input
+                                  type="number"
+                                  placeholder="100"
+                                  value={newMonthlyCategoryAmount}
+                                  onChange={(e) => setNewMonthlyCategoryAmount(e.target.value)}
+                                  className="mt-1 h-9"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-xs">Type (optionnel)</Label>
+                              <Input
+                                placeholder="Ex: Loisirs, Sorties..."
+                                value={newMonthlyCategoryType === "Autre" ? "" : newMonthlyCategoryType}
+                                onChange={(e) => setNewMonthlyCategoryType(e.target.value || "Autre")}
+                                className="mt-1 h-9"
+                              />
+                            </div>
+                            
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label className="text-xs">Appliquer aux mois</Label>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-5 text-xs px-2"
+                                  onClick={() => {
+                                    if (selectedMonths.length === 12) {
+                                      setSelectedMonths([selectedMonth]);
+                                    } else {
+                                      setSelectedMonths([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+                                    }
+                                  }}
+                                >
+                                  {selectedMonths.length === 12 ? "Aucun" : "Tous"}
+                                </Button>
+                              </div>
+                              <div className="flex flex-wrap gap-1">
+                                {months.map((m) => (
+                                  <button
+                                    key={m.value}
+                                    type="button"
+                                    onClick={() => {
+                                      if (selectedMonths.includes(m.value)) {
+                                        setSelectedMonths(selectedMonths.filter((month) => month !== m.value));
+                                      } else {
+                                        setSelectedMonths([...selectedMonths, m.value]);
+                                      }
+                                    }}
+                                    className={cn(
+                                      "px-1.5 py-0.5 text-xs rounded transition-all",
+                                      selectedMonths.includes(m.value)
+                                        ? "bg-primary/20 text-primary border border-primary/30"
+                                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                                    )}
+                                  >
+                                    {m.short}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="flex-1 h-8"
+                                onClick={async () => {
+                                  if (!newMonthlyCategoryName || !newMonthlyCategoryAmount) {
+                                    toast({ variant: "destructive", title: "Erreur", description: "Remplissez les champs requis" });
+                                    return;
+                                  }
+                                  if (selectedMonths.length === 0) {
+                                    toast({ variant: "destructive", title: "Erreur", description: "Sélectionnez au moins un mois" });
+                                    return;
+                                  }
+                                  try {
+                                    const insertPromises = selectedMonths.map((month) =>
+                                      supabase.from("monthly_expense_categories").insert({
+                                        user_id: user?.id,
+                                        year: selectedYear,
+                                        month: month,
+                                        name: newMonthlyCategoryName,
+                                        category: newMonthlyCategoryType || "Autre",
+                                        amount: parseFloat(newMonthlyCategoryAmount),
+                                      })
+                                    );
+                                    await Promise.all(insertPromises);
+                                    if (selectedMonths.includes(selectedMonth)) await fetchMonthlyBudget();
+                                    setNewMonthlyCategoryName("");
+                                    setNewMonthlyCategoryType("");
+                                    setNewMonthlyCategoryAmount("");
+                                    setSelectedMonths([selectedMonth]);
+                                    setShowAddMonthlyCategory(false);
+                                    toast({ title: `Dépense ajoutée à ${selectedMonths.length} mois` });
+                                  } catch (error) {
+                                    toast({ variant: "destructive", title: "Erreur" });
+                                  }
+                                }}
+                              >
+                                Ajouter
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-8"
+                                onClick={() => {
+                                  setShowAddMonthlyCategory(false);
+                                  setNewMonthlyCategoryName("");
+                                  setNewMonthlyCategoryType("");
+                                  setNewMonthlyCategoryAmount("");
+                                  setSelectedMonths([selectedMonth]);
+                                }}
+                              >
+                                Annuler
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full gap-2 border-dashed hover:bg-primary/10 hover:border-primary/50"
+                            onClick={() => {
+                              setNewMonthlyCategoryType("Autre");
+                              setShowAddMonthlyCategory(true);
+                            }}
+                          >
+                            <Plus className="h-3.5 w-3.5 text-primary" />
+                            Ajouter une autre dépense
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Total */}
                       <div className="pt-4 border-t">
                         <div className="flex items-center justify-between">
                           <p className="text-sm text-muted-foreground">Total sorties</p>
