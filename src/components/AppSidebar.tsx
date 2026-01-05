@@ -140,7 +140,7 @@ export function AppSidebar() {
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
               isActive(item.href)
-                ? "bg-primary/10 text-primary"
+                ? "bg-primary/10 text-primary shadow-sm"
                 : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
             )}
           >
@@ -158,10 +158,13 @@ export function AppSidebar() {
         {user && (
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200 group"
+            className={cn(
+              "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group",
+              "text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            )}
           >
-            <LogOut className="h-5 w-5 flex-shrink-0 group-hover:text-destructive" />
-            {!collapsed && <span>Déconnexion</span>}
+            <LogOut className="h-5 w-5 flex-shrink-0 transition-colors text-muted-foreground group-hover:text-destructive" />
+            {!collapsed && <span className="truncate">Déconnexion</span>}
           </button>
         )}
       </div>
