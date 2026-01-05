@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Building2, TrendingUp, Shield, Heart, ArrowLeft } from "lucide-react";
+import { Plus, Building2, TrendingUp, Shield, Heart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { 
   calculateLPPAnalysis, 
   calculateLPPRetirement,
@@ -113,32 +112,13 @@ export default function LPPAccounts() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-20 space-y-8">
-      {/* Header */}
-      <div className="space-y-4">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/prevoyance')}
-          className="gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour à Prévoyance
+    <AppLayout title="2ème Pilier - LPP" subtitle="Gérez vos comptes de 2e pilier et analysez votre couverture retraite, invalidité et décès">
+      {/* Add button */}
+      <div className="flex justify-end mb-6">
+        <Button onClick={handleAddAccount} className="bg-primary hover:bg-primary/90">
+          <Plus className="mr-2 h-4 w-4" />
+          Ajouter un compte LPP
         </Button>
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold">Prévoyance professionnelle (LPP)</h1>
-            <p className="text-muted-foreground mt-2">
-              Gérez vos comptes de 2e pilier et analysez votre couverture retraite, invalidité et décès
-            </p>
-          </div>
-          <Button onClick={handleAddAccount} size="lg">
-            <Plus className="mr-2 h-5 w-5" />
-            Ajouter un compte LPP
-          </Button>
-        </div>
       </div>
 
       {/* Summary Cards */}
@@ -247,8 +227,6 @@ export default function LPPAccounts() {
           onClose={handleFormClose}
         />
       )}
-      </main>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

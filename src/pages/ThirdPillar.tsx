@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Wallet, TrendingUp, ArrowLeft } from "lucide-react";
+import { Plus, Wallet, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 import { calculateThirdPillarAnalysis, ThirdPillarAnalysis } from "@/lib/thirdPillarCalculations";
 import ThirdPillarAccountCard from "@/components/third-pillar/ThirdPillarAccountCard";
 import ThirdPillarAccountForm from "@/components/third-pillar/ThirdPillarAccountForm";
@@ -86,35 +85,18 @@ const ThirdPillar = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container mx-auto py-20">
-          <p>Chargement...</p>
+      <AppLayout title="3e Pilier" subtitle="Chargement...">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-        <Footer />
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-20 space-y-6">
-      <Button 
-        variant="ghost" 
-        onClick={() => navigate('/prevoyance')}
-        className="gap-2 mb-4"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Retour à Prévoyance
-      </Button>
-      
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">3e Pilier</h1>
-          <p className="text-muted-foreground">Gestion de vos comptes 3a et 3b</p>
-        </div>
-        <Button onClick={() => setShowForm(true)}>
+    <AppLayout title="3e Pilier" subtitle="Gestion de vos comptes 3a et 3b">
+      <div className="flex justify-end mb-6">
+        <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90">
           <Plus className="mr-2 h-4 w-4" />
           Ajouter un compte
         </Button>
@@ -216,9 +198,7 @@ const ThirdPillar = () => {
           </div>
         </>
       )}
-      </main>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 };
 
