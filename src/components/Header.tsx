@@ -67,6 +67,9 @@ const Header = () => {
             <Link to="/assurances" className="text-foreground hover:text-primary transition-colors font-medium">
               Assurances
             </Link>
+            <Link to="/investissement" className="text-foreground hover:text-primary transition-colors font-medium">
+              Investissement
+            </Link>
             <Link to="/simulateur-impots" className="text-foreground hover:text-primary transition-colors font-medium">
               Impôts
             </Link>
@@ -255,6 +258,14 @@ const Header = () => {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Assurances
+                  </Link>
+                  
+                  <Link 
+                    to="/investissement" 
+                    className="text-foreground hover:text-primary transition-colors font-medium py-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Investissement
                   </Link>
                   
                   <Link 
