@@ -17,6 +17,9 @@ interface AVSAccountFormProps {
     average_annual_income_determinant?: number;
     years_contributed?: number;
     is_active?: boolean;
+    date_of_birth?: string;
+    number_of_children?: number;
+    marriage_date?: string;
   };
   onSubmit: (data: any) => void;
   onCancel: () => void;
@@ -34,11 +37,16 @@ const AVSAccountForm = ({
   onCalculate,
 }: AVSAccountFormProps) => {
   const [ownerName, setOwnerName] = useState(account?.owner_name || "");
+  const [dateOfBirth, setDateOfBirth] = useState(account?.date_of_birth || "");
   const [avsNumber, setAvsNumber] = useState(account?.avs_number || "");
   const [maritalStatus, setMaritalStatus] = useState(account?.marital_status || "");
+  const [marriageDate, setMarriageDate] = useState(account?.marriage_date || "");
+  const [numberOfChildren, setNumberOfChildren] = useState(account?.number_of_children || 0);
   const [annualIncome, setAnnualIncome] = useState(account?.average_annual_income_determinant?.toString() || "");
   const [yearsContributed, setYearsContributed] = useState(account?.years_contributed || 44);
   const [isActive, setIsActive] = useState(account?.is_active ?? true);
+
+  const showMarriageDate = maritalStatus === "marié" || maritalStatus === "partenariat_enregistré";
 
   const yearsMissing = 44 - yearsContributed;
   const rentCoefficient = Math.round((yearsContributed / 44) * 100);
@@ -48,8 +56,11 @@ const AVSAccountForm = ({
     
     onSubmit({
       owner_name: ownerName,
+      date_of_birth: dateOfBirth || null,
       avs_number: avsNumber || null,
       marital_status: maritalStatus || null,
+      marriage_date: showMarriageDate ? marriageDate || null : null,
+      number_of_children: numberOfChildren,
       average_annual_income_determinant: parseFloat(annualIncome) || 0,
       years_contributed: yearsContributed,
       is_active: isActive,
@@ -86,6 +97,17 @@ const AVSAccountForm = ({
           </div>
 
           <div>
+            <Label htmlFor="dateOfBirth">Date de naissance</Label>
+            <Input
+              id="dateOfBirth"
+              type="date"
+              value={dateOfBirth}
+              onChange={(e) => setDateOfBirth(e.target.value)}
+              className="mt-1"
+            />
+          </div>
+
+          <div>
             <Label htmlFor="avsNumber">Numéro AVS (optionnel)</Label>
             <Input
               id="avsNumber"
@@ -113,6 +135,32 @@ const AVSAccountForm = ({
                 <SelectItem value="partenariat_enregistré">Partenariat enregistré</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {showMarriageDate && (
+            <div>
+              <Label htmlFor="marriageDate">Date de mariage</Label>
+              <Input
+                id="marriageDate"
+                type="date"
+                value={marriageDate}
+                onChange={(e) => setMarriageDate(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          )}
+
+          <div>
+            <Label htmlFor="numberOfChildren">Nombre d'enfants à charge</Label>
+            <Input
+              id="numberOfChildren"
+              type="number"
+              min="0"
+              max="20"
+              value={numberOfChildren}
+              onChange={(e) => setNumberOfChildren(Number(e.target.value))}
+              className="mt-1"
+            />
           </div>
 
           <div className="flex items-center justify-between">
