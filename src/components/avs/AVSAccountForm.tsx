@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { format, parse } from "date-fns";
+import { fr } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,8 +9,11 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Calculator, AlertTriangle, User, Edit, Plus, Trash2, Info } from "lucide-react";
+import { Calculator, AlertTriangle, User, Edit, Plus, Trash2, Info, CalendarIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 export interface YearlyIncome {
   year: number;
@@ -254,15 +259,34 @@ const AVSAccountForm = ({
             <CardContent className="pt-6 space-y-4">
               {/* Date de naissance */}
               <div>
-                <Label htmlFor="dateOfBirth">Date de naissance</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={dateOfBirth}
-                  onChange={(e) => handleDateOfBirthChange(e.target.value)}
-                  className="mt-1"
-                  placeholder="JJ.MM.AAAA"
-                />
+                <Label>Date de naissance</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full mt-1 justify-start text-left font-normal",
+                        !dateOfBirth && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateOfBirth ? format(parse(dateOfBirth, "yyyy-MM-dd", new Date()), "dd MMMM yyyy", { locale: fr }) : <span>Sélectionnez une date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateOfBirth ? parse(dateOfBirth, "yyyy-MM-dd", new Date()) : undefined}
+                      onSelect={(date) => handleDateOfBirthChange(date ? format(date, "yyyy-MM-dd") : "")}
+                      disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                      captionLayout="dropdown-buttons"
+                      fromYear={1930}
+                      toYear={new Date().getFullYear()}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* Revenus annuel brut moyen */}
@@ -379,14 +403,34 @@ const AVSAccountForm = ({
 
               {/* Date de retraite */}
               <div>
-                <Label htmlFor="retirementDate">Date de retraite</Label>
-                <Input
-                  id="retirementDate"
-                  type="date"
-                  value={retirementDate}
-                  onChange={(e) => setRetirementDate(e.target.value)}
-                  className="mt-1"
-                />
+                <Label>Date de retraite</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-full mt-1 justify-start text-left font-normal",
+                        !retirementDate && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {retirementDate ? format(parse(retirementDate, "yyyy-MM-dd", new Date()), "dd MMMM yyyy", { locale: fr }) : <span>Sélectionnez une date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={retirementDate ? parse(retirementDate, "yyyy-MM-dd", new Date()) : undefined}
+                      onSelect={(date) => setRetirementDate(date ? format(date, "yyyy-MM-dd") : "")}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                      className={cn("p-3 pointer-events-auto")}
+                      captionLayout="dropdown-buttons"
+                      fromYear={new Date().getFullYear()}
+                      toYear={new Date().getFullYear() + 50}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* Enfants */}
