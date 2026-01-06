@@ -1,7 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Edit, Trash2, TrendingUp, Shield, Heart } from "lucide-react";
+import { Edit, Trash2, Landmark } from "lucide-react";
 import { ThirdPillarProjection } from "@/lib/thirdPillarCalculations";
 import { deleteThirdPillarAccount } from "@/lib/thirdPillarCalculations";
 import { useToast } from "@/hooks/use-toast";
@@ -29,13 +28,6 @@ const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   '3b': '3b',
 };
 
-const WAITING_PERIOD_LABELS: Record<number, string> = {
-  3: '3 mois',
-  6: '6 mois',
-  12: '12 mois',
-  24: '24 mois',
-};
-
 const ThirdPillarAccountCard = ({ account, onEdit, onDelete }: ThirdPillarAccountCardProps) => {
   const { toast } = useToast();
 
@@ -57,26 +49,27 @@ const ThirdPillarAccountCard = ({ account, onEdit, onDelete }: ThirdPillarAccoun
     }
   };
 
+  const formatCHF = (value: number) => {
+    return new Intl.NumberFormat('fr-CH', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value) + ' CHF';
+  };
+
   const showInsuranceFields = account.accountType === '3a_insurance' || account.accountType === '3b';
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              {account.institutionName}
-              <Badge variant="secondary">
-                {ACCOUNT_TYPE_LABELS[account.accountType] || account.accountType}
-              </Badge>
-            </CardTitle>
-            <CardDescription className="mt-1">
-              Taux de rendement: {account.returnRate}%
-            </CardDescription>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <Landmark className="h-5 w-5 text-muted-foreground" />
+            <CardTitle className="text-lg">{account.institutionName}</CardTitle>
           </div>
           <div className="flex gap-2">
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
               onClick={() => onEdit(account.accountId)}
             >
@@ -84,92 +77,82 @@ const ThirdPillarAccountCard = ({ account, onEdit, onDelete }: ThirdPillarAccoun
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Trash2 className="h-4 w-4" />
+                <Button variant="ghost" size="icon">
+                  <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                  <AlertDialogTitle>Supprimer ce compte 3ème pilier ?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Êtes-vous sûr de vouloir supprimer ce compte? Cette action est irréversible.
+                    Cette action est irréversible. Toutes les données de ce compte seront définitivement supprimées.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete}>Supprimer</AlertDialogAction>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    Supprimer
+                  </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
           </div>
         </div>
+        <p className="text-sm text-muted-foreground">
+          {ACCOUNT_TYPE_LABELS[account.accountType] || account.accountType} • Taux: {account.returnRate}%
+        </p>
       </CardHeader>
-      <CardContent>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <CardContent className="space-y-4">
+        {/* Capital actuel et cotisation */}
+        <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-muted-foreground">Capital actuel</p>
-            <p className="text-lg font-semibold">
-              {account.currentAmount.toLocaleString('fr-CH')} CHF
-            </p>
+            <p className="text-xs text-muted-foreground">Capital actuel</p>
+            <p className="text-lg font-semibold">{formatCHF(account.currentAmount)}</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Cotisation annuelle</p>
-            <p className="text-lg font-semibold">
-              {account.annualContribution.toLocaleString('fr-CH')} CHF
-            </p>
+            <p className="text-xs text-muted-foreground">Cotisation annuelle</p>
+            <p className="text-lg font-semibold">{formatCHF(account.annualContribution)}</p>
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Capital projeté à 65 ans</p>
-            <p className="text-lg font-semibold flex items-center gap-1">
-              {account.projectedAmount.toLocaleString('fr-CH')} CHF
-              <TrendingUp className="h-4 w-4 text-green-500" />
-            </p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Rente annuelle projetée</p>
-            <p className="text-lg font-semibold">
-              {account.projectedAnnualRent.toLocaleString('fr-CH')} CHF
-            </p>
-          </div>
-
-          {account.deathCapital && account.deathCapital > 0 && (
-            <div>
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Heart className="h-3 w-3" />
-                Capital décès
-              </p>
-              <p className="text-lg font-semibold">
-                {account.deathCapital.toLocaleString('fr-CH')} CHF
-              </p>
-            </div>
-          )}
-
-          {showInsuranceFields && account.disabilityRentAnnual && account.disabilityRentAnnual > 0 && (
-            <div>
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Shield className="h-3 w-3" />
-                Rente d'invalidité annuelle
-              </p>
-              <p className="text-lg font-semibold">
-                {account.disabilityRentAnnual.toLocaleString('fr-CH')} CHF
-              </p>
-            </div>
-          )}
-
-          {showInsuranceFields && account.premiumExemptionWaitingPeriod && (
-            <div>
-              <p className="text-sm text-muted-foreground">Exonération des primes</p>
-              <p className="text-sm font-medium">
-                Délai: {WAITING_PERIOD_LABELS[account.premiumExemptionWaitingPeriod] || `${account.premiumExemptionWaitingPeriod} mois`}
-              </p>
-            </div>
-          )}
         </div>
 
-        {account.yearsToRetirement > 0 && (
-          <p className="text-xs text-muted-foreground mt-4">
-            Dans {account.yearsToRetirement} ans (à 65 ans)
+        {/* Capital projeté */}
+        <div className="pt-2 border-t">
+          <p className="text-xs text-muted-foreground mb-1">Capital projeté à 65 ans</p>
+          <p className="text-xl font-bold text-green-600">
+            {formatCHF(account.projectedAmount)}
           </p>
+          <p className="text-xs text-muted-foreground">
+            Rente annuelle: {formatCHF(account.projectedAnnualRent)}
+          </p>
+        </div>
+
+        {/* Invalidité & Décès */}
+        {showInsuranceFields && (account.deathCapital || account.disabilityRentAnnual) && (
+          <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+            {account.disabilityRentAnnual && account.disabilityRentAnnual > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground">Rente invalidité</p>
+                <p className="text-sm font-semibold">
+                  {formatCHF(account.disabilityRentAnnual / 12)}<span className="text-xs">/mois</span>
+                </p>
+              </div>
+            )}
+            {account.deathCapital && account.deathCapital > 0 && (
+              <div>
+                <p className="text-xs text-muted-foreground">Capital décès</p>
+                <p className="text-sm font-semibold">{formatCHF(account.deathCapital)}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Années jusqu'à la retraite */}
+        {account.yearsToRetirement > 0 && (
+          <div className="pt-2 border-t">
+            <p className="text-xs text-muted-foreground">
+              Dans {account.yearsToRetirement} ans (à 65 ans)
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>
