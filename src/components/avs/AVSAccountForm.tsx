@@ -24,6 +24,7 @@ interface AVSAccountFormProps {
     nationality?: string;
     domicile_country?: string;
     retirement_date?: string;
+    children_birth_dates?: string[];
   };
   onSubmit: (data: any) => void;
   onCancel: () => void;
@@ -50,9 +51,41 @@ const AVSAccountForm = ({
   const [domicileCountry, setDomicileCountry] = useState(account?.domicile_country || "Suisse");
   const [retirementDate, setRetirementDate] = useState(account?.retirement_date || "");
   const [numberOfChildren, setNumberOfChildren] = useState(account?.number_of_children || 0);
+  const [childrenBirthDates, setChildrenBirthDates] = useState<string[]>(
+    account?.children_birth_dates || []
+  );
   const [annualIncome, setAnnualIncome] = useState(account?.average_annual_income_determinant?.toString() || "");
   const [yearsContributed, setYearsContributed] = useState(account?.years_contributed || 44);
   const [isActive, setIsActive] = useState(account?.is_active ?? true);
+
+  const handleChildrenChange = (hasChildren: boolean) => {
+    if (hasChildren) {
+      setNumberOfChildren(1);
+      setChildrenBirthDates([""]);
+    } else {
+      setNumberOfChildren(0);
+      setChildrenBirthDates([]);
+    }
+  };
+
+  const handleChildrenCountChange = (count: number) => {
+    setNumberOfChildren(count);
+    const newDates = [...childrenBirthDates];
+    if (count > newDates.length) {
+      for (let i = newDates.length; i < count; i++) {
+        newDates.push("");
+      }
+    } else {
+      newDates.splice(count);
+    }
+    setChildrenBirthDates(newDates);
+  };
+
+  const handleChildBirthDateChange = (index: number, date: string) => {
+    const newDates = [...childrenBirthDates];
+    newDates[index] = date;
+    setChildrenBirthDates(newDates);
+  };
 
   const showMarriageDate = maritalStatus === "marié" || maritalStatus === "partenariat_enregistré";
   const yearsMissing = 44 - yearsContributed;
@@ -72,6 +105,7 @@ const AVSAccountForm = ({
       domicile_country: domicileCountry || null,
       retirement_date: retirementDate || null,
       number_of_children: numberOfChildren,
+      children_birth_dates: childrenBirthDates.filter(d => d),
       average_annual_income_determinant: parseFloat(annualIncome) || 0,
       years_contributed: yearsContributed,
       is_active: isActive,
@@ -236,7 +270,7 @@ const AVSAccountForm = ({
                 <Label htmlFor="numberOfChildren">Enfants</Label>
                 <Select 
                   value={numberOfChildren > 0 ? "yes" : "no"} 
-                  onValueChange={(val) => setNumberOfChildren(val === "yes" ? 1 : 0)}
+                  onValueChange={(val) => handleChildrenChange(val === "yes")}
                 >
                   <SelectTrigger id="numberOfChildren" className="mt-1">
                     <SelectValue placeholder="Avez-vous des enfants ?" />
@@ -249,18 +283,36 @@ const AVSAccountForm = ({
               </div>
 
               {numberOfChildren > 0 && (
-                <div>
-                  <Label htmlFor="childrenCount">Nombre d'enfants à charge</Label>
-                  <Input
-                    id="childrenCount"
-                    type="number"
-                    min="1"
-                    max="20"
-                    value={numberOfChildren}
-                    onChange={(e) => setNumberOfChildren(Number(e.target.value))}
-                    className="mt-1"
-                  />
-                </div>
+                <>
+                  <div>
+                    <Label htmlFor="childrenCount">Nombre d'enfants à charge</Label>
+                    <Input
+                      id="childrenCount"
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={numberOfChildren}
+                      onChange={(e) => handleChildrenCountChange(Number(e.target.value))}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  {Array.from({ length: numberOfChildren }).map((_, index) => (
+                    <div key={index}>
+                      <Label htmlFor={`childBirthDate-${index}`}>
+                        Enfant ({index + 1}) - Date de naissance
+                      </Label>
+                      <Input
+                        id={`childBirthDate-${index}`}
+                        type="date"
+                        value={childrenBirthDates[index] || ""}
+                        onChange={(e) => handleChildBirthDateChange(index, e.target.value)}
+                        className="mt-1"
+                        placeholder="JJ.MM.AAAA"
+                      />
+                    </div>
+                  ))}
+                </>
               )}
 
               <div className="flex items-center justify-between pt-4 border-t">

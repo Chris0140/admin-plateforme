@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           average_annual_income_determinant: number | null
           avs_number: string | null
+          children_birth_dates: Json | null
           created_at: string | null
           date_of_birth: string | null
           domicile_country: string | null
@@ -42,6 +43,7 @@ export type Database = {
         Insert: {
           average_annual_income_determinant?: number | null
           avs_number?: string | null
+          children_birth_dates?: Json | null
           created_at?: string | null
           date_of_birth?: string | null
           domicile_country?: string | null
@@ -66,6 +68,7 @@ export type Database = {
         Update: {
           average_annual_income_determinant?: number | null
           avs_number?: string | null
+          children_birth_dates?: Json | null
           created_at?: string | null
           date_of_birth?: string | null
           domicile_country?: string | null
