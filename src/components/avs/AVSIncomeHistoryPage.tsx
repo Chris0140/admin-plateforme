@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArrowLeft, Calendar, TrendingUp, Save, RotateCcw, Calculator, AlertTriangle, User, Edit, Plus, Trash2, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -329,16 +330,13 @@ const AVSIncomeHistoryPage = ({ account, onBack, showBackButton = false, onAccou
             {/* Income History Table */}
             <Card className="lg:col-span-2">
               <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    Revenus annuels ({startYear} - {endYear})
-                  </CardTitle>
-                  <Button onClick={calculatePensions} size="sm" variant="secondary">
-                    <Calculator className="mr-2 h-4 w-4" />
-                    Calculer les rentes
-                  </Button>
-                </div>
+                <CardTitle className="flex items-center gap-2">
+                  <Edit className="h-5 w-5 text-primary" />
+                  Historique des revenus
+                </CardTitle>
+                <CardDescription>
+                  Entrez vos revenus bruts pour chaque année de cotisation
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {hasGaps && gapYears.length > 0 && (
@@ -355,60 +353,31 @@ const AVSIncomeHistoryPage = ({ account, onBack, showBackButton = false, onAccou
                   </div>
                 )}
                 
-                <ScrollArea className="h-[500px] pr-4">
-                  <div className="space-y-2">
-                    {yearlyIncomes.map((yearData) => {
-                      const isFutureYear = yearData.year > currentYear;
-                      const hasIncome = yearData.income !== null && yearData.income > 0;
-                      
-                      return (
-                        <div
-                          key={yearData.year}
-                          className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
-                            isFutureYear 
-                              ? 'bg-muted/30 opacity-60' 
-                              : hasIncome 
-                                ? 'bg-green-500/5 border border-green-500/20' 
-                                : 'bg-muted/50 border border-transparent'
-                          }`}
-                        >
-                          <div className="w-16 font-semibold text-foreground">
-                            {yearData.year}
-                          </div>
-                          <div className="flex-1">
+                <div className="border rounded-md max-h-[500px] overflow-auto">
+                  <Table>
+                    <TableHeader className="sticky top-0 bg-background">
+                      <TableRow>
+                        <TableHead className="w-[120px]">Année de revenu</TableHead>
+                        <TableHead>Revenu brut de l'année</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {yearlyIncomes.map((yearData) => (
+                        <TableRow key={yearData.year}>
+                          <TableCell className="font-medium">{yearData.year}</TableCell>
+                          <TableCell>
                             <Input
                               type="number"
-                              placeholder="Revenu annuel"
-                              value={yearData.income ?? ''}
+                              placeholder="0"
+                              value={yearData.income ?? ""}
                               onChange={(e) => handleIncomeChange(yearData.year, e.target.value)}
-                              className="bg-background"
-                              disabled={isFutureYear}
                             />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              id={`estimated-${yearData.year}`}
-                              checked={yearData.isEstimated}
-                              onCheckedChange={(checked) => handleEstimatedChange(yearData.year, checked as boolean)}
-                              disabled={isFutureYear}
-                            />
-                            <label 
-                              htmlFor={`estimated-${yearData.year}`} 
-                              className="text-xs text-muted-foreground cursor-pointer"
-                            >
-                              Estimé
-                            </label>
-                          </div>
-                          {hasIncome && (
-                            <Badge variant="secondary" className="text-xs">
-                              {yearData.income?.toLocaleString('fr-CH')} CHF
-                            </Badge>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
 
