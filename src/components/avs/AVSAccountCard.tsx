@@ -157,24 +157,24 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-primary/5 rounded-lg p-4 border border-primary/20 hover:border-primary/40 transition-colors">
-                <p className="font-semibold text-foreground text-sm mb-1">Rente vieillesse</p>
-                <p className="text-2xl font-bold text-primary">{formatCHF(pensionResults.old_age_rent_annual)}<span className="text-xs font-medium text-muted-foreground ml-1">/an</span></p>
+              <div className="bg-card rounded-lg p-4 border border-border hover:border-primary/40 transition-colors">
+                <p className="font-semibold text-primary text-sm mb-1">Rente vieillesse</p>
+                <p className="text-2xl font-bold text-foreground">{formatCHF(pensionResults.old_age_rent_annual)}<span className="text-xs font-medium text-muted-foreground ml-1">/an</span></p>
                 <p className="text-sm text-muted-foreground mt-1">{formatCHF(pensionResults.old_age_rent_monthly)}/mois</p>
               </div>
-              <div className="bg-orange-50 dark:bg-orange-950/20 rounded-lg p-4 border border-orange-200 dark:border-orange-800 hover:border-orange-300 dark:hover:border-orange-700 transition-colors">
-                <p className="font-semibold text-foreground text-sm mb-1">Rente invalidité</p>
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{formatCHF(pensionResults.disability_rent_annual)}<span className="text-xs font-medium text-muted-foreground ml-1">/an</span></p>
+              <div className="bg-card rounded-lg p-4 border border-border hover:border-primary/40 transition-colors">
+                <p className="font-semibold text-primary text-sm mb-1">Rente invalidité</p>
+                <p className="text-2xl font-bold text-foreground">{formatCHF(pensionResults.disability_rent_annual)}<span className="text-xs font-medium text-muted-foreground ml-1">/an</span></p>
                 <p className="text-sm text-muted-foreground mt-1">{formatCHF(pensionResults.disability_rent_monthly)}/mois</p>
               </div>
-              <div className="bg-purple-50 dark:bg-purple-950/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800 hover:border-purple-300 dark:hover:border-purple-700 transition-colors">
-                <p className="font-semibold text-foreground text-sm mb-1">Rente veuve/veuf</p>
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{formatCHF(pensionResults.widow_rent_annual)}<span className="text-xs font-medium text-muted-foreground ml-1">/an</span></p>
+              <div className="bg-card rounded-lg p-4 border border-border hover:border-primary/40 transition-colors">
+                <p className="font-semibold text-primary text-sm mb-1">Rente veuve/veuf</p>
+                <p className="text-2xl font-bold text-foreground">{formatCHF(pensionResults.widow_rent_annual)}<span className="text-xs font-medium text-muted-foreground ml-1">/an</span></p>
                 <p className="text-sm text-muted-foreground mt-1">{formatCHF(pensionResults.widow_rent_monthly)}/mois</p>
               </div>
-              <div className="bg-teal-50 dark:bg-teal-950/20 rounded-lg p-4 border border-teal-200 dark:border-teal-800 hover:border-teal-300 dark:hover:border-teal-700 transition-colors">
-                <p className="font-semibold text-foreground text-sm mb-1">Rente enfant</p>
-                <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{formatCHF(pensionResults.child_rent_annual)}<span className="text-xs font-medium text-muted-foreground ml-1">/an</span></p>
+              <div className="bg-card rounded-lg p-4 border border-border hover:border-primary/40 transition-colors">
+                <p className="font-semibold text-primary text-sm mb-1">Rente enfant</p>
+                <p className="text-2xl font-bold text-foreground">{formatCHF(pensionResults.child_rent_annual)}<span className="text-xs font-medium text-muted-foreground ml-1">/an</span></p>
                 <p className="text-sm text-muted-foreground mt-1">{formatCHF(pensionResults.child_rent_monthly)}/mois</p>
               </div>
             </div>
