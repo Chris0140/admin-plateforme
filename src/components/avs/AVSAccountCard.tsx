@@ -127,7 +127,7 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
           <div className="flex gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md mt-4">
             <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
             <p className="text-sm text-destructive">
-              {yearsMissing} année(s) de lacune - Rente réduite à {rentCoefficient}%
+              {yearsMissing} année(s) de lacune
             </p>
           </div>
         )}
