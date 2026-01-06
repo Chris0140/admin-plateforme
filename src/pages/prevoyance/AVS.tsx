@@ -138,7 +138,12 @@ const AVS = () => {
         });
       }
 
-      // Save yearly incomes
+      // Save yearly incomes - always delete existing first
+      await supabase
+        .from('avs_yearly_incomes')
+        .delete()
+        .eq('avs_profile_id', avsProfileId);
+
       const incomesToSave = yearlyIncomes
         .filter(y => y.income !== null && y.income > 0)
         .map(y => ({
@@ -149,19 +154,22 @@ const AVS = () => {
         }));
 
       if (incomesToSave.length > 0) {
-        // Delete existing incomes for this profile
-        await supabase
-          .from('avs_yearly_incomes')
-          .delete()
-          .eq('avs_profile_id', avsProfileId);
-
-        // Insert new incomes
         const { error: incomeError } = await supabase
           .from('avs_yearly_incomes')
           .insert(incomesToSave);
 
         if (incomeError) {
           console.error('Error saving yearly incomes:', incomeError);
+          toast({
+            title: "Attention",
+            description: "Les revenus annuels n'ont pas pu être enregistrés",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Historique enregistré",
+            description: `${incomesToSave.length} année(s) de revenus enregistrée(s)`,
+          });
         }
       }
 
