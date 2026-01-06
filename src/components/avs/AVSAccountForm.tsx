@@ -70,13 +70,13 @@ const AVSAccountForm = ({
   const [isActive, setIsActive] = useState(account?.is_active ?? true);
   const [scaleUsed] = useState(account?.scale_used || "44");
 
-  // Generate 44 years of income data based on birth date
+  // Generate 44 years of income data based on birth date (ascending order)
   const generateYearlyIncomes = (birthDate: string): YearlyIncome[] => {
     const incomes: YearlyIncome[] = [];
     if (birthDate) {
       const birthYear = new Date(birthDate).getFullYear();
       const startYear = birthYear + 21; // Cotisation commence à 21 ans
-      for (let i = 43; i >= 0; i--) {
+      for (let i = 0; i < 44; i++) {
         const year = startYear + i;
         incomes.push({
           year,
@@ -87,7 +87,7 @@ const AVSAccountForm = ({
     } else {
       // Default: 44 years from current year backwards
       const currentYear = new Date().getFullYear();
-      for (let i = 0; i < 44; i++) {
+      for (let i = 43; i >= 0; i--) {
         incomes.push({
           year: currentYear - i,
           income: null,
