@@ -70,20 +70,37 @@ const AVSAccountForm = ({
   const [isActive, setIsActive] = useState(account?.is_active ?? true);
   const [scaleUsed] = useState(account?.scale_used || "44");
 
-  // Generate 44 years of income data
-  const currentYear = new Date().getFullYear();
-  const [yearlyIncomes, setYearlyIncomes] = useState<YearlyIncome[]>(() => {
+  // Generate 44 years of income data based on birth date
+  const generateYearlyIncomes = (birthDate: string): YearlyIncome[] => {
     const incomes: YearlyIncome[] = [];
-    for (let i = 0; i < 44; i++) {
-      const year = currentYear - i;
-      incomes.push({
-        year,
-        income: null,
-        isEstimated: true,
-      });
+    if (birthDate) {
+      const birthYear = new Date(birthDate).getFullYear();
+      const startYear = birthYear + 21; // Cotisation commence à 21 ans
+      for (let i = 43; i >= 0; i--) {
+        const year = startYear + i;
+        incomes.push({
+          year,
+          income: null,
+          isEstimated: false,
+        });
+      }
+    } else {
+      // Default: 44 years from current year backwards
+      const currentYear = new Date().getFullYear();
+      for (let i = 0; i < 44; i++) {
+        incomes.push({
+          year: currentYear - i,
+          income: null,
+          isEstimated: false,
+        });
+      }
     }
     return incomes;
-  });
+  };
+
+  const [yearlyIncomes, setYearlyIncomes] = useState<YearlyIncome[]>(() => 
+    generateYearlyIncomes(account?.date_of_birth || "")
+  );
 
   // Calculate contribution years based on birth date
   const contributionInfo = useMemo(() => {
@@ -92,10 +109,17 @@ const AVSAccountForm = ({
     const birthYear = new Date(dateOfBirth).getFullYear();
     const startYear = birthYear + 21; // Cotisation commence à 21 ans
     const endYear = birthYear + 64; // Jusqu'à 64/65 ans
-    const yearsCount = Math.min(44, currentYear - startYear + 1);
+    const now = new Date().getFullYear();
+    const yearsCount = Math.min(44, now - startYear + 1);
     
     return { startYear, endYear, yearsCount: Math.max(0, yearsCount) };
-  }, [dateOfBirth, currentYear]);
+  }, [dateOfBirth]);
+
+  // Update yearly incomes when birth date changes
+  const handleDateOfBirthChange = (newDate: string) => {
+    setDateOfBirth(newDate);
+    setYearlyIncomes(generateYearlyIncomes(newDate));
+  };
 
   const handleChildrenChange = (hasChildren: boolean) => {
     if (hasChildren) {
@@ -230,7 +254,7 @@ const AVSAccountForm = ({
                   id="dateOfBirth"
                   type="date"
                   value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  onChange={(e) => handleDateOfBirthChange(e.target.value)}
                   className="mt-1"
                   placeholder="JJ.MM.AAAA"
                 />
