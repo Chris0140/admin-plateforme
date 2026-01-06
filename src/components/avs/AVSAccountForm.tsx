@@ -568,27 +568,6 @@ const AVSAccountForm = ({
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex flex-wrap gap-2">
-            {onCalculate && (
-              <Button 
-                type="button"
-                onClick={onCalculate}
-                variant="secondary"
-                className="gap-2"
-              >
-                <Calculator className="h-4 w-4" />
-                Calculer la rente
-              </Button>
-            )}
-            <Button 
-              type="button"
-              onClick={clearEstimations}
-              variant="ghost"
-            >
-              Réinitialiser
-            </Button>
-          </div>
 
           {/* Income table */}
           <Card>
@@ -631,13 +610,34 @@ const AVSAccountForm = ({
         </TabsContent>
       </Tabs>
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Annuler
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Enregistrement..." : account?.id ? "Mettre à jour" : "Créer le compte"}
-        </Button>
+      <div className="flex flex-col items-end gap-2">
+        <div className="flex gap-2">
+          <Button 
+            type="button"
+            onClick={clearEstimations}
+            variant="ghost"
+          >
+            Réinitialiser
+          </Button>
+          {onCalculate && (
+            <Button 
+              type="button" 
+              onClick={onCalculate}
+              variant="secondary"
+            >
+              <Calculator className="h-4 w-4" />
+              Calculer la rente
+            </Button>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Annuler
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Enregistrement..." : account?.id ? "Mettre à jour" : "Créer le compte"}
+          </Button>
+        </div>
       </div>
     </form>
   );
