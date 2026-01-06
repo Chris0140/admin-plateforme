@@ -19,12 +19,15 @@ export type Database = {
           average_annual_income_determinant: number | null
           avs_number: string | null
           created_at: string | null
+          date_of_birth: string | null
           full_rent_fraction: number | null
           has_gaps: boolean | null
           id: string
           is_active: boolean | null
           last_calculation_date: string | null
           marital_status: string | null
+          marriage_date: string | null
+          number_of_children: number | null
           owner_name: string | null
           profile_id: string
           scale_used: string | null
@@ -36,12 +39,15 @@ export type Database = {
           average_annual_income_determinant?: number | null
           avs_number?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           full_rent_fraction?: number | null
           has_gaps?: boolean | null
           id?: string
           is_active?: boolean | null
           last_calculation_date?: string | null
           marital_status?: string | null
+          marriage_date?: string | null
+          number_of_children?: number | null
           owner_name?: string | null
           profile_id: string
           scale_used?: string | null
@@ -53,12 +59,15 @@ export type Database = {
           average_annual_income_determinant?: number | null
           avs_number?: string | null
           created_at?: string | null
+          date_of_birth?: string | null
           full_rent_fraction?: number | null
           has_gaps?: boolean | null
           id?: string
           is_active?: boolean | null
           last_calculation_date?: string | null
           marital_status?: string | null
+          marriage_date?: string | null
+          number_of_children?: number | null
           owner_name?: string | null
           profile_id?: string
           scale_used?: string | null
