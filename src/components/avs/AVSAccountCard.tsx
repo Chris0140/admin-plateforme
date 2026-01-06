@@ -1,8 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, User, AlertTriangle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { calculateAVSFromScale, AVSCalculationResult } from "@/lib/avsCalculations";
+import { Badge } from "@/components/ui/badge";
+import { Edit, Trash2, AlertTriangle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,47 +36,36 @@ const MARITAL_STATUS_LABELS: Record<string, string> = {
 };
 
 const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
-  const [pensionResults, setPensionResults] = useState<AVSCalculationResult | null>(null);
-
   const formatCHF = (value: number) => {
     return new Intl.NumberFormat('fr-CH', {
       style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(value) + ' CHF';
+    }).format(value);
   };
 
   const yearsMissing = 44 - (account.years_contributed || 0);
 
-  useEffect(() => {
-    const calculatePension = async () => {
-      if (account.average_annual_income_determinant && account.average_annual_income_determinant > 0) {
-        try {
-          const result = await calculateAVSFromScale(
-            account.average_annual_income_determinant,
-            account.years_contributed || 44
-          );
-          setPensionResults(result);
-        } catch (error) {
-          console.error("Erreur calcul rente:", error);
-          setPensionResults(null);
-        }
-      }
-    };
-    calculatePension();
-  }, [account.average_annual_income_determinant, account.years_contributed]);
-
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-lg">{account.owner_name}</CardTitle>
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              {account.owner_name}
+              {!account.is_active && (
+                <Badge variant="secondary">Inactif</Badge>
+              )}
+            </CardTitle>
+            {account.avs_number && (
+              <CardDescription className="mt-1">
+                N° AVS: {account.avs_number}
+              </CardDescription>
+            )}
           </div>
           <div className="flex gap-2">
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={() => onEdit(account)}
             >
@@ -85,15 +73,15 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                <Button variant="outline" size="icon">
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Supprimer ce compte AVS ?</AlertDialogTitle>
+                  <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Cette action est irréversible. Toutes les données de ce compte seront définitivement supprimées.
+                    Cette action est irréversible. Le compte AVS "{account.owner_name}" sera définitivement supprimé.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -109,59 +97,41 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
             </AlertDialog>
           </div>
         </div>
-        {account.avs_number && (
-          <p className="text-sm text-muted-foreground">N° AVS: {account.avs_number}</p>
-        )}
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Informations principales */}
-        <div className="grid grid-cols-2 gap-4">
+      <CardContent>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <div>
-            <p className="text-xs text-muted-foreground">Revenu déterminant</p>
-            <p className="text-lg font-semibold">
-              {account.average_annual_income_determinant
-                ? formatCHF(account.average_annual_income_determinant)
-                : "Non renseigné"}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">État civil</p>
+            <p className="text-sm text-muted-foreground">État civil</p>
             <p className="text-lg font-semibold">
               {account.marital_status 
                 ? MARITAL_STATUS_LABELS[account.marital_status] || account.marital_status 
                 : "Non renseigné"}
             </p>
           </div>
-        </div>
-
-        {/* Rente vieillesse */}
-        {pensionResults && (
-          <div className="pt-2 border-t">
-            <p className="text-xs text-muted-foreground mb-1">Rente de vieillesse</p>
-            <p className="text-xl font-bold text-green-600">
-              {formatCHF(pensionResults.old_age_rent_monthly)}<span className="text-sm font-normal">/mois</span>
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {formatCHF(pensionResults.old_age_rent_annual)} par an
+          <div>
+            <p className="text-sm text-muted-foreground">Revenu déterminant</p>
+            <p className="text-lg font-semibold">
+              {account.average_annual_income_determinant
+                ? `${formatCHF(account.average_annual_income_determinant)} CHF`
+                : "Non renseigné"}
             </p>
           </div>
-        )}
-
-        {/* Années cotisées */}
-        <div className="grid grid-cols-2 gap-4 pt-2 border-t">
           <div>
-            <p className="text-xs text-muted-foreground">Années cotisées</p>
-            <p className="text-sm font-semibold">{account.years_contributed || 0} / 44</p>
+            <p className="text-sm text-muted-foreground">Années cotisées</p>
+            <p className="text-lg font-semibold">
+              {account.years_contributed || 0} / 44
+            </p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground">Années manquantes</p>
-            <p className="text-sm font-semibold">{yearsMissing}</p>
+            <p className="text-sm text-muted-foreground">Années manquantes</p>
+            <p className="text-lg font-semibold">
+              {yearsMissing}
+            </p>
           </div>
         </div>
 
-        {/* Alerte lacunes */}
         {yearsMissing > 0 && (
-          <div className="flex gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md">
+          <div className="flex gap-2 p-3 mt-4 bg-destructive/10 border border-destructive/30 rounded-md">
             <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
             <p className="text-sm text-destructive">
               {yearsMissing} année(s) de lacune.
