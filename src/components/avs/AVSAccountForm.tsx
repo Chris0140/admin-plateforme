@@ -477,14 +477,34 @@ const AVSAccountForm = ({
                       </CardHeader>
                       <CardContent className="px-4 pb-4 space-y-3">
                         <div>
-                          <Label htmlFor={`childBirthDate-${index}`}>Date de naissance</Label>
-                          <Input
-                            id={`childBirthDate-${index}`}
-                            type="date"
-                            value={date}
-                            onChange={(e) => handleChildBirthDateChange(index, e.target.value)}
-                            className="mt-1"
-                          />
+                          <Label>Date de naissance</Label>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full mt-1 justify-start text-left font-normal",
+                                  !date && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {date ? format(parse(date, "yyyy-MM-dd", new Date()), "dd MMMM yyyy", { locale: fr }) : <span>Sélectionnez une date</span>}
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={date ? parse(date, "yyyy-MM-dd", new Date()) : undefined}
+                                onSelect={(selectedDate) => handleChildBirthDateChange(index, selectedDate ? format(selectedDate, "yyyy-MM-dd") : "")}
+                                disabled={(d) => d > new Date() || d < new Date("1900-01-01")}
+                                initialFocus
+                                className={cn("p-3 pointer-events-auto")}
+                                captionLayout="dropdown-buttons"
+                                fromYear={1950}
+                                toYear={new Date().getFullYear()}
+                              />
+                            </PopoverContent>
+                          </Popover>
                         </div>
                         <Button 
                           type="button" 
