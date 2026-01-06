@@ -64,7 +64,16 @@ const AVSAccountForm = ({
   const [marriageDate, setMarriageDate] = useState(account?.marriage_date || "");
   const [nationality, setNationality] = useState(account?.nationality || "Suisse");
   const [domicileCountry, setDomicileCountry] = useState(account?.domicile_country || "Suisse");
-  const [retirementDate, setRetirementDate] = useState(account?.retirement_date || "");
+  const [retirementDate, setRetirementDate] = useState(() => {
+    if (account?.retirement_date) return account.retirement_date;
+    if (account?.date_of_birth) {
+      const birthDate = parse(account.date_of_birth, "yyyy-MM-dd", new Date());
+      const retirement = new Date(birthDate);
+      retirement.setFullYear(retirement.getFullYear() + 65);
+      return format(retirement, "yyyy-MM-dd");
+    }
+    return "";
+  });
   const [numberOfChildren, setNumberOfChildren] = useState(account?.number_of_children || 0);
   const [childrenBirthDates, setChildrenBirthDates] = useState<string[]>(
     account?.children_birth_dates || []
