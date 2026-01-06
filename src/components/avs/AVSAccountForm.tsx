@@ -125,10 +125,18 @@ const AVSAccountForm = ({
     return { startYear, endYear, yearsCount: Math.max(0, yearsCount) };
   }, [dateOfBirth]);
 
-  // Update yearly incomes when birth date changes
+  // Update yearly incomes and retirement date when birth date changes
   const handleDateOfBirthChange = (newDate: string) => {
     setDateOfBirth(newDate);
     setYearlyIncomes(generateYearlyIncomes(newDate));
+    
+    // Calculate retirement date (65 years after birth)
+    if (newDate) {
+      const birthDate = parse(newDate, "yyyy-MM-dd", new Date());
+      const retirement = new Date(birthDate);
+      retirement.setFullYear(retirement.getFullYear() + 65);
+      setRetirementDate(format(retirement, "yyyy-MM-dd"));
+    }
   };
 
   const handleChildrenChange = (hasChildren: boolean) => {
