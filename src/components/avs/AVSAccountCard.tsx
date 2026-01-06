@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Trash2, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { calculateAVSFromScale, AVSCalculationResult } from "@/lib/avsCalculations";
 import {
@@ -62,7 +62,10 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
   }, [account.average_annual_income_determinant, account.years_contributed]);
 
   return (
-    <Card className={account.is_active ? "" : "opacity-60"}>
+    <Card 
+      className={`cursor-pointer transition-shadow hover:shadow-md ${account.is_active ? "" : "opacity-60"}`}
+      onClick={() => onEdit(account)}
+    >
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="space-y-1 flex-1">
@@ -79,14 +82,7 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
               </span>
             )}
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onEdit(account)}
-            >
-              <Pencil className="h-4 w-4" />
-            </Button>
+          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="ghost" size="icon">
