@@ -1,8 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertTriangle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { calculateAVSFromScale, AVSCalculationResult } from "@/lib/avsCalculations";
+import { Badge } from "@/components/ui/badge";
+import { Edit, Trash2, AlertTriangle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,13 +28,17 @@ interface AVSAccountCardProps {
   onDelete: (id: string) => void;
 }
 
-const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
-  const [pensionResults, setPensionResults] = useState<AVSCalculationResult | null>(null);
+const MARITAL_STATUS_LABELS: Record<string, string> = {
+  'celibataire': 'Célibataire',
+  'marie': 'Marié(e)',
+  'divorce': 'Divorcé(e)',
+  'veuf': 'Veuf/Veuve',
+};
 
+const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
   const formatCHF = (value: number) => {
     return new Intl.NumberFormat('fr-CH', {
-      style: 'currency',
-      currency: 'CHF',
+      style: 'decimal',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -43,50 +46,35 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
 
   const yearsMissing = 44 - (account.years_contributed || 0);
 
-  useEffect(() => {
-    const calculatePension = async () => {
-      if (account.average_annual_income_determinant && account.average_annual_income_determinant > 0) {
-        try {
-          const result = await calculateAVSFromScale(
-            account.average_annual_income_determinant,
-            account.years_contributed || 44
-          );
-          setPensionResults(result);
-        } catch (error) {
-          console.error("Erreur calcul rente:", error);
-          setPensionResults(null);
-        }
-      }
-    };
-    calculatePension();
-  }, [account.average_annual_income_determinant, account.years_contributed]);
-
   return (
-    <Card 
-      className={`cursor-pointer transition-shadow hover:shadow-md ${account.is_active ? "" : "opacity-60"}`}
-      onClick={() => onEdit(account)}
-    >
+    <Card>
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="space-y-1 flex-1">
-            <CardTitle className="text-xl">{account.owner_name}</CardTitle>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              {account.owner_name}
+              {!account.is_active && (
+                <Badge variant="secondary">Inactif</Badge>
+              )}
+            </CardTitle>
             {account.avs_number && (
-              <p className="text-sm text-muted-foreground">N° AVS: {account.avs_number}</p>
-            )}
-            {account.marital_status && (
-              <p className="text-sm text-muted-foreground capitalize">État civil: {account.marital_status}</p>
-            )}
-            {!account.is_active && (
-              <span className="inline-block px-2 py-1 text-xs bg-muted text-muted-foreground rounded">
-                Inactif
-              </span>
+              <CardDescription className="mt-1">
+                N° AVS: {account.avs_number}
+              </CardDescription>
             )}
           </div>
-          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => onEdit(account)}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                <Button variant="outline" size="icon">
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -110,13 +98,21 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-3 gap-4">
+      <CardContent>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <p className="text-sm text-muted-foreground">État civil</p>
+            <p className="text-lg font-semibold">
+              {account.marital_status 
+                ? MARITAL_STATUS_LABELS[account.marital_status] || account.marital_status 
+                : "Non renseigné"}
+            </p>
+          </div>
           <div>
             <p className="text-sm text-muted-foreground">Revenu déterminant</p>
             <p className="text-lg font-semibold">
               {account.average_annual_income_determinant
-                ? formatCHF(account.average_annual_income_determinant)
+                ? `${formatCHF(account.average_annual_income_determinant)} CHF`
                 : "Non renseigné"}
             </p>
           </div>
@@ -135,7 +131,7 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
         </div>
 
         {yearsMissing > 0 && (
-          <div className="flex gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md">
+          <div className="flex gap-2 p-3 mt-4 bg-destructive/10 border border-destructive/30 rounded-md">
             <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
             <p className="text-sm text-destructive">
               {yearsMissing} année(s) de lacune.
