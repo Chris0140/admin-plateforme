@@ -204,7 +204,7 @@ const AVSAccountForm = ({
     setYearlyIncomes(newIncomes);
   };
 
-  const showMarriageDate = maritalStatus === "marié" || maritalStatus === "partenariat_enregistré";
+  const showMarriageDate = maritalStatus === "marié" || maritalStatus === "partenariat_enregistré" || maritalStatus === "divorcé";
   
   // Calculate years contributed from filled incomes
   const yearsContributed = yearlyIncomes.filter(y => y.income !== null && y.income > 0).length;
@@ -377,14 +377,34 @@ const AVSAccountForm = ({
               {/* Date de mariage (conditionnelle) */}
               {showMarriageDate && (
                 <div>
-                  <Label htmlFor="marriageDate">Date de mariage</Label>
-                  <Input
-                    id="marriageDate"
-                    type="date"
-                    value={marriageDate}
-                    onChange={(e) => setMarriageDate(e.target.value)}
-                    className="mt-1"
-                  />
+                  <Label>Date de mariage</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full mt-1 justify-start text-left font-normal",
+                          !marriageDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {marriageDate ? format(parse(marriageDate, "yyyy-MM-dd", new Date()), "dd MMMM yyyy", { locale: fr }) : <span>Sélectionnez une date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={marriageDate ? parse(marriageDate, "yyyy-MM-dd", new Date()) : undefined}
+                        onSelect={(date) => setMarriageDate(date ? format(date, "yyyy-MM-dd") : "")}
+                        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                        captionLayout="dropdown-buttons"
+                        fromYear={1950}
+                        toYear={new Date().getFullYear()}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               )}
 
