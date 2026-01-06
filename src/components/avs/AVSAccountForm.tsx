@@ -374,10 +374,10 @@ const AVSAccountForm = ({
                 </Select>
               </div>
 
-              {/* Date de mariage (conditionnelle) */}
+              {/* Date de mariage/divorce (conditionnelle) */}
               {showMarriageDate && (
                 <div>
-                  <Label>Date de mariage</Label>
+                  <Label>{maritalStatus === "divorcé" ? "Date de divorce" : "Date de mariage"}</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
