@@ -140,24 +140,24 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
             <h4 className="text-sm font-medium text-muted-foreground mb-3">Rentes estimées</h4>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-background rounded-md p-3 border">
-                <p className="text-xs text-muted-foreground mb-1">Rente vieillesse</p>
-                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.old_age_rent_monthly)}</p>
-                <p className="text-xs text-muted-foreground">/mois • {formatCHF(pensionResults.old_age_rent_annual)}/an</p>
+                <p className="font-semibold text-foreground">Rente vieillesse</p>
+                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.old_age_rent_annual)}<span className="text-sm font-normal text-muted-foreground">/an</span></p>
+                <p className="text-xs text-muted-foreground mt-1">{formatCHF(pensionResults.old_age_rent_monthly)}/mois</p>
               </div>
               <div className="bg-background rounded-md p-3 border">
-                <p className="text-xs text-muted-foreground mb-1">Rente invalidité</p>
-                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.disability_rent_monthly)}</p>
-                <p className="text-xs text-muted-foreground">/mois • {formatCHF(pensionResults.disability_rent_annual)}/an</p>
+                <p className="font-semibold text-foreground">Rente invalidité</p>
+                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.disability_rent_annual)}<span className="text-sm font-normal text-muted-foreground">/an</span></p>
+                <p className="text-xs text-muted-foreground mt-1">{formatCHF(pensionResults.disability_rent_monthly)}/mois</p>
               </div>
               <div className="bg-background rounded-md p-3 border">
-                <p className="text-xs text-muted-foreground mb-1">Rente veuve/veuf</p>
-                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.widow_rent_monthly)}</p>
-                <p className="text-xs text-muted-foreground">/mois • {formatCHF(pensionResults.widow_rent_annual)}/an</p>
+                <p className="font-semibold text-foreground">Rente veuve/veuf</p>
+                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.widow_rent_annual)}<span className="text-sm font-normal text-muted-foreground">/an</span></p>
+                <p className="text-xs text-muted-foreground mt-1">{formatCHF(pensionResults.widow_rent_monthly)}/mois</p>
               </div>
               <div className="bg-background rounded-md p-3 border">
-                <p className="text-xs text-muted-foreground mb-1">Rente enfant</p>
-                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.child_rent_monthly)}</p>
-                <p className="text-xs text-muted-foreground">/mois • {formatCHF(pensionResults.child_rent_annual)}/an</p>
+                <p className="font-semibold text-foreground">Rente enfant</p>
+                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.child_rent_annual)}<span className="text-sm font-normal text-muted-foreground">/an</span></p>
+                <p className="text-xs text-muted-foreground mt-1">{formatCHF(pensionResults.child_rent_monthly)}/mois</p>
               </div>
             </div>
           </div>
