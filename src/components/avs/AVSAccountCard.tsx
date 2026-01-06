@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { calculateAVSFromScale, AVSCalculationResult } from "@/lib/avsCalculations";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +30,8 @@ interface AVSAccountCardProps {
 }
 
 const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
+  const [pensionResults, setPensionResults] = useState<AVSCalculationResult | null>(null);
+
   const formatCHF = (value: number) => {
     return new Intl.NumberFormat('fr-CH', {
       style: 'currency',
@@ -38,7 +42,24 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
   };
 
   const yearsMissing = 44 - (account.years_contributed || 0);
-  const rentCoefficient = Math.round(((account.years_contributed || 0) / 44) * 100);
+
+  useEffect(() => {
+    const calculatePension = async () => {
+      if (account.average_annual_income_determinant && account.average_annual_income_determinant > 0) {
+        try {
+          const result = await calculateAVSFromScale(
+            account.average_annual_income_determinant,
+            account.years_contributed || 44
+          );
+          setPensionResults(result);
+        } catch (error) {
+          console.error("Erreur calcul rente:", error);
+          setPensionResults(null);
+        }
+      }
+    };
+    calculatePension();
+  }, [account.average_annual_income_determinant, account.years_contributed]);
 
   return (
     <Card className={account.is_active ? "" : "opacity-60"}>
@@ -93,8 +114,8 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-3 gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Revenu déterminant</p>
             <p className="text-lg font-semibold">
@@ -115,19 +136,42 @@ const AVSAccountCard = ({ account, onEdit, onDelete }: AVSAccountCardProps) => {
               {yearsMissing}
             </p>
           </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Coefficient</p>
-            <p className="text-lg font-semibold">
-              {rentCoefficient}%
-            </p>
-          </div>
         </div>
 
+        {/* Pension Results */}
+        {pensionResults && (
+          <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+            <h4 className="text-sm font-medium text-muted-foreground mb-3">Rentes estimées</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-background rounded-md p-3 border">
+                <p className="text-xs text-muted-foreground mb-1">Rente vieillesse</p>
+                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.old_age_rent_monthly)}</p>
+                <p className="text-xs text-muted-foreground">/mois • {formatCHF(pensionResults.old_age_rent_annual)}/an</p>
+              </div>
+              <div className="bg-background rounded-md p-3 border">
+                <p className="text-xs text-muted-foreground mb-1">Rente invalidité</p>
+                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.disability_rent_monthly)}</p>
+                <p className="text-xs text-muted-foreground">/mois • {formatCHF(pensionResults.disability_rent_annual)}/an</p>
+              </div>
+              <div className="bg-background rounded-md p-3 border">
+                <p className="text-xs text-muted-foreground mb-1">Rente veuve/veuf</p>
+                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.widow_rent_monthly)}</p>
+                <p className="text-xs text-muted-foreground">/mois • {formatCHF(pensionResults.widow_rent_annual)}/an</p>
+              </div>
+              <div className="bg-background rounded-md p-3 border">
+                <p className="text-xs text-muted-foreground mb-1">Rente enfant</p>
+                <p className="text-xl font-bold text-primary">{formatCHF(pensionResults.child_rent_monthly)}</p>
+                <p className="text-xs text-muted-foreground">/mois • {formatCHF(pensionResults.child_rent_annual)}/an</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {yearsMissing > 0 && (
-          <div className="flex gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md mt-4">
+          <div className="flex gap-2 p-3 bg-destructive/10 border border-destructive/30 rounded-md">
             <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
             <p className="text-sm text-destructive">
-              {yearsMissing} année(s) de lacune
+              {yearsMissing} année(s) de lacune.
             </p>
           </div>
         )}
