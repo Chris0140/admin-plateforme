@@ -282,16 +282,10 @@ const AVS = () => {
               ← Retour aux comptes
             </Button>
           )}
-          <div className="flex gap-2 ml-auto">
-            <Button variant="outline" size="sm" onClick={(e) => handleEditAccount(selectedAccount, e)}>
-              <Edit2 className="mr-2 h-4 w-4" />
-              Modifier le compte
-            </Button>
-            <Button onClick={handleAddNew} size="sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Ajouter un compte
-            </Button>
-          </div>
+          <Button onClick={handleAddNew} size="sm" className="ml-auto">
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter un compte
+          </Button>
         </div>
         <AVSIncomeHistoryPage 
           account={selectedAccount} 
