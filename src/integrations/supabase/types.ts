@@ -20,16 +20,20 @@ export type Database = {
           avs_number: string | null
           created_at: string | null
           date_of_birth: string | null
+          domicile_country: string | null
           full_rent_fraction: number | null
+          gender: string | null
           has_gaps: boolean | null
           id: string
           is_active: boolean | null
           last_calculation_date: string | null
           marital_status: string | null
           marriage_date: string | null
+          nationality: string | null
           number_of_children: number | null
           owner_name: string | null
           profile_id: string
+          retirement_date: string | null
           scale_used: string | null
           updated_at: string | null
           years_contributed: number | null
@@ -40,16 +44,20 @@ export type Database = {
           avs_number?: string | null
           created_at?: string | null
           date_of_birth?: string | null
+          domicile_country?: string | null
           full_rent_fraction?: number | null
+          gender?: string | null
           has_gaps?: boolean | null
           id?: string
           is_active?: boolean | null
           last_calculation_date?: string | null
           marital_status?: string | null
           marriage_date?: string | null
+          nationality?: string | null
           number_of_children?: number | null
           owner_name?: string | null
           profile_id: string
+          retirement_date?: string | null
           scale_used?: string | null
           updated_at?: string | null
           years_contributed?: number | null
@@ -60,16 +68,20 @@ export type Database = {
           avs_number?: string | null
           created_at?: string | null
           date_of_birth?: string | null
+          domicile_country?: string | null
           full_rent_fraction?: number | null
+          gender?: string | null
           has_gaps?: boolean | null
           id?: string
           is_active?: boolean | null
           last_calculation_date?: string | null
           marital_status?: string | null
           marriage_date?: string | null
+          nationality?: string | null
           number_of_children?: number | null
           owner_name?: string | null
           profile_id?: string
+          retirement_date?: string | null
           scale_used?: string | null
           updated_at?: string | null
           years_contributed?: number | null
