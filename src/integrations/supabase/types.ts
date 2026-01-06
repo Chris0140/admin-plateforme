@@ -166,6 +166,44 @@ export type Database = {
         }
         Relationships: []
       }
+      avs_yearly_incomes: {
+        Row: {
+          avs_profile_id: string
+          created_at: string
+          id: string
+          income: number
+          is_estimated: boolean
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          avs_profile_id: string
+          created_at?: string
+          id?: string
+          income?: number
+          is_estimated?: boolean
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          avs_profile_id?: string
+          created_at?: string
+          id?: string
+          income?: number
+          is_estimated?: boolean
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avs_yearly_incomes_avs_profile_id_fkey"
+            columns: ["avs_profile_id"]
+            isOneToOne: false
+            referencedRelation: "avs_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_data: {
         Row: {
           autres_depenses: number | null
