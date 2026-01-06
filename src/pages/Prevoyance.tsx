@@ -118,29 +118,6 @@ const Prevoyance = () => {
       title="Prévoyance" 
       subtitle="Vue d'ensemble de votre prévoyance suisse"
     >
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-        <Card className="glass border-border/50">
-          <CardContent className="pt-4 md:pt-6 px-4 md:px-6 pb-4">
-            <p className="text-xs md:text-sm text-muted-foreground mb-1">Capital actuel total</p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{formatCHF(totalCurrentCapital)}</p>
-          </CardContent>
-        </Card>
-        <Card className="glass border-border/50">
-          <CardContent className="pt-4 md:pt-6 px-4 md:px-6 pb-4">
-            <p className="text-xs md:text-sm text-muted-foreground mb-1">Rente annuelle projetée</p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-primary">{formatCHF(totalProjectedRent)}</p>
-            <p className="text-[10px] md:text-xs text-muted-foreground">à 65 ans</p>
-          </CardContent>
-        </Card>
-        <Card className="glass border-border/50 sm:col-span-2 md:col-span-1">
-          <CardContent className="pt-4 md:pt-6 px-4 md:px-6 pb-4">
-            <p className="text-xs md:text-sm text-muted-foreground mb-1">Rente mensuelle projetée</p>
-            <p className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">{formatCHF(totalProjectedRent / 12)}</p>
-            <p className="text-[10px] md:text-xs text-muted-foreground">à 65 ans</p>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Pillar Cards */}
       <div className="space-y-3 md:space-y-4">
