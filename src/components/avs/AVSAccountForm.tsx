@@ -265,17 +265,17 @@ const AVSAccountForm = ({
                 />
               </div>
 
-              {/* Revenu annuel brut suisse */}
+              {/* Revenus annuel brut moyen */}
               <div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="annualIncome">Revenu annuel brut suisse</Label>
+                  <Label htmlFor="annualIncome">Revenus annuel brut moyen</Label>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger>
-                        <Info className="h-4 w-4 text-muted-foreground" />
+                        <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Revenu brut annuel moyen pour le calcul de la rente</p>
+                        <p>Le salaire brut moyen depuis l'année de vos 21 ans</p>
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
