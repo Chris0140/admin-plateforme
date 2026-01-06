@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Calculator, AlertTriangle, User, Edit, Plus, Trash2, Info } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-interface YearlyIncome {
+export interface YearlyIncome {
   year: number;
   income: number | null;
   isEstimated: boolean;
@@ -35,7 +35,8 @@ interface AVSAccountFormProps {
     children_birth_dates?: string[];
     scale_used?: string;
   };
-  onSubmit: (data: any) => void;
+  initialYearlyIncomes?: YearlyIncome[];
+  onSubmit: (data: any, yearlyIncomes: YearlyIncome[]) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
   calculatedResults?: any;
@@ -44,6 +45,7 @@ interface AVSAccountFormProps {
 
 const AVSAccountForm = ({
   account,
+  initialYearlyIncomes,
   onSubmit,
   onCancel,
   isSubmitting = false,
@@ -98,9 +100,12 @@ const AVSAccountForm = ({
     return incomes;
   };
 
-  const [yearlyIncomes, setYearlyIncomes] = useState<YearlyIncome[]>(() => 
-    generateYearlyIncomes(account?.date_of_birth || "")
-  );
+  const [yearlyIncomes, setYearlyIncomes] = useState<YearlyIncome[]>(() => {
+    if (initialYearlyIncomes && initialYearlyIncomes.length > 0) {
+      return initialYearlyIncomes;
+    }
+    return generateYearlyIncomes(account?.date_of_birth || "");
+  });
 
   // Calculate contribution years based on birth date
   const contributionInfo = useMemo(() => {
@@ -210,7 +215,7 @@ const AVSAccountForm = ({
       years_contributed: yearsContributed || 44,
       scale_used: scaleUsed,
       is_active: isActive,
-    });
+    }, yearlyIncomes);
   };
 
   const formatCHF = (value: number) => {

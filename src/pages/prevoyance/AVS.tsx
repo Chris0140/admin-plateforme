@@ -8,7 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateAllAVSPensionsStructured } from "@/lib/avsCalculations";
 import AVSAccountCard from "@/components/avs/AVSAccountCard";
-import AVSAccountForm from "@/components/avs/AVSAccountForm";
+import AVSAccountForm, { YearlyIncome } from "@/components/avs/AVSAccountForm";
 
 const AVS = () => {
   const { user } = useAuth();
@@ -20,6 +20,7 @@ const AVS = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingAccount, setEditingAccount] = useState<any>(null);
+  const [editingYearlyIncomes, setEditingYearlyIncomes] = useState<YearlyIncome[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [calculatedResults, setCalculatedResults] = useState<any>(null);
 
@@ -93,11 +94,13 @@ const AVS = () => {
     }
   };
 
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: any, yearlyIncomes: YearlyIncome[]) => {
     if (!profileId) return;
 
     setIsSubmitting(true);
     try {
+      let avsProfileId: string;
+      
       if (editingAccount?.id) {
         // Update existing account
         const { error } = await supabase
@@ -109,6 +112,7 @@ const AVS = () => {
           .eq('id', editingAccount.id);
 
         if (error) throw error;
+        avsProfileId = editingAccount.id;
 
         toast({
           title: "Compte mis à jour",
@@ -116,14 +120,17 @@ const AVS = () => {
         });
       } else {
         // Create new account
-        const { error } = await supabase
+        const { data: newAccount, error } = await supabase
           .from('avs_profiles')
           .insert({
             profile_id: profileId,
             ...data,
-          });
+          })
+          .select('id')
+          .single();
 
         if (error) throw error;
+        avsProfileId = newAccount.id;
 
         toast({
           title: "Compte créé",
@@ -131,8 +138,36 @@ const AVS = () => {
         });
       }
 
+      // Save yearly incomes
+      const incomesToSave = yearlyIncomes
+        .filter(y => y.income !== null && y.income > 0)
+        .map(y => ({
+          avs_profile_id: avsProfileId,
+          year: y.year,
+          income: y.income,
+          is_estimated: y.isEstimated,
+        }));
+
+      if (incomesToSave.length > 0) {
+        // Delete existing incomes for this profile
+        await supabase
+          .from('avs_yearly_incomes')
+          .delete()
+          .eq('avs_profile_id', avsProfileId);
+
+        // Insert new incomes
+        const { error: incomeError } = await supabase
+          .from('avs_yearly_incomes')
+          .insert(incomesToSave);
+
+        if (incomeError) {
+          console.error('Error saving yearly incomes:', incomeError);
+        }
+      }
+
       setShowForm(false);
       setEditingAccount(null);
+      setEditingYearlyIncomes([]);
       setCalculatedResults(null);
       loadData();
     } catch (error) {
@@ -147,10 +182,30 @@ const AVS = () => {
     }
   };
 
-  const handleEdit = (account: any) => {
+  const handleEdit = async (account: any) => {
     setEditingAccount(account);
     setShowForm(true);
     setCalculatedResults(null);
+
+    // Load yearly incomes for this account
+    if (account.id) {
+      const { data: incomes } = await supabase
+        .from('avs_yearly_incomes')
+        .select('year, income, is_estimated')
+        .eq('avs_profile_id', account.id)
+        .order('year', { ascending: true });
+
+      if (incomes && incomes.length > 0) {
+        const yearlyIncomes: YearlyIncome[] = incomes.map(i => ({
+          year: i.year,
+          income: Number(i.income),
+          isEstimated: i.is_estimated,
+        }));
+        setEditingYearlyIncomes(yearlyIncomes);
+      } else {
+        setEditingYearlyIncomes([]);
+      }
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -180,6 +235,7 @@ const AVS = () => {
 
   const handleAddNew = () => {
     setEditingAccount({});
+    setEditingYearlyIncomes([]);
     setShowForm(true);
     setCalculatedResults(null);
   };
@@ -187,6 +243,7 @@ const AVS = () => {
   const handleCancel = () => {
     setShowForm(false);
     setEditingAccount(null);
+    setEditingYearlyIncomes([]);
     setCalculatedResults(null);
   };
 
@@ -205,6 +262,7 @@ const AVS = () => {
           {showForm ? (
             <AVSAccountForm
               account={editingAccount}
+              initialYearlyIncomes={editingYearlyIncomes}
               onSubmit={handleSubmit}
               onCancel={handleCancel}
               isSubmitting={isSubmitting}
