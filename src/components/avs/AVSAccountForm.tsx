@@ -474,10 +474,10 @@ const AVSAccountForm = ({
                 <p className="text-2xl font-bold">{yearsContributed} / 44</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="border-2 border-primary bg-primary/5">
               <CardContent className="pt-4">
                 <p className="text-sm text-muted-foreground">Revenu moyen</p>
-                <p className="text-2xl font-bold">{formatCHF(calculatedAverageIncome)}</p>
+                <p className="text-2xl font-bold text-primary">{formatCHF(calculatedAverageIncome)}</p>
               </CardContent>
             </Card>
             <Card>
@@ -559,18 +559,10 @@ const AVSAccountForm = ({
             )}
             <Button 
               type="button"
-              onClick={estimateAllIncomes}
-              variant="outline"
-              disabled={!annualIncome}
-            >
-              Estimer les revenus
-            </Button>
-            <Button 
-              type="button"
               onClick={clearEstimations}
               variant="ghost"
             >
-              Supprimer les estimations
+              Réinitialiser
             </Button>
           </div>
 
@@ -601,7 +593,7 @@ const AVSAccountForm = ({
                             placeholder="0"
                             value={item.income ?? ""}
                             onChange={(e) => handleYearlyIncomeChange(index, e.target.value)}
-                            className={item.isEstimated && item.income ? "bg-amber-100 border-amber-300" : ""}
+                            className=""
                           />
                         </TableCell>
                       </TableRow>
@@ -610,16 +602,6 @@ const AVSAccountForm = ({
                 </Table>
               </div>
               
-              <div className="flex items-center gap-4 mt-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-amber-100 border border-amber-300 rounded"></div>
-                  <span className="text-muted-foreground">Revenu estimé</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 bg-background border rounded"></div>
-                  <span className="text-muted-foreground">Revenu entré</span>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
