@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
+import { Plus, TrendingUp, ShieldAlert, Heart, Baby } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { calculateAllAVSPensionsStructured } from "@/lib/avsCalculations";
+import { calculateAllAVSPensionsStructured, calculateAVSFromScale, AVSCalculationResult } from "@/lib/avsCalculations";
 import AVSAccountCard from "@/components/avs/AVSAccountCard";
 import AVSAccountForm, { YearlyIncome } from "@/components/avs/AVSAccountForm";
 
@@ -23,12 +24,35 @@ const AVS = () => {
   const [editingYearlyIncomes, setEditingYearlyIncomes] = useState<YearlyIncome[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [calculatedResults, setCalculatedResults] = useState<any>(null);
+  const [summaryPensions, setSummaryPensions] = useState<AVSCalculationResult | null>(null);
 
   useEffect(() => {
     if (user) {
       loadData();
     }
   }, [user]);
+
+  // Calculate summary pensions from first active account
+  useEffect(() => {
+    const calculateSummary = async () => {
+      const activeAccount = accounts.find(a => a.is_active !== false);
+      if (activeAccount?.average_annual_income_determinant && activeAccount.average_annual_income_determinant > 0) {
+        try {
+          const result = await calculateAVSFromScale(
+            activeAccount.average_annual_income_determinant,
+            activeAccount.years_contributed || 44
+          );
+          setSummaryPensions(result);
+        } catch (error) {
+          console.error("Erreur calcul résumé:", error);
+          setSummaryPensions(null);
+        }
+      } else {
+        setSummaryPensions(null);
+      }
+    };
+    calculateSummary();
+  }, [accounts]);
 
   const loadData = async () => {
     try {
@@ -255,6 +279,14 @@ const AVS = () => {
     setCalculatedResults(null);
   };
 
+  const formatCHF = (value: number) => {
+    return new Intl.NumberFormat('fr-CH', {
+      style: 'decimal',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
+
   return (
     <AppLayout title="1er Pilier - AVS" subtitle="Gérez vos comptes AVS et ceux de votre partenaire">
       {/* Add button */}
@@ -265,6 +297,60 @@ const AVS = () => {
             Ajouter un compte
           </Button>
         </div>
+      )}
+
+      {/* Summary cards - Rentes estimées */}
+      {!showForm && summaryPensions && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card className="border border-border">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <TrendingUp className="h-4 w-4 text-green-500" />
+                <span className="text-sm text-green-500">Rente vieillesse</span>
+              </div>
+              <p className="text-2xl font-bold text-foreground">{formatCHF(summaryPensions.old_age_rent_monthly)} CHF</p>
+              <p className="text-sm text-muted-foreground">par mois</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <ShieldAlert className="h-4 w-4 text-primary" />
+                <span className="text-sm text-primary">Rente invalidité</span>
+              </div>
+              <p className="text-2xl font-bold text-foreground">{formatCHF(summaryPensions.disability_rent_monthly)} CHF</p>
+              <p className="text-sm text-muted-foreground">par mois</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Heart className="h-4 w-4 text-red-500" />
+                <span className="text-sm text-red-500">Rente veuve/veuf</span>
+              </div>
+              <p className="text-2xl font-bold text-foreground">{formatCHF(summaryPensions.widow_rent_monthly)} CHF</p>
+              <p className="text-sm text-muted-foreground">par mois</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border border-border">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Baby className="h-4 w-4 text-blue-500" />
+                <span className="text-sm text-blue-500">Rente enfant</span>
+              </div>
+              <p className="text-2xl font-bold text-foreground">{formatCHF(summaryPensions.child_rent_monthly)} CHF</p>
+              <p className="text-sm text-muted-foreground">par mois</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Section title */}
+      {!showForm && accounts.length > 0 && (
+        <h2 className="text-lg font-semibold mb-4">Vos comptes AVS</h2>
       )}
 
           {showForm ? (
