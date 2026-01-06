@@ -206,14 +206,6 @@ const AVSAccountForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Info banner */}
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800">
-        <p>
-          Les revenus en <span className="bg-amber-200 px-1 rounded font-medium">jaune</span> sont des 
-          <strong> revenus estimés</strong> utilisés pour le calcul de votre rente. 
-          Pour obtenir un calcul plus précis, vous pouvez les remplacer par vos revenus exacts.
-        </p>
-      </div>
 
       <Tabs defaultValue="personal" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
