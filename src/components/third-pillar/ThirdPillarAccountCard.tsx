@@ -113,16 +113,16 @@ const ThirdPillarAccountCard = ({ account, onEdit, onDelete }: ThirdPillarAccoun
             </p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Cotisation annuelle</p>
-            <p className="text-lg font-semibold">
-              {account.annualContribution.toLocaleString('fr-CH')} CHF
-            </p>
-          </div>
-          <div>
             <p className="text-sm text-muted-foreground">Capital projeté à 65 ans</p>
             <p className="text-lg font-semibold flex items-center gap-1">
               {account.projectedAmount.toLocaleString('fr-CH')} CHF
               <TrendingUp className="h-4 w-4 text-green-500" />
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Cotisation annuelle</p>
+            <p className="text-lg font-semibold">
+              {account.annualContribution.toLocaleString('fr-CH')} CHF
             </p>
           </div>
           <div>
