@@ -105,7 +105,7 @@ const ThirdPillarAccountCard = ({ account, onEdit, onDelete }: ThirdPillarAccoun
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-3">
           <div>
             <p className="text-sm text-muted-foreground">Capital actuel</p>
             <p className="text-lg font-semibold">
@@ -125,46 +125,43 @@ const ThirdPillarAccountCard = ({ account, onEdit, onDelete }: ThirdPillarAccoun
               {account.annualContribution.toLocaleString('fr-CH')} CHF
             </p>
           </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3 mt-4">
           <div>
             <p className="text-sm text-muted-foreground">Rente annuelle projetée</p>
             <p className="text-lg font-semibold">
               {account.projectedAnnualRent.toLocaleString('fr-CH')} CHF
             </p>
           </div>
-
-          {account.deathCapital && account.deathCapital > 0 && (
-            <div>
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Heart className="h-3 w-3" />
-                Capital décès
-              </p>
-              <p className="text-lg font-semibold">
-                {account.deathCapital.toLocaleString('fr-CH')} CHF
-              </p>
-            </div>
-          )}
-
-          {showInsuranceFields && account.disabilityRentAnnual && account.disabilityRentAnnual > 0 && (
-            <div>
-              <p className="text-sm text-muted-foreground flex items-center gap-1">
-                <Shield className="h-3 w-3" />
-                Rente d'invalidité annuelle
-              </p>
-              <p className="text-lg font-semibold">
-                {account.disabilityRentAnnual.toLocaleString('fr-CH')} CHF
-              </p>
-            </div>
-          )}
-
-          {showInsuranceFields && account.premiumExemptionWaitingPeriod && (
-            <div>
-              <p className="text-sm text-muted-foreground">Exonération des primes</p>
-              <p className="text-sm font-medium">
-                Délai: {WAITING_PERIOD_LABELS[account.premiumExemptionWaitingPeriod] || `${account.premiumExemptionWaitingPeriod} mois`}
-              </p>
-            </div>
-          )}
+          <div>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              <Shield className="h-3 w-3" />
+              Rente d'invalidité
+            </p>
+            <p className="text-lg font-semibold">
+              {(account.disabilityRentAnnual || 0).toLocaleString('fr-CH')} CHF
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground flex items-center gap-1">
+              <Heart className="h-3 w-3" />
+              Capital décès
+            </p>
+            <p className="text-lg font-semibold">
+              {(account.deathCapital || 0).toLocaleString('fr-CH')} CHF
+            </p>
+          </div>
         </div>
+
+        {showInsuranceFields && account.premiumExemptionWaitingPeriod && (
+          <div className="mt-4">
+            <p className="text-sm text-muted-foreground">Exonération des primes</p>
+            <p className="text-sm font-medium">
+              Délai: {WAITING_PERIOD_LABELS[account.premiumExemptionWaitingPeriod] || `${account.premiumExemptionWaitingPeriod} mois`}
+            </p>
+          </div>
+        )}
 
         {account.yearsToRetirement > 0 && (
           <p className="text-xs text-muted-foreground mt-4">
