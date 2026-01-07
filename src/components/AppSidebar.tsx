@@ -14,7 +14,8 @@ import {
   User,
   TrendingUp,
   Menu,
-  LineChart
+  LineChart,
+  Briefcase
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -38,6 +39,7 @@ const mainNavItems: NavItem[] = [
   { icon: LineChart, label: "Investissement", href: "/investissement" },
   { icon: Calculator, label: "Impôts", href: "/simulateur-impots" },
   { icon: Scale, label: "Comparateur", href: "/comparateur" },
+  { icon: Briefcase, label: "Service", href: "/service" },
 ];
 
 const bottomNavItems: NavItem[] = [

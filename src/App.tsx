@@ -30,6 +30,7 @@ import Synthese from "./pages/Synthese";
 import UserProfile from "./pages/UserProfile";
 import LPPAccounts from "./pages/LPPAccounts";
 import Admin from "./pages/Admin";
+import Service from "./pages/Service";
 import { AdminRoute } from "./components/AdminRoute";
 
 const queryClient = new QueryClient();
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/prevoyance/3e-pilier" element={<ThirdPillar />} />
             <Route path="/assurances" element={<Insurance />} />
             <Route path="/investissement" element={<Investissement />} />
+            <Route path="/service" element={<Service />} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
