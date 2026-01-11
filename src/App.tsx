@@ -15,6 +15,7 @@ import AccountSecurity from "./pages/AccountSecurity";
 import AccountDocuments from "./pages/AccountDocuments";
 import ThirdPillar from "./pages/ThirdPillar";
 import Insurance from "./pages/Insurance";
+import Immobilier from "./pages/Immobilier";
 import Investissement from "./pages/Investissement";
 import Prevoyance from "./pages/Prevoyance";
 import AVS from "./pages/prevoyance/AVS";
@@ -66,6 +67,7 @@ const App = () => (
             <Route path="/prevoyance/lpp" element={<LPPAccounts />} />
             <Route path="/prevoyance/3e-pilier" element={<ThirdPillar />} />
             <Route path="/assurances" element={<Insurance />} />
+            <Route path="/immobilier" element={<Immobilier />} />
             <Route path="/investissement" element={<Investissement />} />
             <Route path="/service" element={<Service />} />
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
