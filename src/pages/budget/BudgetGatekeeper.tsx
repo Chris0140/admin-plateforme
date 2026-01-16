@@ -25,10 +25,9 @@ export default function BudgetGatekeeper() {
     // Route based on onboarding status
     if (!hasProfile) {
       navigate("/budget/onboarding/profile", { replace: true });
-    } else if (!hasAccount) {
-      navigate("/budget/accounts", { replace: true });
     } else {
-      navigate("/budget/dashboard", { replace: true });
+      // Always go to accounts hub (whether they have accounts or not)
+      navigate("/budget/accounts", { replace: true });
     }
   }, [user, authLoading, isLoading, hasProfile, hasAccount, navigate]);
 
