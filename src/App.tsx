@@ -68,7 +68,7 @@ const App = () => (
             <Route path="/budget" element={<BudgetGatekeeper />} />
             <Route path="/budget/onboarding/profile" element={<OnboardingProfile />} />
             <Route path="/budget/accounts" element={<AccountsHub />} />
-            <Route path="/budget/dashboard" element={<BudgetDashboard />} />
+            <Route path="/budget/dashboard/:accountId" element={<BudgetDashboard />} />
             <Route path="/dashboard" element={<Synthese />} />
             <Route path="/prevoyance" element={<Prevoyance />} />
             <Route path="/prevoyance/avs" element={<AVS />} />

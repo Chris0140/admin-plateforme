@@ -29,7 +29,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const accountSchema = z.object({
   revenues: z
@@ -51,13 +51,18 @@ type AccountFormValues = z.infer<typeof accountSchema>;
 
 interface AccountConfigFormProps {
   onClose?: () => void;
+  onSuccess?: () => void;
+  accountId?: string; // If provided, we're in edit mode
 }
 
-export function AccountConfigForm({ onClose }: AccountConfigFormProps) {
+export function AccountConfigForm({ onClose, onSuccess, accountId }: AccountConfigFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(!!accountId);
+
+  const isEditMode = !!accountId;
 
   const form = useForm<AccountFormValues>({
     resolver: zodResolver(accountSchema),
@@ -68,6 +73,57 @@ export function AccountConfigForm({ onClose }: AccountConfigFormProps) {
       bankName: "",
     },
   });
+
+  // Load existing account data in edit mode
+  useEffect(() => {
+    if (!accountId) return;
+
+    const loadAccountData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch account
+        const { data: account, error: accountError } = await supabase
+          .from("budget_accounts")
+          .select("*")
+          .eq("id", accountId)
+          .single();
+
+        if (accountError) throw accountError;
+
+        // Fetch revenues
+        const { data: revenues, error: revenuesError } = await supabase
+          .from("budget_account_revenues")
+          .select("*")
+          .eq("account_id", accountId);
+
+        if (revenuesError) throw revenuesError;
+
+        // Set form values
+        form.reset({
+          bankName: account.bank_name,
+          revenueType: account.revenue_type as "regulier" | "variable",
+          accountingDay: account.accounting_day.toString(),
+          revenues: revenues.length > 0
+            ? revenues.map((r) => ({
+                source: r.source_name,
+                amount: r.amount.toString(),
+              }))
+            : [{ source: "", amount: "" }],
+        });
+      } catch (error) {
+        console.error("Error loading account:", error);
+        toast({
+          variant: "destructive",
+          title: "Erreur",
+          description: "Impossible de charger les données du compte",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAccountData();
+  }, [accountId, form, toast]);
 
   const onSubmit = async (values: AccountFormValues) => {
     if (!user) {
@@ -81,48 +137,95 @@ export function AccountConfigForm({ onClose }: AccountConfigFormProps) {
 
     setIsSubmitting(true);
     try {
-      // Create the account
-      const { data: account, error: accountError } = await supabase
-        .from("budget_accounts")
-        .insert({
-          user_id: user.id,
-          account_type: "courant",
-          bank_name: values.bankName,
-          revenue_type: values.revenueType,
-          accounting_day: parseInt(values.accountingDay),
-          is_active: true,
-        })
-        .select()
-        .single();
+      if (isEditMode && accountId) {
+        // Update existing account
+        const { error: accountError } = await supabase
+          .from("budget_accounts")
+          .update({
+            bank_name: values.bankName,
+            revenue_type: values.revenueType,
+            accounting_day: parseInt(values.accountingDay),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", accountId);
 
-      if (accountError) throw accountError;
+        if (accountError) throw accountError;
 
-      // Create the revenues
-      const revenues = values.revenues.map((rev) => ({
-        account_id: account.id,
-        source_name: rev.source,
-        amount: parseFloat(rev.amount) || 0,
-      }));
+        // Delete existing revenues and recreate
+        const { error: deleteError } = await supabase
+          .from("budget_account_revenues")
+          .delete()
+          .eq("account_id", accountId);
 
-      const { error: revenuesError } = await supabase
-        .from("budget_account_revenues")
-        .insert(revenues);
+        if (deleteError) throw deleteError;
 
-      if (revenuesError) throw revenuesError;
+        // Insert new revenues
+        const revenues = values.revenues.map((rev) => ({
+          account_id: accountId,
+          source_name: rev.source,
+          amount: parseFloat(rev.amount) || 0,
+        }));
 
-      toast({
-        title: "Votre espace est prêt !",
-        description: "Bienvenue dans votre tableau de bord budget",
-      });
+        const { error: revenuesError } = await supabase
+          .from("budget_account_revenues")
+          .insert(revenues);
 
-      if (onClose) onClose();
-      navigate("/budget/dashboard");
+        if (revenuesError) throw revenuesError;
+
+        toast({
+          title: "Compte mis à jour",
+          description: "Les modifications ont été enregistrées",
+        });
+
+        if (onSuccess) onSuccess();
+        if (onClose) onClose();
+      } else {
+        // Create new account
+        const { data: account, error: accountError } = await supabase
+          .from("budget_accounts")
+          .insert({
+            user_id: user.id,
+            account_type: "courant",
+            bank_name: values.bankName,
+            revenue_type: values.revenueType,
+            accounting_day: parseInt(values.accountingDay),
+            is_active: true,
+          })
+          .select()
+          .single();
+
+        if (accountError) throw accountError;
+
+        // Create the revenues
+        const revenues = values.revenues.map((rev) => ({
+          account_id: account.id,
+          source_name: rev.source,
+          amount: parseFloat(rev.amount) || 0,
+        }));
+
+        const { error: revenuesError } = await supabase
+          .from("budget_account_revenues")
+          .insert(revenues);
+
+        if (revenuesError) throw revenuesError;
+
+        toast({
+          title: "Votre espace est prêt !",
+          description: "Bienvenue dans votre tableau de bord budget",
+        });
+
+        if (onSuccess) onSuccess();
+        if (onClose) onClose();
+        navigate(`/budget/dashboard/${account.id}`);
+      }
     } catch (error) {
-      console.error("Error creating account:", error);
+      console.error("Error saving account:", error);
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: "Impossible de créer votre compte",
+        description: isEditMode
+          ? "Impossible de mettre à jour le compte"
+          : "Impossible de créer votre compte",
       });
     } finally {
       setIsSubmitting(false);
@@ -130,6 +233,14 @@ export function AccountConfigForm({ onClose }: AccountConfigFormProps) {
   };
 
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <Form {...form}>
@@ -144,7 +255,7 @@ export function AccountConfigForm({ onClose }: AccountConfigFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Type de revenus</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionnez le type" />
@@ -195,7 +306,7 @@ export function AccountConfigForm({ onClose }: AccountConfigFormProps) {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionnez le jour" />
@@ -239,8 +350,10 @@ export function AccountConfigForm({ onClose }: AccountConfigFormProps) {
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Création en cours...
+              {isEditMode ? "Mise à jour..." : "Création en cours..."}
             </>
+          ) : isEditMode ? (
+            "Mettre à jour"
           ) : (
             "Créer mon budget"
           )}
