@@ -204,6 +204,74 @@ export type Database = {
           },
         ]
       }
+      budget_account_revenues: {
+        Row: {
+          account_id: string
+          amount: number
+          created_at: string
+          id: string
+          source_name: string
+        }
+        Insert: {
+          account_id: string
+          amount?: number
+          created_at?: string
+          id?: string
+          source_name: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          source_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_account_revenues_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "budget_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budget_accounts: {
+        Row: {
+          account_type: string
+          accounting_day: number
+          bank_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          revenue_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_type?: string
+          accounting_day?: number
+          bank_name: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          revenue_type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_type?: string
+          accounting_day?: number
+          bank_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          revenue_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       budget_data: {
         Row: {
           autres_depenses: number | null
@@ -345,6 +413,45 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           year?: number
+        }
+        Relationships: []
+      }
+      budget_profiles: {
+        Row: {
+          created_at: string
+          first_name: string
+          id: string
+          job_title: string | null
+          last_name: string
+          onboarding_completed: boolean
+          professional_status: string
+          residence_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          first_name: string
+          id?: string
+          job_title?: string | null
+          last_name: string
+          onboarding_completed?: boolean
+          professional_status: string
+          residence_status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          first_name?: string
+          id?: string
+          job_title?: string | null
+          last_name?: string
+          onboarding_completed?: boolean
+          professional_status?: string
+          residence_status?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

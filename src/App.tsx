@@ -26,13 +26,18 @@ import AssuranceMaladie from "./pages/comparateur/AssuranceMaladie";
 import AssuranceVehicule from "./pages/comparateur/AssuranceVehicule";
 import TroisiemePilier from "./pages/comparateur/TroisiemePilier";
 import AssuranceAnimaux from "./pages/comparateur/AssuranceAnimaux";
-import Budget from "./pages/Budget";
 import Synthese from "./pages/Synthese";
 import UserProfile from "./pages/UserProfile";
 import LPPAccounts from "./pages/LPPAccounts";
 import Admin from "./pages/Admin";
 import Service from "./pages/Service";
 import { AdminRoute } from "./components/AdminRoute";
+
+// Budget Onboarding Flow
+import BudgetGatekeeper from "./pages/budget/BudgetGatekeeper";
+import OnboardingProfile from "./pages/budget/OnboardingProfile";
+import AccountsHub from "./pages/budget/AccountsHub";
+import BudgetDashboard from "./pages/budget/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -60,7 +65,10 @@ const App = () => (
             <Route path="/comparateur/troisieme-pilier" element={<TroisiemePilier />} />
             <Route path="/comparateur/assurance-animaux" element={<AssuranceAnimaux />} />
             <Route path="/simulateur-impots" element={<SimulateurImpots />} />
-            <Route path="/budget" element={<Budget />} />
+            <Route path="/budget" element={<BudgetGatekeeper />} />
+            <Route path="/budget/onboarding/profile" element={<OnboardingProfile />} />
+            <Route path="/budget/accounts" element={<AccountsHub />} />
+            <Route path="/budget/dashboard" element={<BudgetDashboard />} />
             <Route path="/dashboard" element={<Synthese />} />
             <Route path="/prevoyance" element={<Prevoyance />} />
             <Route path="/prevoyance/avs" element={<AVS />} />
