@@ -33,6 +33,8 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+const LOCAL_PROFILE_KEY = "budget_profile_guest";
+
 export function ProfileForm() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -51,28 +53,37 @@ export function ProfileForm() {
   });
 
   const onSubmit = async (values: ProfileFormValues) => {
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Vous devez être connecté",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from("budget_profiles").insert({
-        user_id: user.id,
-        first_name: values.firstName,
-        last_name: values.lastName,
-        residence_status: values.residenceStatus,
-        professional_status: values.professionalStatus,
-        job_title: values.jobTitle || null,
-        onboarding_completed: true,
-      });
+      if (user) {
+        // Authenticated user: save to Supabase
+        const { error } = await supabase.from("budget_profiles").insert({
+          user_id: user.id,
+          first_name: values.firstName,
+          last_name: values.lastName,
+          residence_status: values.residenceStatus,
+          professional_status: values.professionalStatus,
+          job_title: values.jobTitle || null,
+          onboarding_completed: true,
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Guest user: save to localStorage
+        const guestProfile = {
+          id: crypto.randomUUID(),
+          user_id: "guest",
+          first_name: values.firstName,
+          last_name: values.lastName,
+          residence_status: values.residenceStatus,
+          professional_status: values.professionalStatus,
+          job_title: values.jobTitle || null,
+          onboarding_completed: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+        localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(guestProfile));
+      }
 
       toast({
         title: "Profil créé",

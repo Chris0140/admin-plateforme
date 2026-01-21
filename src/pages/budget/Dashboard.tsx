@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Loader2, ArrowLeft } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
@@ -16,27 +16,34 @@ interface BudgetAccount {
   accounting_day: number;
 }
 
+const LOCAL_ACCOUNTS_KEY = "budget_accounts_guest";
+
+// Helper to get guest accounts from localStorage
+const getGuestAccounts = (): BudgetAccount[] => {
+  try {
+    const stored = localStorage.getItem(LOCAL_ACCOUNTS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
 export default function BudgetDashboard() {
   const { accountId } = useParams<{ accountId: string }>();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
   const [account, setAccount] = useState<BudgetAccount | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/login");
-    }
-  }, [user, authLoading, navigate]);
-
-  useEffect(() => {
-    if (!user || !accountId) return;
-
-    const fetchAccount = async () => {
-      setIsLoading(true);
-      try {
+  const fetchAccount = useCallback(async () => {
+    if (!accountId) return;
+    
+    setIsLoading(true);
+    try {
+      if (user) {
+        // Authenticated user: fetch from Supabase
         const { data, error } = await supabase
           .from("budget_accounts")
           .select("*")
@@ -57,23 +64,41 @@ export default function BudgetDashboard() {
         }
 
         setAccount(data);
-      } catch (error) {
-        console.error("Error fetching account:", error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger le compte",
-        });
-        navigate("/budget/accounts");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      } else {
+        // Guest user: fetch from localStorage
+        const accounts = getGuestAccounts();
+        const foundAccount = accounts.find((a) => a.id === accountId);
 
-    fetchAccount();
+        if (!foundAccount) {
+          toast({
+            variant: "destructive",
+            title: "Compte non trouvé",
+            description: "Ce compte n'existe pas",
+          });
+          navigate("/budget/accounts");
+          return;
+        }
+
+        setAccount(foundAccount);
+      }
+    } catch (error) {
+      console.error("Error fetching account:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger le compte",
+      });
+      navigate("/budget/accounts");
+    } finally {
+      setIsLoading(false);
+    }
   }, [user, accountId, navigate, toast]);
 
-  if (authLoading || isLoading) {
+  useEffect(() => {
+    fetchAccount();
+  }, [fetchAccount]);
+
+  if (isLoading) {
     return (
       <AppLayout title="Budget" subtitle="Chargement...">
         <div className="flex items-center justify-center min-h-[400px]">
