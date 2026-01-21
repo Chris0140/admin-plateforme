@@ -35,8 +35,31 @@ export interface OnboardingState {
   accounts: BudgetAccount[];
 }
 
+const LOCAL_PROFILE_KEY = "budget_profile_guest";
+const LOCAL_ACCOUNTS_KEY = "budget_accounts_guest";
+
+// Helper to get guest profile from localStorage
+const getGuestProfile = (): BudgetProfile | null => {
+  try {
+    const stored = localStorage.getItem(LOCAL_PROFILE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
+  }
+};
+
+// Helper to get guest accounts from localStorage
+const getGuestAccounts = (): BudgetAccount[] => {
+  try {
+    const stored = localStorage.getItem(LOCAL_ACCOUNTS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
 export function useBudgetOnboarding() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [state, setState] = useState<OnboardingState>({
     isLoading: true,
     hasProfile: false,
@@ -46,42 +69,49 @@ export function useBudgetOnboarding() {
   });
 
   useEffect(() => {
-    if (!user) {
-      setState({
-        isLoading: false,
-        hasProfile: false,
-        hasAccount: false,
-        profile: null,
-        accounts: [],
-      });
-      return;
-    }
+    // Wait for auth to finish loading
+    if (authLoading) return;
 
     const fetchOnboardingStatus = async () => {
       try {
-        const [profileRes, accountsRes] = await Promise.all([
-          supabase
-            .from("budget_profiles")
-            .select("*")
-            .eq("user_id", user.id)
-            .maybeSingle(),
-          supabase
-            .from("budget_accounts")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("is_active", true),
-        ]);
+        if (user) {
+          // Authenticated user: fetch from Supabase
+          const [profileRes, accountsRes] = await Promise.all([
+            supabase
+              .from("budget_profiles")
+              .select("*")
+              .eq("user_id", user.id)
+              .maybeSingle(),
+            supabase
+              .from("budget_accounts")
+              .select("*")
+              .eq("user_id", user.id)
+              .eq("is_active", true),
+          ]);
 
-        const profile = profileRes.data as BudgetProfile | null;
-        const accounts = (accountsRes.data || []) as BudgetAccount[];
+          const profile = profileRes.data as BudgetProfile | null;
+          const accounts = (accountsRes.data || []) as BudgetAccount[];
 
-        setState({
-          isLoading: false,
-          hasProfile: !!profile && profile.onboarding_completed,
-          hasAccount: accounts.length > 0,
-          profile,
-          accounts,
-        });
+          setState({
+            isLoading: false,
+            hasProfile: !!profile && profile.onboarding_completed,
+            hasAccount: accounts.length > 0,
+            profile,
+            accounts,
+          });
+        } else {
+          // Guest user: fetch from localStorage
+          const profile = getGuestProfile();
+          const accounts = getGuestAccounts();
+
+          setState({
+            isLoading: false,
+            hasProfile: !!profile && profile.onboarding_completed,
+            hasAccount: accounts.length > 0,
+            profile,
+            accounts,
+          });
+        }
       } catch (error) {
         console.error("Error fetching onboarding status:", error);
         setState((prev) => ({ ...prev, isLoading: false }));
@@ -89,7 +119,7 @@ export function useBudgetOnboarding() {
     };
 
     fetchOnboardingStatus();
-  }, [user]);
+  }, [user, authLoading]);
 
   return state;
 }

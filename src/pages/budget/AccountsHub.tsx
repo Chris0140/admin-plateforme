@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { CreditCard, PiggyBank, Plus, Wallet } from "lucide-react";
+import { CreditCard, Plus, Wallet } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AccountConfigForm } from "@/components/budget/AccountConfigForm";
@@ -23,8 +22,25 @@ interface BudgetAccount {
   is_active: boolean;
 }
 
+const LOCAL_STORAGE_KEY = "budget_accounts_guest";
+
+// Helper to get guest accounts from localStorage
+const getGuestAccounts = (): BudgetAccount[] => {
+  try {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+// Helper to save guest accounts to localStorage
+const saveGuestAccounts = (accounts: BudgetAccount[]) => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(accounts));
+};
+
 export default function AccountsHub() {
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { isLoading: onboardingLoading, hasProfile } = useBudgetOnboarding();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -35,13 +51,6 @@ export default function AccountsHub() {
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
   const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null);
 
-  // Redirect if not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/login");
-    }
-  }, [user, authLoading, navigate]);
-
   // Redirect if no profile
   useEffect(() => {
     if (!onboardingLoading && !hasProfile) {
@@ -50,12 +59,11 @@ export default function AccountsHub() {
   }, [onboardingLoading, hasProfile, navigate]);
 
   // Fetch accounts
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchAccounts = async () => {
-      setIsLoadingAccounts(true);
-      try {
+  const fetchAccounts = useCallback(async () => {
+    setIsLoadingAccounts(true);
+    try {
+      if (user) {
+        // Authenticated user: fetch from Supabase
         const { data, error } = await supabase
           .from("budget_accounts")
           .select("*")
@@ -65,20 +73,25 @@ export default function AccountsHub() {
 
         if (error) throw error;
         setAccounts(data || []);
-      } catch (error) {
-        console.error("Error fetching accounts:", error);
-        toast({
-          variant: "destructive",
-          title: "Erreur",
-          description: "Impossible de charger vos comptes",
-        });
-      } finally {
-        setIsLoadingAccounts(false);
+      } else {
+        // Guest user: fetch from localStorage
+        setAccounts(getGuestAccounts());
       }
-    };
-
-    fetchAccounts();
+    } catch (error) {
+      console.error("Error fetching accounts:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger vos comptes",
+      });
+    } finally {
+      setIsLoadingAccounts(false);
+    }
   }, [user, toast]);
+
+  useEffect(() => {
+    fetchAccounts();
+  }, [fetchAccounts]);
 
   const handleCreateAccount = () => {
     setEditingAccountId(null);
@@ -93,19 +106,24 @@ export default function AccountsHub() {
   const handleDeleteAccount = async (accountId: string) => {
     setDeletingAccountId(accountId);
     try {
-      // Delete revenues first (cascade would be better but we do it manually)
-      await supabase
-        .from("budget_account_revenues")
-        .delete()
-        .eq("account_id", accountId);
+      if (user) {
+        // Authenticated user: delete from Supabase
+        await supabase
+          .from("budget_account_revenues")
+          .delete()
+          .eq("account_id", accountId);
 
-      // Delete the account
-      const { error } = await supabase
-        .from("budget_accounts")
-        .delete()
-        .eq("id", accountId);
+        const { error } = await supabase
+          .from("budget_accounts")
+          .delete()
+          .eq("id", accountId);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        // Guest user: delete from localStorage
+        const updatedAccounts = getGuestAccounts().filter((acc) => acc.id !== accountId);
+        saveGuestAccounts(updatedAccounts);
+      }
 
       // Optimistic update
       setAccounts((prev) => prev.filter((acc) => acc.id !== accountId));
@@ -133,21 +151,10 @@ export default function AccountsHub() {
 
   const handleFormSuccess = async () => {
     // Refresh accounts list
-    if (!user) return;
-    
-    const { data, error } = await supabase
-      .from("budget_accounts")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("is_active", true)
-      .order("created_at", { ascending: true });
-
-    if (!error && data) {
-      setAccounts(data);
-    }
+    await fetchAccounts();
   };
 
-  if (authLoading || onboardingLoading || isLoadingAccounts) {
+  if (onboardingLoading || isLoadingAccounts) {
     return (
       <AppLayout title="Budget" subtitle="Mes Comptes">
         <div className="flex items-center justify-center min-h-[400px]">

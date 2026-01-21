@@ -55,6 +55,39 @@ interface AccountConfigFormProps {
   accountId?: string; // If provided, we're in edit mode
 }
 
+const LOCAL_ACCOUNTS_KEY = "budget_accounts_guest";
+const LOCAL_REVENUES_KEY = "budget_revenues_guest";
+
+// Helper to get guest accounts from localStorage
+const getGuestAccounts = () => {
+  try {
+    const stored = localStorage.getItem(LOCAL_ACCOUNTS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+// Helper to save guest accounts to localStorage
+const saveGuestAccounts = (accounts: unknown[]) => {
+  localStorage.setItem(LOCAL_ACCOUNTS_KEY, JSON.stringify(accounts));
+};
+
+// Helper to get guest revenues from localStorage
+const getGuestRevenues = () => {
+  try {
+    const stored = localStorage.getItem(LOCAL_REVENUES_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+// Helper to save guest revenues to localStorage
+const saveGuestRevenues = (revenues: unknown[]) => {
+  localStorage.setItem(LOCAL_REVENUES_KEY, JSON.stringify(revenues));
+};
+
 export function AccountConfigForm({ onClose, onSuccess, accountId }: AccountConfigFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -81,35 +114,55 @@ export function AccountConfigForm({ onClose, onSuccess, accountId }: AccountConf
     const loadAccountData = async () => {
       setIsLoading(true);
       try {
-        // Fetch account
-        const { data: account, error: accountError } = await supabase
-          .from("budget_accounts")
-          .select("*")
-          .eq("id", accountId)
-          .single();
+        if (user) {
+          // Authenticated user: fetch from Supabase
+          const { data: account, error: accountError } = await supabase
+            .from("budget_accounts")
+            .select("*")
+            .eq("id", accountId)
+            .single();
 
-        if (accountError) throw accountError;
+          if (accountError) throw accountError;
 
-        // Fetch revenues
-        const { data: revenues, error: revenuesError } = await supabase
-          .from("budget_account_revenues")
-          .select("*")
-          .eq("account_id", accountId);
+          const { data: revenues, error: revenuesError } = await supabase
+            .from("budget_account_revenues")
+            .select("*")
+            .eq("account_id", accountId);
 
-        if (revenuesError) throw revenuesError;
+          if (revenuesError) throw revenuesError;
 
-        // Set form values
-        form.reset({
-          bankName: account.bank_name,
-          revenueType: account.revenue_type as "regulier" | "variable",
-          accountingDay: account.accounting_day.toString(),
-          revenues: revenues.length > 0
-            ? revenues.map((r) => ({
-                source: r.source_name,
-                amount: r.amount.toString(),
-              }))
-            : [{ source: "", amount: "" }],
-        });
+          form.reset({
+            bankName: account.bank_name,
+            revenueType: account.revenue_type as "regulier" | "variable",
+            accountingDay: account.accounting_day.toString(),
+            revenues: revenues.length > 0
+              ? revenues.map((r) => ({
+                  source: r.source_name,
+                  amount: r.amount.toString(),
+                }))
+              : [{ source: "", amount: "" }],
+          });
+        } else {
+          // Guest user: fetch from localStorage
+          const accounts = getGuestAccounts();
+          const account = accounts.find((a: { id: string }) => a.id === accountId);
+          const allRevenues = getGuestRevenues();
+          const revenues = allRevenues.filter((r: { account_id: string }) => r.account_id === accountId);
+
+          if (account) {
+            form.reset({
+              bankName: account.bank_name,
+              revenueType: account.revenue_type as "regulier" | "variable",
+              accountingDay: account.accounting_day.toString(),
+              revenues: revenues.length > 0
+                ? revenues.map((r: { source_name: string; amount: number }) => ({
+                    source: r.source_name,
+                    amount: r.amount.toString(),
+                  }))
+                : [{ source: "", amount: "" }],
+            });
+          }
+        }
       } catch (error) {
         console.error("Error loading account:", error);
         toast({
@@ -123,100 +176,162 @@ export function AccountConfigForm({ onClose, onSuccess, accountId }: AccountConf
     };
 
     loadAccountData();
-  }, [accountId, form, toast]);
+  }, [accountId, form, toast, user]);
 
   const onSubmit = async (values: AccountFormValues) => {
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Vous devez être connecté",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
     try {
-      if (isEditMode && accountId) {
-        // Update existing account
-        const { error: accountError } = await supabase
-          .from("budget_accounts")
-          .update({
-            bank_name: values.bankName,
-            revenue_type: values.revenueType,
-            accounting_day: parseInt(values.accountingDay),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", accountId);
+      if (user) {
+        // Authenticated user: save to Supabase
+        if (isEditMode && accountId) {
+          const { error: accountError } = await supabase
+            .from("budget_accounts")
+            .update({
+              bank_name: values.bankName,
+              revenue_type: values.revenueType,
+              accounting_day: parseInt(values.accountingDay),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", accountId);
 
-        if (accountError) throw accountError;
+          if (accountError) throw accountError;
 
-        // Delete existing revenues and recreate
-        const { error: deleteError } = await supabase
-          .from("budget_account_revenues")
-          .delete()
-          .eq("account_id", accountId);
+          const { error: deleteError } = await supabase
+            .from("budget_account_revenues")
+            .delete()
+            .eq("account_id", accountId);
 
-        if (deleteError) throw deleteError;
+          if (deleteError) throw deleteError;
 
-        // Insert new revenues
-        const revenues = values.revenues.map((rev) => ({
-          account_id: accountId,
-          source_name: rev.source,
-          amount: parseFloat(rev.amount) || 0,
-        }));
+          const revenues = values.revenues.map((rev) => ({
+            account_id: accountId,
+            source_name: rev.source,
+            amount: parseFloat(rev.amount) || 0,
+          }));
 
-        const { error: revenuesError } = await supabase
-          .from("budget_account_revenues")
-          .insert(revenues);
+          const { error: revenuesError } = await supabase
+            .from("budget_account_revenues")
+            .insert(revenues);
 
-        if (revenuesError) throw revenuesError;
+          if (revenuesError) throw revenuesError;
 
-        toast({
-          title: "Compte mis à jour",
-          description: "Les modifications ont été enregistrées",
-        });
+          toast({
+            title: "Compte mis à jour",
+            description: "Les modifications ont été enregistrées",
+          });
 
-        if (onSuccess) onSuccess();
-        if (onClose) onClose();
+          if (onSuccess) onSuccess();
+          if (onClose) onClose();
+        } else {
+          const { data: account, error: accountError } = await supabase
+            .from("budget_accounts")
+            .insert({
+              user_id: user.id,
+              account_type: "courant",
+              bank_name: values.bankName,
+              revenue_type: values.revenueType,
+              accounting_day: parseInt(values.accountingDay),
+              is_active: true,
+            })
+            .select()
+            .single();
+
+          if (accountError) throw accountError;
+
+          const revenues = values.revenues.map((rev) => ({
+            account_id: account.id,
+            source_name: rev.source,
+            amount: parseFloat(rev.amount) || 0,
+          }));
+
+          const { error: revenuesError } = await supabase
+            .from("budget_account_revenues")
+            .insert(revenues);
+
+          if (revenuesError) throw revenuesError;
+
+          toast({
+            title: "Votre espace est prêt !",
+            description: "Bienvenue dans votre tableau de bord budget",
+          });
+
+          if (onSuccess) onSuccess();
+          if (onClose) onClose();
+          navigate(`/budget/dashboard/${account.id}`);
+        }
       } else {
-        // Create new account
-        const { data: account, error: accountError } = await supabase
-          .from("budget_accounts")
-          .insert({
-            user_id: user.id,
+        // Guest user: save to localStorage
+        const accounts = getGuestAccounts();
+        const allRevenues = getGuestRevenues();
+
+        if (isEditMode && accountId) {
+          // Update existing account
+          const updatedAccounts = accounts.map((acc: { id: string }) =>
+            acc.id === accountId
+              ? {
+                  ...acc,
+                  bank_name: values.bankName,
+                  revenue_type: values.revenueType,
+                  accounting_day: parseInt(values.accountingDay),
+                  updated_at: new Date().toISOString(),
+                }
+              : acc
+          );
+          saveGuestAccounts(updatedAccounts);
+
+          // Update revenues
+          const otherRevenues = allRevenues.filter((r: { account_id: string }) => r.account_id !== accountId);
+          const newRevenues = values.revenues.map((rev) => ({
+            id: crypto.randomUUID(),
+            account_id: accountId,
+            source_name: rev.source,
+            amount: parseFloat(rev.amount) || 0,
+            created_at: new Date().toISOString(),
+          }));
+          saveGuestRevenues([...otherRevenues, ...newRevenues]);
+
+          toast({
+            title: "Compte mis à jour",
+            description: "Les modifications ont été enregistrées",
+          });
+
+          if (onSuccess) onSuccess();
+          if (onClose) onClose();
+        } else {
+          // Create new account
+          const newAccountId = crypto.randomUUID();
+          const newAccount = {
+            id: newAccountId,
+            user_id: "guest",
             account_type: "courant",
             bank_name: values.bankName,
             revenue_type: values.revenueType,
             accounting_day: parseInt(values.accountingDay),
             is_active: true,
-          })
-          .select()
-          .single();
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+          saveGuestAccounts([...accounts, newAccount]);
 
-        if (accountError) throw accountError;
+          // Create revenues
+          const newRevenues = values.revenues.map((rev) => ({
+            id: crypto.randomUUID(),
+            account_id: newAccountId,
+            source_name: rev.source,
+            amount: parseFloat(rev.amount) || 0,
+            created_at: new Date().toISOString(),
+          }));
+          saveGuestRevenues([...allRevenues, ...newRevenues]);
 
-        // Create the revenues
-        const revenues = values.revenues.map((rev) => ({
-          account_id: account.id,
-          source_name: rev.source,
-          amount: parseFloat(rev.amount) || 0,
-        }));
+          toast({
+            title: "Votre espace est prêt !",
+            description: "Bienvenue dans votre tableau de bord budget",
+          });
 
-        const { error: revenuesError } = await supabase
-          .from("budget_account_revenues")
-          .insert(revenues);
-
-        if (revenuesError) throw revenuesError;
-
-        toast({
-          title: "Votre espace est prêt !",
-          description: "Bienvenue dans votre tableau de bord budget",
-        });
-
-        if (onSuccess) onSuccess();
-        if (onClose) onClose();
-        navigate(`/budget/dashboard/${account.id}`);
+          if (onSuccess) onSuccess();
+          if (onClose) onClose();
+          navigate(`/budget/dashboard/${newAccountId}`);
+        }
       }
     } catch (error) {
       console.error("Error saving account:", error);
