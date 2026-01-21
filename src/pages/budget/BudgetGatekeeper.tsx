@@ -11,14 +11,9 @@ export default function BudgetGatekeeper() {
     // Wait for onboarding status to load
     if (isLoading) return;
 
-    // Route based on onboarding status
-    if (!hasProfile) {
-      navigate("/budget/onboarding/profile", { replace: true });
-    } else {
-      // Always go to accounts hub (whether they have accounts or not)
-      navigate("/budget/accounts", { replace: true });
-    }
-  }, [isLoading, hasProfile, navigate]);
+    // Always go directly to accounts hub (no profile required)
+    navigate("/budget/accounts", { replace: true });
+  }, [isLoading, navigate]);
 
   // Show loading state while determining route
   return (
