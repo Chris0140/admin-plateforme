@@ -2,12 +2,23 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useBudgetOnboarding } from "@/hooks/useBudgetOnboarding";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function BudgetGatekeeper() {
-  const { isLoading, hasProfile } = useBudgetOnboarding();
+  const { user, loading: authLoading } = useAuth();
+  const { isLoading, hasProfile, hasAccount } = useBudgetOnboarding();
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Wait for auth to load
+    if (authLoading) return;
+
+    // Redirect to login if not authenticated
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
     // Wait for onboarding status to load
     if (isLoading) return;
 
@@ -18,7 +29,7 @@ export default function BudgetGatekeeper() {
       // Always go to accounts hub (whether they have accounts or not)
       navigate("/budget/accounts", { replace: true });
     }
-  }, [isLoading, hasProfile, navigate]);
+  }, [user, authLoading, isLoading, hasProfile, hasAccount, navigate]);
 
   // Show loading state while determining route
   return (

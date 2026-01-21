@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { CreditCard, Plus, Wallet } from "lucide-react";
+import { CreditCard, PiggyBank, Plus, Wallet } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AccountConfigForm } from "@/components/budget/AccountConfigForm";
 import { AccountCard } from "@/components/budget/AccountCard";
 import { useBudgetOnboarding } from "@/hooks/useBudgetOnboarding";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -22,6 +24,7 @@ interface BudgetAccount {
 }
 
 export default function AccountsHub() {
+  const { user, loading: authLoading } = useAuth();
   const { isLoading: onboardingLoading, hasProfile } = useBudgetOnboarding();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -32,6 +35,13 @@ export default function AccountsHub() {
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
   const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null);
 
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/login");
+    }
+  }, [user, authLoading, navigate]);
+
   // Redirect if no profile
   useEffect(() => {
     if (!onboardingLoading && !hasProfile) {
@@ -41,12 +51,15 @@ export default function AccountsHub() {
 
   // Fetch accounts
   useEffect(() => {
+    if (!user) return;
+
     const fetchAccounts = async () => {
       setIsLoadingAccounts(true);
       try {
         const { data, error } = await supabase
           .from("budget_accounts")
           .select("*")
+          .eq("user_id", user.id)
           .eq("is_active", true)
           .order("created_at", { ascending: true });
 
@@ -65,7 +78,7 @@ export default function AccountsHub() {
     };
 
     fetchAccounts();
-  }, [toast]);
+  }, [user, toast]);
 
   const handleCreateAccount = () => {
     setEditingAccountId(null);
@@ -120,9 +133,12 @@ export default function AccountsHub() {
 
   const handleFormSuccess = async () => {
     // Refresh accounts list
+    if (!user) return;
+    
     const { data, error } = await supabase
       .from("budget_accounts")
       .select("*")
+      .eq("user_id", user.id)
       .eq("is_active", true)
       .order("created_at", { ascending: true });
 
@@ -131,7 +147,7 @@ export default function AccountsHub() {
     }
   };
 
-  if (onboardingLoading || isLoadingAccounts) {
+  if (authLoading || onboardingLoading || isLoadingAccounts) {
     return (
       <AppLayout title="Budget" subtitle="Mes Comptes">
         <div className="flex items-center justify-center min-h-[400px]">

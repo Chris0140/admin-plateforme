@@ -4,10 +4,18 @@ import { Wallet } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { ProfileForm } from "@/components/budget/ProfileForm";
 import { useBudgetOnboarding } from "@/hooks/useBudgetOnboarding";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function OnboardingProfile() {
+  const { user, loading: authLoading } = useAuth();
   const { isLoading, hasProfile } = useBudgetOnboarding();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/login");
+    }
+  }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (!isLoading && hasProfile) {
@@ -15,7 +23,7 @@ export default function OnboardingProfile() {
     }
   }, [isLoading, hasProfile, navigate]);
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <AppLayout title="Budget" subtitle="Configuration de votre espace">
         <div className="flex items-center justify-center min-h-[400px]">
