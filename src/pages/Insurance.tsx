@@ -1,22 +1,50 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Plus, Shield, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { calculateInsuranceAnalysis, InsuranceAnalysis } from "@/lib/insuranceCalculations";
-import InsuranceContractCard from "@/components/insurance/InsuranceContractCard";
-import InsuranceContractForm from "@/components/insurance/InsuranceContractForm";
+import { calculateInsuranceAnalysis, InsuranceAnalysis, InsuranceContract, INSURANCE_TYPE_LABELS } from "@/lib/insuranceCalculations";
+import InsuranceTypeCube from "@/components/insurance/InsuranceTypeCube";
+import InsuranceAddPanel from "@/components/insurance/InsuranceAddPanel";
+import InsuranceDetailPanel from "@/components/insurance/InsuranceDetailPanel";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Heart,
+  HeartPulse,
+  Home,
+  Scale,
+  Car,
+  Gavel,
+  Users,
+  Accessibility,
+  TrendingDown,
+  LucideIcon,
+} from "lucide-react";
+
+interface InsuranceTypeConfig {
+  type: InsuranceContract['insurance_type'];
+  label: string;
+  icon: LucideIcon;
+}
+
+const INSURANCE_TYPES: InsuranceTypeConfig[] = [
+  { type: 'health_basic', label: 'LAMal', icon: Heart },
+  { type: 'health_complementary', label: 'LCA', icon: HeartPulse },
+  { type: 'household', label: 'Ménage', icon: Home },
+  { type: 'liability', label: 'RC', icon: Scale },
+  { type: 'vehicle', label: 'Véhicule', icon: Car },
+  { type: 'legal_protection', label: 'Juridique', icon: Gavel },
+  { type: 'life', label: 'Vie', icon: Users },
+  { type: 'disability', label: 'Invalidité', icon: Accessibility },
+  { type: 'loss_of_earnings', label: 'Perte de gain', icon: TrendingDown },
+];
 
 const Insurance = () => {
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [analysis, setAnalysis] = useState<InsuranceAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingContractId, setEditingContractId] = useState<string | null>(null);
+  const [selectedType, setSelectedType] = useState<InsuranceContract['insurance_type'] | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
 
   const loadData = async () => {
     try {
@@ -66,19 +94,29 @@ const Insurance = () => {
   }, []);
 
   const handleFormSuccess = () => {
-    setShowForm(false);
-    setEditingContractId(null);
+    setShowAddDialog(false);
     loadData();
   };
 
-  const handleEdit = (contractId: string) => {
-    setEditingContractId(contractId);
-    setShowForm(true);
-  };
+  const getTypeStats = useMemo(() => {
+    if (!analysis) return {};
+    
+    const stats: Record<string, { count: number; premium: number }> = {};
+    
+    for (const type of INSURANCE_TYPES) {
+      const contracts = analysis.contracts.filter(c => c.insurance_type === type.type);
+      stats[type.type] = {
+        count: contracts.length,
+        premium: contracts.reduce((sum, c) => sum + c.annual_premium, 0),
+      };
+    }
+    
+    return stats;
+  }, [analysis]);
 
-  const handleDelete = async () => {
-    await loadData();
-  };
+  const selectedTypeLabel = selectedType 
+    ? INSURANCE_TYPE_LABELS[selectedType] 
+    : '';
 
   if (loading) {
     return (
@@ -92,152 +130,92 @@ const Insurance = () => {
 
   return (
     <AppLayout title="Assurances" subtitle="Gestion de vos contrats d'assurance">
-      {/* Action button */}
-      <div className="flex justify-end mb-6">
-        <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90">
-          <Plus className="mr-2 h-4 w-4" />
-          Ajouter une assurance
-        </Button>
-      </div>
-
-      {showForm && (
-        <InsuranceContractForm
-          contractId={editingContractId}
-          onSuccess={handleFormSuccess}
-          onCancel={() => {
-            setShowForm(false);
-            setEditingContractId(null);
-          }}
-        />
-      )}
-
-      {analysis && (
-        <div className="space-y-6">
-          {/* Summary cards */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="glass border-border/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Prime totale</CardTitle>
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <DollarSign className="h-4 w-4 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">
-                  {analysis.totalAnnualPremium.toLocaleString('fr-CH')} CHF
-                </div>
-                <p className="text-xs text-muted-foreground">Par an</p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass border-border/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Contrats actifs</CardTitle>
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <Shield className="h-4 w-4 text-emerald-500" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">{analysis.contracts.length}</div>
-                <p className="text-xs text-muted-foreground">Assurances</p>
-              </CardContent>
-            </Card>
+      <div className="flex flex-col h-full gap-6">
+        {/* Main layout */}
+        <div className={`flex flex-1 gap-6 ${isMobile ? 'flex-col' : ''}`}>
+          {/* Left Panel - Add */}
+          <div className={`${isMobile ? 'w-full' : 'w-48 flex-shrink-0'}`}>
+            <InsuranceAddPanel
+              open={showAddDialog}
+              onOpenChange={setShowAddDialog}
+              onSuccess={handleFormSuccess}
+            />
           </div>
 
-          {/* Category cards */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="glass border-border/50">
-              <CardHeader>
-                <CardTitle className="text-lg">Santé</CardTitle>
-                <CardDescription>LAMal et complémentaires</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Contrats:</span>
-                    <span className="font-semibold text-foreground">{analysis.byType.health.count}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Prime annuelle:</span>
-                    <span className="font-semibold text-primary">
-                      {analysis.byType.health.premium.toLocaleString('fr-CH')} CHF
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass border-border/50">
-              <CardHeader>
-                <CardTitle className="text-lg">Protection</CardTitle>
-                <CardDescription>Vie, invalidité, perte de gain</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Contrats:</span>
-                    <span className="font-semibold text-foreground">{analysis.byType.protection.count}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Prime annuelle:</span>
-                    <span className="font-semibold text-primary">
-                      {analysis.byType.protection.premium.toLocaleString('fr-CH')} CHF
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="glass border-border/50">
-              <CardHeader>
-                <CardTitle className="text-lg">Biens</CardTitle>
-                <CardDescription>Ménage, RC, véhicule</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Contrats:</span>
-                    <span className="font-semibold text-foreground">{analysis.byType.property.count}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Prime annuelle:</span>
-                    <span className="font-semibold text-primary">
-                      {analysis.byType.property.premium.toLocaleString('fr-CH')} CHF
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Center - Cubes Grid */}
+          <div className={`flex-1 ${selectedType && !isMobile ? 'max-w-md' : ''}`}>
+            <div className={`grid gap-4 ${
+              isMobile 
+                ? 'grid-cols-2' 
+                : selectedType 
+                  ? 'grid-cols-2 lg:grid-cols-3' 
+                  : 'grid-cols-3'
+            }`}>
+              {INSURANCE_TYPES.map((config) => {
+                const stats = getTypeStats[config.type] || { count: 0, premium: 0 };
+                return (
+                  <InsuranceTypeCube
+                    key={config.type}
+                    type={config.type}
+                    label={config.label}
+                    icon={config.icon}
+                    contractCount={stats.count}
+                    totalPremium={stats.premium}
+                    isSelected={selectedType === config.type}
+                    onClick={() => setSelectedType(
+                      selectedType === config.type ? null : config.type
+                    )}
+                  />
+                );
+              })}
+            </div>
           </div>
 
-          {/* Contracts list */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-foreground">Mes contrats</h2>
-            {analysis.contracts.length === 0 ? (
-              <Card className="glass border-border/50">
-                <CardContent className="py-12 text-center">
-                  <p className="text-muted-foreground mb-4">
-                    Aucun contrat d'assurance enregistré.
-                  </p>
-                  <Button onClick={() => setShowForm(true)} className="bg-primary hover:bg-primary/90">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Ajouter votre premier contrat
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              analysis.contracts.map((contract) => (
-                <InsuranceContractCard
-                  key={contract.id}
-                  contract={contract}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                />
-              ))
-            )}
-          </div>
+          {/* Right Panel - Details (desktop only, mobile uses drawer) */}
+          {selectedType && !isMobile && (
+            <div className="w-80 flex-shrink-0 border-l pl-6">
+              <InsuranceDetailPanel
+                selectedType={selectedType}
+                typeLabel={selectedTypeLabel}
+                contracts={analysis?.contracts || []}
+                onClose={() => setSelectedType(null)}
+                onRefresh={loadData}
+              />
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Bottom - Discreet Totals */}
+        {analysis && (
+          <div className="border-t pt-4 bg-background">
+            <div className="flex justify-center gap-8 text-sm text-muted-foreground">
+              <div>
+                Prime totale:{" "}
+                <span className="font-medium text-foreground">
+                  {analysis.totalAnnualPremium.toLocaleString('fr-CH')} CHF/an
+                </span>
+              </div>
+              <div>
+                Contrats actifs:{" "}
+                <span className="font-medium text-foreground">
+                  {analysis.contracts.length}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Drawer for Details */}
+        {isMobile && selectedType && (
+          <InsuranceDetailPanel
+            selectedType={selectedType}
+            typeLabel={selectedTypeLabel}
+            contracts={analysis?.contracts || []}
+            onClose={() => setSelectedType(null)}
+            onRefresh={loadData}
+          />
+        )}
+      </div>
     </AppLayout>
   );
 };
