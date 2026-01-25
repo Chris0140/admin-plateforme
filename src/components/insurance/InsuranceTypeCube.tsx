@@ -1,11 +1,5 @@
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface InsuranceTypeCubeProps {
   type: string;
@@ -27,43 +21,33 @@ const InsuranceTypeCube = ({
   onClick,
 }: InsuranceTypeCubeProps) => {
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            onClick={onClick}
-            className={cn(
-              "relative flex items-center justify-center p-4 rounded-xl border-2 transition-all duration-200",
-              "hover:scale-105 hover:shadow-lg cursor-pointer aspect-square",
-              "bg-card text-card-foreground",
-              isSelected
-                ? "border-primary bg-primary/10 shadow-md"
-                : "border-border hover:border-primary/50"
-            )}
-          >
-            <Icon className={cn(
-              "h-10 w-10",
-              isSelected ? "text-primary" : "text-muted-foreground"
-            )} />
-            
-            {/* Badge for contract count */}
-            {contractCount > 0 && (
-              <span className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                {contractCount}
-              </span>
-            )}
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-center">
-          <p className="font-medium">{label}</p>
-          {contractCount > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {contractCount} contrat{contractCount > 1 ? 's' : ''} • {totalPremium.toLocaleString('fr-CH')} CHF/an
-            </p>
-          )}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <button
+      onClick={onClick}
+      className={cn(
+        "flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all duration-200",
+        "hover:scale-105 hover:shadow-lg cursor-pointer min-h-[120px]",
+        "bg-card text-card-foreground",
+        isSelected
+          ? "border-primary bg-primary/5 shadow-md"
+          : "border-border hover:border-primary/50"
+      )}
+    >
+      <Icon className={cn(
+        "h-8 w-8 mb-2",
+        isSelected ? "text-primary" : "text-muted-foreground"
+      )} />
+      <span className="text-sm font-medium text-center leading-tight">{label}</span>
+      {contractCount > 0 && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">{contractCount}</span> contrat{contractCount > 1 ? 's' : ''}
+        </div>
+      )}
+      {totalPremium > 0 && (
+        <div className="text-xs text-primary font-medium">
+          {totalPremium.toLocaleString('fr-CH')} CHF/an
+        </div>
+      )}
+    </button>
   );
 };
 
