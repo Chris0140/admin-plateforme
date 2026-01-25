@@ -137,14 +137,7 @@ const InsuranceContractForm = ({ contractId, onSuccess, onCancel }: InsuranceCon
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{contractId ? "Modifier" : "Ajouter"} un contrat d'assurance</CardTitle>
-        <CardDescription>
-          Gérez vos contrats d'assurance
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="space-y-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
@@ -352,8 +345,7 @@ const InsuranceContractForm = ({ contractId, onSuccess, onCancel }: InsuranceCon
             </div>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+    </div>
   );
 };
 
