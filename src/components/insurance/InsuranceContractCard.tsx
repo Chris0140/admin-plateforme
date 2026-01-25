@@ -114,22 +114,6 @@ const InsuranceContractCard = ({ contract, onEdit, onDelete }: InsuranceContract
               </p>
             </div>
           )}
-          {contract.death_capital && contract.death_capital > 0 && (
-            <div>
-              <p className="text-sm text-muted-foreground">Capital décès</p>
-              <p className="text-lg font-semibold">
-                {contract.death_capital.toLocaleString('fr-CH')} CHF
-              </p>
-            </div>
-          )}
-          {contract.disability_rent_annual && contract.disability_rent_annual > 0 && (
-            <div>
-              <p className="text-sm text-muted-foreground">Rente invalidité</p>
-              <p className="text-lg font-semibold">
-                {contract.disability_rent_annual.toLocaleString('fr-CH')} CHF/an
-              </p>
-            </div>
-          )}
         </div>
         {contract.notes && (
           <p className="text-sm text-muted-foreground mt-4">{contract.notes}</p>
