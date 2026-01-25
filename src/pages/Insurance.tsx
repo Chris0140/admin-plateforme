@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Shield, DollarSign, Heart } from "lucide-react";
+import { Plus, Shield, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateInsuranceAnalysis, InsuranceAnalysis } from "@/lib/insuranceCalculations";
@@ -114,7 +114,7 @@ const Insurance = () => {
       {analysis && (
         <div className="space-y-6">
           {/* Summary cards */}
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-2">
             <Card className="glass border-border/50">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Prime totale</CardTitle>
@@ -127,36 +127,6 @@ const Insurance = () => {
                   {analysis.totalAnnualPremium.toLocaleString('fr-CH')} CHF
                 </div>
                 <p className="text-xs text-muted-foreground">Par an</p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass border-border/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Capital décès</CardTitle>
-                <div className="p-2 rounded-lg bg-red-500/10">
-                  <Heart className="h-4 w-4 text-red-500" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">
-                  {analysis.totalDeathCapital.toLocaleString('fr-CH')} CHF
-                </div>
-                <p className="text-xs text-muted-foreground">Total assuré</p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass border-border/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Rente invalidité</CardTitle>
-                <div className="p-2 rounded-lg bg-orange-500/10">
-                  <Shield className="h-4 w-4 text-orange-500" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">
-                  {analysis.totalDisabilityRent.toLocaleString('fr-CH')} CHF
-                </div>
-                <p className="text-xs text-muted-foreground">Rente annuelle</p>
               </CardContent>
             </Card>
 
