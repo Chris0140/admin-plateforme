@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { CreditCard, Plus, Wallet } from "lucide-react";
+import { CreditCard, Plus, Wallet, LayoutGrid, Layers } from "lucide-react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AccountConfigForm } from "@/components/budget/AccountConfigForm";
 import { AccountCard } from "@/components/budget/AccountCard";
+import { AggregatedBudgetTable } from "@/components/budget/AggregatedBudgetTable";
+import { AggregationToolbar } from "@/components/budget/AggregationToolbar";
 import { useBudgetOnboarding } from "@/hooks/useBudgetOnboarding";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +52,13 @@ export default function AccountsHub() {
   const [showAccountSheet, setShowAccountSheet] = useState(false);
   const [editingAccountId, setEditingAccountId] = useState<string | null>(null);
   const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null);
+
+  // Aggregation state
+  const [selectedForAggregation, setSelectedForAggregation] = useState<string[]>([]);
+  const [showAggregation, setShowAggregation] = useState(false);
+  const [aggregationMode, setAggregationMode] = useState(false);
+  const [aggregationMonth, setAggregationMonth] = useState(new Date().getMonth() + 1);
+  const [aggregationYear, setAggregationYear] = useState(new Date().getFullYear());
 
   // Redirect if no profile
   useEffect(() => {
@@ -168,12 +177,48 @@ export default function AccountsHub() {
   }
 
   const hasAccounts = accounts.length > 0;
+  const canAggregate = accounts.length >= 2;
+
+  const handleSelectionChange = (accountId: string, selected: boolean) => {
+    if (selected) {
+      setSelectedForAggregation((prev) => [...prev, accountId]);
+    } else {
+      setSelectedForAggregation((prev) => prev.filter((id) => id !== accountId));
+    }
+  };
+
+  const handleToggleAggregationMode = () => {
+    if (aggregationMode) {
+      // Exiting aggregation mode
+      setAggregationMode(false);
+      setSelectedForAggregation([]);
+      setShowAggregation(false);
+    } else {
+      // Entering aggregation mode
+      setAggregationMode(true);
+    }
+  };
+
+  const handleCalculateAggregation = () => {
+    if (selectedForAggregation.length >= 2) {
+      setShowAggregation(true);
+    }
+  };
+
+  const handleClearAggregation = () => {
+    setSelectedForAggregation([]);
+    setShowAggregation(false);
+  };
+
+  const selectedAccounts = accounts.filter((acc) =>
+    selectedForAggregation.includes(acc.id)
+  );
 
   return (
     <AppLayout title="Budget" subtitle="Mes Comptes">
-      <div className="max-w-5xl mx-auto py-8 px-4">
+      <div className="max-w-5xl mx-auto py-8 px-4 space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-primary/10 mb-3">
               <Wallet className="h-7 w-7 text-primary" />
@@ -183,17 +228,51 @@ export default function AccountsHub() {
             </h1>
             <p className="text-muted-foreground mt-1">
               {hasAccounts
-                ? "Sélectionnez un compte pour accéder à son tableau de bord"
+                ? aggregationMode 
+                  ? "Sélectionnez les comptes à agréger"
+                  : "Sélectionnez un compte pour accéder à son tableau de bord"
                 : "Créez votre premier compte pour commencer"}
             </p>
           </div>
-          {hasAccounts && (
-            <Button onClick={handleCreateAccount} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Nouveau compte
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {canAggregate && (
+              <Button
+                variant={aggregationMode ? "default" : "outline"}
+                onClick={handleToggleAggregationMode}
+                className="gap-2"
+              >
+                <Layers className="h-4 w-4" />
+                {aggregationMode ? "Annuler" : "Agréger"}
+              </Button>
+            )}
+            {hasAccounts && !aggregationMode && (
+              <Button onClick={handleCreateAccount} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Nouveau compte
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* Aggregation Toolbar */}
+        {aggregationMode && selectedForAggregation.length >= 2 && (
+          <AggregationToolbar
+            selectedCount={selectedForAggregation.length}
+            month={aggregationMonth}
+            year={aggregationYear}
+            onMonthChange={setAggregationMonth}
+            onYearChange={setAggregationYear}
+            onCalculate={handleCalculateAggregation}
+            onClear={handleClearAggregation}
+          />
+        )}
+
+        {/* Aggregation help text */}
+        {aggregationMode && selectedForAggregation.length < 2 && (
+          <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-4 text-center">
+            Sélectionnez au moins 2 comptes pour voir le récapitulatif agrégé
+          </div>
+        )}
 
         {/* Empty State */}
         {!hasAccounts && (
@@ -227,30 +306,44 @@ export default function AccountsHub() {
                 onEdit={handleEditAccount}
                 onDelete={handleDeleteAccount}
                 isDeleting={deletingAccountId === account.id}
+                showSelection={aggregationMode}
+                isSelected={selectedForAggregation.includes(account.id)}
+                onSelectionChange={handleSelectionChange}
               />
             ))}
 
-            {/* Add Account Card */}
-            <Card
-              className={cn(
-                "border-dashed border-2 cursor-pointer transition-all duration-300",
-                "hover:border-primary hover:bg-primary/5"
-              )}
-              onClick={handleCreateAccount}
-            >
-              <CardHeader className="text-center pb-2">
-                <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-xl bg-muted text-muted-foreground mb-2">
-                  <Plus className="h-7 w-7" />
-                </div>
-                <CardTitle className="text-lg">Ajouter un compte</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-center text-sm">
-                  Configurez un nouveau compte pour suivre vos finances
-                </CardDescription>
-              </CardContent>
-            </Card>
+            {/* Add Account Card - hide in aggregation mode */}
+            {!aggregationMode && (
+              <Card
+                className={cn(
+                  "border-dashed border-2 cursor-pointer transition-all duration-300",
+                  "hover:border-primary hover:bg-primary/5"
+                )}
+                onClick={handleCreateAccount}
+              >
+                <CardHeader className="text-center pb-2">
+                  <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-xl bg-muted text-muted-foreground mb-2">
+                    <Plus className="h-7 w-7" />
+                  </div>
+                  <CardTitle className="text-lg">Ajouter un compte</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-center text-sm">
+                    Configurez un nouveau compte pour suivre vos finances
+                  </CardDescription>
+                </CardContent>
+              </Card>
+            )}
           </div>
+        )}
+
+        {/* Aggregated Budget Table */}
+        {showAggregation && selectedAccounts.length >= 2 && (
+          <AggregatedBudgetTable
+            selectedAccounts={selectedAccounts}
+            year={aggregationYear}
+            month={aggregationMonth}
+          />
         )}
       </div>
 
