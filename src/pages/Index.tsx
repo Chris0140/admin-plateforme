@@ -1,5 +1,5 @@
 import { AppLayout } from "@/components/AppLayout";
-import { Users, Star, TrendingUp, Calculator, Wallet, Scale, FileText, Shield, PieChart, Landmark } from "lucide-react";
+import { TrendingUp, Calculator, Wallet, Scale, FileText, Shield, PieChart, Landmark } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,27 +76,6 @@ const Index = () => {
             Gérez votre patrimoine, optimisez vos finances et prenez le contrôle de votre avenir financier.
           </p>
 
-          {/* Stats */}
-          <div className="flex flex-wrap gap-3 md:gap-4 mb-6 md:mb-8">
-            <div className="glass rounded-xl px-4 md:px-5 py-2.5 md:py-3 flex items-center gap-2 md:gap-3">
-              <Users className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-              <div>
-                <div className="text-xs md:text-sm font-semibold text-foreground">500K+</div>
-                <div className="text-[10px] md:text-xs text-muted-foreground">utilisateurs</div>
-              </div>
-            </div>
-            <div className="glass rounded-xl px-4 md:px-5 py-2.5 md:py-3 flex items-center gap-2 md:gap-3">
-              <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-2.5 w-2.5 md:h-3 md:w-3 fill-primary text-primary" />
-                ))}
-              </div>
-              <div>
-                <div className="text-xs md:text-sm font-semibold text-foreground">4.8/5</div>
-                <div className="text-[10px] md:text-xs text-muted-foreground">avis</div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
