@@ -361,6 +361,7 @@ export type Database = {
       }
       budget_monthly: {
         Row: {
+          account_id: string | null
           assurances: number | null
           autres_revenus: number | null
           created_at: string | null
@@ -379,6 +380,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          account_id?: string | null
           assurances?: number | null
           autres_revenus?: number | null
           created_at?: string | null
@@ -397,6 +399,7 @@ export type Database = {
           year: number
         }
         Update: {
+          account_id?: string | null
           assurances?: number | null
           autres_revenus?: number | null
           created_at?: string | null
@@ -414,7 +417,15 @@ export type Database = {
           user_id?: string
           year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "budget_monthly_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "budget_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       budget_profiles: {
         Row: {

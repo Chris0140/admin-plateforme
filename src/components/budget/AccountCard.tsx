@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CreditCard, PiggyBank, MoreHorizontal, Settings, Trash2 } from "lucide-react";
+import { CreditCard, PiggyBank, MoreHorizontal, Settings, Trash2, Check } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,9 +36,20 @@ interface AccountCardProps {
   onEdit: (accountId: string) => void;
   onDelete: (accountId: string) => void;
   isDeleting?: boolean;
+  isSelected?: boolean;
+  onSelectionChange?: (accountId: string, selected: boolean) => void;
+  showSelection?: boolean;
 }
 
-export function AccountCard({ account, onEdit, onDelete, isDeleting }: AccountCardProps) {
+export function AccountCard({ 
+  account, 
+  onEdit, 
+  onDelete, 
+  isDeleting,
+  isSelected = false,
+  onSelectionChange,
+  showSelection = false,
+}: AccountCardProps) {
   const navigate = useNavigate();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -55,11 +67,16 @@ export function AccountCard({ account, onEdit, onDelete, isDeleting }: AccountCa
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't navigate if clicking on the dropdown
-    if ((e.target as HTMLElement).closest('[data-dropdown]')) {
+    // Don't navigate if clicking on the dropdown or checkbox
+    if ((e.target as HTMLElement).closest('[data-dropdown]') || 
+        (e.target as HTMLElement).closest('[data-checkbox]')) {
       return;
     }
     navigate(`/budget/dashboard/${account.id}`);
+  };
+
+  const handleCheckboxChange = (checked: boolean) => {
+    onSelectionChange?.(account.id, checked);
   };
 
   const handleDelete = () => {
@@ -73,10 +90,26 @@ export function AccountCard({ account, onEdit, onDelete, isDeleting }: AccountCa
         className={cn(
           "relative group cursor-pointer transition-all duration-300",
           "hover:border-primary hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1",
-          "border-2"
+          "border-2",
+          isSelected && "border-primary bg-primary/5"
         )}
         onClick={handleCardClick}
       >
+        {/* Selection Checkbox */}
+        {showSelection && (
+          <div
+            data-checkbox
+            className="absolute top-3 left-3 z-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Checkbox
+              checked={isSelected}
+              onCheckedChange={handleCheckboxChange}
+              className="h-5 w-5 border-2"
+            />
+          </div>
+        )}
+
         {/* Dropdown Menu */}
         <div
           data-dropdown

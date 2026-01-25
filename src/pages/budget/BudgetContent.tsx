@@ -128,6 +128,7 @@ const BudgetContent = ({ accountId }: BudgetContentProps) => {
         .from("budget_monthly")
         .select("*")
         .eq("user_id", user?.id)
+        .eq("account_id", accountId)
         .eq("year", selectedYear)
         .eq("month", selectedMonth)
         .maybeSingle();
@@ -302,6 +303,7 @@ const BudgetContent = ({ accountId }: BudgetContentProps) => {
 
       const { error } = await supabase.from("budget_monthly").upsert({
         user_id: user.id,
+        account_id: accountId,
         year: selectedYear,
         month: selectedMonth,
         reste_mois_precedent: epargne,
@@ -314,7 +316,7 @@ const BudgetContent = ({ accountId }: BudgetContentProps) => {
         total_revenus: totalRevenus,
         total_sorties: totalSorties,
         total_restant: totalRestant,
-      }, { onConflict: "user_id,year,month" });
+      }, { onConflict: "user_id,account_id,year,month" });
 
       if (error) throw error;
       toast({ title: "Budget mensuel sauvegardé" });
