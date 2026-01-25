@@ -9,6 +9,7 @@ import InsuranceDetailPanel from "@/components/insurance/InsuranceDetailPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Heart,
+  HeartPulse,
   Home,
   Scale,
   Car,
@@ -27,7 +28,8 @@ interface InsuranceTypeConfig {
 }
 
 const INSURANCE_TYPES: InsuranceTypeConfig[] = [
-  { type: 'health', subTypes: ['health_basic', 'health_complementary'], label: 'Assurance maladie', icon: Heart },
+  { type: 'health_basic', label: 'LAMal', icon: Heart },
+  { type: 'health_complementary', label: 'Complémentaire', icon: HeartPulse },
   { type: 'household', label: 'Ménage', icon: Home },
   { type: 'liability', label: 'RC', icon: Scale },
   { type: 'vehicle', label: 'Véhicule', icon: Car },
