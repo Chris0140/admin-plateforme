@@ -1,4 +1,5 @@
 import { X, Edit, Trash2, FileUp, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -41,6 +42,8 @@ interface InsuranceDetailPanelProps {
   contracts: InsuranceContract[];
   onClose: () => void;
   onRefresh: () => void;
+  onContractSelect?: (contractId: string) => void;
+  selectedContractId?: string | null;
 }
 
 const InsuranceDetailPanel = ({
@@ -50,6 +53,8 @@ const InsuranceDetailPanel = ({
   contracts,
   onClose,
   onRefresh,
+  onContractSelect,
+  selectedContractId,
 }: InsuranceDetailPanelProps) => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -94,10 +99,17 @@ const InsuranceDetailPanel = ({
 
   const hasSubTypes = subTypes && subTypes.length > 1;
 
-  const renderContractCard = (contract: InsuranceContract) => (
+  const renderContractCard = (contract: InsuranceContract) => {
+    const isSelected = selectedContractId === contract.id;
+    
+    return (
     <div
       key={contract.id}
-      className="p-4 rounded-lg border bg-card space-y-3"
+      className={cn(
+        "p-4 rounded-lg border bg-card space-y-3 cursor-pointer transition-all",
+        isSelected ? "ring-2 ring-primary border-primary" : "hover:border-primary/50"
+      )}
+      onClick={() => onContractSelect?.(contract.id)}
     >
       <div className="flex items-start justify-between">
         <div>
@@ -174,6 +186,7 @@ const InsuranceDetailPanel = ({
       </div>
     </div>
   );
+  };
 
   const content = (
     <div className="flex flex-col h-full">

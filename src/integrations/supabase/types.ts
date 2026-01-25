@@ -522,6 +522,7 @@ export type Database = {
       documents: {
         Row: {
           category: string
+          contract_id: string | null
           extracted_data: Json | null
           extraction_date: string | null
           extraction_status: string | null
@@ -535,6 +536,7 @@ export type Database = {
         }
         Insert: {
           category?: string
+          contract_id?: string | null
           extracted_data?: Json | null
           extraction_date?: string | null
           extraction_status?: string | null
@@ -548,6 +550,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          contract_id?: string | null
           extracted_data?: Json | null
           extraction_date?: string | null
           extraction_status?: string | null
@@ -559,7 +562,15 @@ export type Database = {
           uploaded_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "documents_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "insurance_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fixed_expenses: {
         Row: {
