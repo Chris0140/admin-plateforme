@@ -68,7 +68,7 @@ const Index = () => {
           {/* Main heading */}
           <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.1] tracking-tight mb-4 md:mb-6">
             <span className="text-foreground">Bienvenue sur </span>
-            <span className="text-gradient">TG Fulgence</span>
+            <span className="text-gradient">admin.</span>
           </h1>
 
           {/* Subtitle */}
