@@ -2,14 +2,13 @@ import { useEffect, useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { calculateInsuranceAnalysis, InsuranceAnalysis, InsuranceContract, INSURANCE_TYPE_LABELS } from "@/lib/insuranceCalculations";
+import { calculateInsuranceAnalysis, InsuranceAnalysis, InsuranceContract } from "@/lib/insuranceCalculations";
 import InsuranceTypeCube from "@/components/insurance/InsuranceTypeCube";
 import InsuranceAddPanel from "@/components/insurance/InsuranceAddPanel";
 import InsuranceDetailPanel from "@/components/insurance/InsuranceDetailPanel";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Heart,
-  HeartPulse,
   Home,
   Scale,
   Car,
@@ -21,7 +20,7 @@ import {
 } from "lucide-react";
 
 interface InsuranceTypeConfig {
-  type: string; // Can be single type or combined like 'health'
+  type: string;
   subTypes?: InsuranceContract['insurance_type'][];
   label: string;
   icon: LucideIcon;
@@ -44,6 +43,7 @@ const Insurance = () => {
   const [analysis, setAnalysis] = useState<InsuranceAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const loadData = async () => {
@@ -98,6 +98,15 @@ const Insurance = () => {
     loadData();
   };
 
+  const handleBack = () => {
+    setSelectedType(null);
+    setSelectedContractId(null);
+  };
+
+  const handleContractSelect = (contractId: string) => {
+    setSelectedContractId(contractId);
+  };
+
   const getTypeStats = useMemo(() => {
     if (!analysis) return {};
     
@@ -135,61 +144,61 @@ const Insurance = () => {
       <div className="flex flex-col h-full gap-6">
         {/* Main layout */}
         <div className={`flex flex-1 gap-6 ${isMobile ? 'flex-col' : ''}`}>
-          {/* Left Panel - Add */}
-          <div className={`${isMobile ? 'w-full' : 'w-48 flex-shrink-0'}`}>
+          {/* Left Panel */}
+          <div className={`${isMobile ? 'w-full' : selectedType ? 'w-64' : 'w-48'} flex-shrink-0`}>
             <InsuranceAddPanel
               open={showAddDialog}
               onOpenChange={setShowAddDialog}
               onSuccess={handleFormSuccess}
+              selectedType={selectedType}
+              selectedTypeLabel={selectedTypeLabel}
+              selectedContractId={selectedContractId}
+              onBack={handleBack}
             />
           </div>
 
-          {/* Center - Cubes Grid */}
-          <div className={`flex-1 ${selectedType && !isMobile ? 'max-w-md' : ''}`}>
-            <div className={`grid gap-4 ${
-              isMobile 
-                ? 'grid-cols-2' 
-                : selectedType 
-                  ? 'grid-cols-2 lg:grid-cols-3' 
-                  : 'grid-cols-3'
-            }`}>
-              {INSURANCE_TYPES.map((config) => {
-                const stats = getTypeStats[config.type] || { count: 0, premium: 0 };
-                return (
-                  <InsuranceTypeCube
-                    key={config.type}
-                    type={config.type}
-                    label={config.label}
-                    icon={config.icon}
-                    contractCount={stats.count}
-                    totalPremium={stats.premium}
-                    isSelected={selectedType === config.type}
-                    onClick={() => setSelectedType(
-                      selectedType === config.type ? null : config.type
-                    )}
-                  />
-                );
-              })}
+          {/* Center - Cubes Grid - ONLY when no type selected */}
+          {!selectedType && (
+            <div className="flex-1">
+              <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-3 lg:grid-cols-4'}`}>
+                {INSURANCE_TYPES.map((config) => {
+                  const stats = getTypeStats[config.type] || { count: 0, premium: 0 };
+                  return (
+                    <InsuranceTypeCube
+                      key={config.type}
+                      type={config.type}
+                      label={config.label}
+                      icon={config.icon}
+                      contractCount={stats.count}
+                      totalPremium={stats.premium}
+                      isSelected={false}
+                      onClick={() => setSelectedType(config.type)}
+                    />
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Right Panel - Details (desktop only, mobile uses drawer) */}
+          {/* Right Panel - Details - ONLY when type selected */}
           {selectedType && !isMobile && (
-            <div className="w-80 flex-shrink-0 border-l pl-6">
+            <div className="flex-1 border-l pl-6">
               <InsuranceDetailPanel
                 selectedType={selectedType}
                 subTypes={selectedConfig?.subTypes}
                 typeLabel={selectedTypeLabel}
                 contracts={analysis?.contracts || []}
-                onClose={() => setSelectedType(null)}
+                onClose={handleBack}
                 onRefresh={loadData}
+                onContractSelect={handleContractSelect}
+                selectedContractId={selectedContractId}
               />
             </div>
           )}
         </div>
 
         {/* Bottom - Discreet Totals */}
-        {analysis && (
+        {analysis && !selectedType && (
           <div className="border-t pt-4 bg-background">
             <div className="flex justify-center gap-8 text-sm text-muted-foreground">
               <div>
@@ -215,8 +224,10 @@ const Insurance = () => {
             subTypes={selectedConfig?.subTypes}
             typeLabel={selectedTypeLabel}
             contracts={analysis?.contracts || []}
-            onClose={() => setSelectedType(null)}
+            onClose={handleBack}
             onRefresh={loadData}
+            onContractSelect={handleContractSelect}
+            selectedContractId={selectedContractId}
           />
         )}
       </div>
