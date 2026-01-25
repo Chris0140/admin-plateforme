@@ -21,14 +21,14 @@ import {
 } from "lucide-react";
 
 interface InsuranceTypeConfig {
-  type: InsuranceContract['insurance_type'];
+  type: string; // Can be single type or combined like 'health'
+  subTypes?: InsuranceContract['insurance_type'][];
   label: string;
   icon: LucideIcon;
 }
 
 const INSURANCE_TYPES: InsuranceTypeConfig[] = [
-  { type: 'health_basic', label: 'LAMal', icon: Heart },
-  { type: 'health_complementary', label: 'LCA', icon: HeartPulse },
+  { type: 'health', subTypes: ['health_basic', 'health_complementary'], label: 'Assurance maladie', icon: Heart },
   { type: 'household', label: 'Ménage', icon: Home },
   { type: 'liability', label: 'RC', icon: Scale },
   { type: 'vehicle', label: 'Véhicule', icon: Car },
@@ -43,7 +43,7 @@ const Insurance = () => {
   const isMobile = useIsMobile();
   const [analysis, setAnalysis] = useState<InsuranceAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedType, setSelectedType] = useState<InsuranceContract['insurance_type'] | null>(null);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
 
   const loadData = async () => {
@@ -103,9 +103,12 @@ const Insurance = () => {
     
     const stats: Record<string, { count: number; premium: number }> = {};
     
-    for (const type of INSURANCE_TYPES) {
-      const contracts = analysis.contracts.filter(c => c.insurance_type === type.type);
-      stats[type.type] = {
+    for (const config of INSURANCE_TYPES) {
+      const typesToMatch = config.subTypes || [config.type];
+      const contracts = analysis.contracts.filter(c => 
+        typesToMatch.includes(c.insurance_type)
+      );
+      stats[config.type] = {
         count: contracts.length,
         premium: contracts.reduce((sum, c) => sum + c.annual_premium, 0),
       };
@@ -114,9 +117,8 @@ const Insurance = () => {
     return stats;
   }, [analysis]);
 
-  const selectedTypeLabel = selectedType 
-    ? INSURANCE_TYPE_LABELS[selectedType] 
-    : '';
+  const selectedConfig = INSURANCE_TYPES.find(t => t.type === selectedType);
+  const selectedTypeLabel = selectedConfig?.label || '';
 
   if (loading) {
     return (
@@ -176,6 +178,7 @@ const Insurance = () => {
             <div className="w-80 flex-shrink-0 border-l pl-6">
               <InsuranceDetailPanel
                 selectedType={selectedType}
+                subTypes={selectedConfig?.subTypes}
                 typeLabel={selectedTypeLabel}
                 contracts={analysis?.contracts || []}
                 onClose={() => setSelectedType(null)}
@@ -209,6 +212,7 @@ const Insurance = () => {
         {isMobile && selectedType && (
           <InsuranceDetailPanel
             selectedType={selectedType}
+            subTypes={selectedConfig?.subTypes}
             typeLabel={selectedTypeLabel}
             contracts={analysis?.contracts || []}
             onClose={() => setSelectedType(null)}
