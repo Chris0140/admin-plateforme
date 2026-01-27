@@ -1,4 +1,4 @@
-import { X, Edit, Trash2, FileUp, FileText } from "lucide-react";
+import { X, Edit, Trash2, FileUp, FileText, ArrowLeft, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -24,8 +25,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { InsuranceContract, INSURANCE_TYPE_LABELS, deleteInsuranceContract } from "@/lib/insuranceCalculations";
 import InsuranceContractForm from "./InsuranceContractForm";
+import InsuranceDocumentUpload from "./InsuranceDocumentUpload";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { InsuranceDocument, loadContractDocuments } from "@/lib/insuranceDocuments";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Drawer,
@@ -60,6 +63,21 @@ const InsuranceDetailPanel = ({
   const isMobile = useIsMobile();
   const [editingContractId, setEditingContractId] = useState<string | null>(null);
   const [activeSubType, setActiveSubType] = useState<string | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [documents, setDocuments] = useState<InsuranceDocument[]>([]);
+
+  const loadDocuments = async () => {
+    if (selectedContractId) {
+      const docs = await loadContractDocuments(selectedContractId);
+      setDocuments(docs);
+    } else {
+      setDocuments([]);
+    }
+  };
+
+  useEffect(() => {
+    loadDocuments();
+  }, [selectedContractId]);
 
   const handleDelete = async (contractId: string) => {
     const result = await deleteInsuranceContract(contractId);
@@ -80,6 +98,11 @@ const InsuranceDetailPanel = ({
 
   const handleEditSuccess = () => {
     setEditingContractId(null);
+    onRefresh();
+  };
+
+  const handleAddSuccess = () => {
+    setShowAddDialog(false);
     onRefresh();
   };
 
@@ -190,13 +213,18 @@ const InsuranceDetailPanel = ({
 
   const content = (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-4">
+      {/* Header with back button */}
+      <div className="flex items-center gap-4 mb-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="gap-2"
+          onClick={onClose}
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour
+        </Button>
         <h3 className="text-lg font-semibold">{typeLabel}</h3>
-        {!isMobile && (
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        )}
       </div>
       
       {/* Sub-type tabs for health insurance */}
@@ -216,6 +244,25 @@ const InsuranceDetailPanel = ({
 
       <Separator className="mb-4" />
       
+      {/* Add new contract button */}
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogTrigger asChild>
+          <Button className="w-full mb-4" variant="outline">
+            <Plus className="mr-2 h-4 w-4" />
+            Nouveau contrat
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nouveau contrat d'assurance</DialogTitle>
+          </DialogHeader>
+          <InsuranceContractForm
+            onSuccess={handleAddSuccess}
+            onCancel={() => setShowAddDialog(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
       <ScrollArea className="flex-1">
         <div className="space-y-4 pr-2">
           {filteredContracts.length === 0 ? (
@@ -228,6 +275,21 @@ const InsuranceDetailPanel = ({
           )}
         </div>
       </ScrollArea>
+
+      {/* Document upload section */}
+      {selectedContractId && (
+        <>
+          <Separator className="my-4" />
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-muted-foreground">Documents</h4>
+            <InsuranceDocumentUpload
+              contractId={selectedContractId}
+              documents={documents}
+              onDocumentsChange={loadDocuments}
+            />
+          </div>
+        </>
+      )}
 
       {/* Edit Dialog */}
       <Dialog open={!!editingContractId} onOpenChange={(open) => !open && setEditingContractId(null)}>
