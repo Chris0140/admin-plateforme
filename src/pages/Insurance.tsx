@@ -4,8 +4,17 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { calculateInsuranceAnalysis, InsuranceAnalysis, InsuranceContract } from "@/lib/insuranceCalculations";
 import InsuranceTypeCube from "@/components/insurance/InsuranceTypeCube";
-import InsuranceAddPanel from "@/components/insurance/InsuranceAddPanel";
 import InsuranceDetailPanel from "@/components/insurance/InsuranceDetailPanel";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import InsuranceContractForm from "@/components/insurance/InsuranceContractForm";
+import { Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Heart,
@@ -145,59 +154,63 @@ const Insurance = () => {
     <AppLayout title="Assurances" subtitle="Gestion de vos contrats d'assurance">
       <div className="flex flex-col h-full gap-6">
         {/* Main layout */}
-        <div className={`flex flex-1 gap-6 ${isMobile ? 'flex-col' : ''}`}>
-          {/* Left Panel */}
-          <div className={`${isMobile ? 'w-full' : selectedType ? 'w-64' : 'w-48'} flex-shrink-0`}>
-            <InsuranceAddPanel
-              open={showAddDialog}
-              onOpenChange={setShowAddDialog}
-              onSuccess={handleFormSuccess}
+        {!selectedType ? (
+          /* Grid of cubes when no type selected */
+          <div className="flex-1 flex flex-col">
+            <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-3 lg:grid-cols-4'}`}>
+              {INSURANCE_TYPES.map((config) => {
+                const stats = getTypeStats[config.type] || { count: 0, premium: 0 };
+                return (
+                  <InsuranceTypeCube
+                    key={config.type}
+                    type={config.type}
+                    label={config.label}
+                    icon={config.icon}
+                    contractCount={stats.count}
+                    totalPremium={stats.premium}
+                    isSelected={false}
+                    onClick={() => setSelectedType(config.type)}
+                  />
+                );
+              })}
+            </div>
+
+            {/* Add button centered at bottom */}
+            <div className="flex justify-center mt-8">
+              <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="default" size="lg">
+                    <Plus className="mr-2 h-5 w-5" />
+                    Ajouter une assurance
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Nouveau contrat d'assurance</DialogTitle>
+                  </DialogHeader>
+                  <InsuranceContractForm
+                    onSuccess={handleFormSuccess}
+                    onCancel={() => setShowAddDialog(false)}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
+          </div>
+        ) : (
+          /* Detail panel when type is selected */
+          <div className="flex-1">
+            <InsuranceDetailPanel
               selectedType={selectedType}
-              selectedTypeLabel={selectedTypeLabel}
+              subTypes={selectedConfig?.subTypes}
+              typeLabel={selectedTypeLabel}
+              contracts={analysis?.contracts || []}
+              onClose={handleBack}
+              onRefresh={loadData}
+              onContractSelect={handleContractSelect}
               selectedContractId={selectedContractId}
-              onBack={handleBack}
             />
           </div>
-
-          {/* Center - Cubes Grid - ONLY when no type selected */}
-          {!selectedType && (
-            <div className="flex-1">
-              <div className={`grid gap-4 ${isMobile ? 'grid-cols-2' : 'grid-cols-3 lg:grid-cols-4'}`}>
-                {INSURANCE_TYPES.map((config) => {
-                  const stats = getTypeStats[config.type] || { count: 0, premium: 0 };
-                  return (
-                    <InsuranceTypeCube
-                      key={config.type}
-                      type={config.type}
-                      label={config.label}
-                      icon={config.icon}
-                      contractCount={stats.count}
-                      totalPremium={stats.premium}
-                      isSelected={false}
-                      onClick={() => setSelectedType(config.type)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Right Panel - Details - ONLY when type selected */}
-          {selectedType && !isMobile && (
-            <div className="flex-1 border-l pl-6">
-              <InsuranceDetailPanel
-                selectedType={selectedType}
-                subTypes={selectedConfig?.subTypes}
-                typeLabel={selectedTypeLabel}
-                contracts={analysis?.contracts || []}
-                onClose={handleBack}
-                onRefresh={loadData}
-                onContractSelect={handleContractSelect}
-                selectedContractId={selectedContractId}
-              />
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Bottom - Discreet Totals */}
         {analysis && !selectedType && (
@@ -219,19 +232,6 @@ const Insurance = () => {
           </div>
         )}
 
-        {/* Mobile Drawer for Details */}
-        {isMobile && selectedType && (
-          <InsuranceDetailPanel
-            selectedType={selectedType}
-            subTypes={selectedConfig?.subTypes}
-            typeLabel={selectedTypeLabel}
-            contracts={analysis?.contracts || []}
-            onClose={handleBack}
-            onRefresh={loadData}
-            onContractSelect={handleContractSelect}
-            selectedContractId={selectedContractId}
-          />
-        )}
       </div>
     </AppLayout>
   );
