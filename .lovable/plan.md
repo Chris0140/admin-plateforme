@@ -1,117 +1,70 @@
 
 
-## Suppression des cubes du centre après sélection
+## Suppression de InsuranceAddPanel.tsx
 
-### Modification du layout dans `src/pages/Insurance.tsx`
+### Objectif
+Supprimer le composant `InsuranceAddPanel` et reorganiser l'interface des assurances.
 
-**Comportement actuel:**
+### Fichiers a modifier
+
+**1. Supprimer le fichier:**
+- `src/components/insurance/InsuranceAddPanel.tsx`
+
+**2. Modifier `src/pages/Insurance.tsx`:**
+- Retirer l'import de `InsuranceAddPanel`
+- Retirer le bloc JSX du panneau gauche (lignes 150-160)
+- Integrer les fonctionnalites essentielles directement:
+  - Bouton "Retour aux categories" → Deplacer dans `InsuranceDetailPanel`
+  - Bouton "Ajouter une assurance" → Deplacer dans la vue principale ou dans `InsuranceDetailPanel`
+  - Upload de documents → Deplacer dans `InsuranceDetailPanel`
+
+### Nouveau layout propose
+
 ```
-+------------------+------------------------+------------------+
-|    GAUCHE        |    GRILLE CUBES       |     DROITE       |
-|   (Add Panel)    |    (toujours visible) |   (Détails)      |
-+------------------+------------------------+------------------+
+AVANT selection:
++--------------------------------------------------+
+|              GRILLE CUBES                        |
+|  [LAMal] [Complementaire] [Menage] [RC]          |
+|  [Vehicule] [Juridique] [Vie] [Invalidite]       |
++--------------------------------------------------+
+|  + Ajouter une assurance (bouton centre en bas)  |
++--------------------------------------------------+
+
+APRES selection d'un cube:
++--------------------------------------------------+
+|  [← Retour] LAMal                                |
++--------------------------------------------------+
+|                                                  |
+|  Liste des contrats + Details                    |
+|  Zone upload documents                           |
+|  + Nouveau contrat                               |
+|                                                  |
++--------------------------------------------------+
 ```
 
-**Nouveau comportement:**
-```
-AVANT sélection:
-+------------------+------------------------------------------+
-|    GAUCHE        |           GRILLE CUBES                   |
-| + Ajouter        |  [Santé] [Ménage] [RC] [Véhicule]        |
-|   assurance      |  [Juridique] [Vie] [Invalidité] [Perte]  |
-+------------------+------------------------------------------+
+### Details techniques
 
-APRÈS sélection d'un cube:
-+---------------------------+--------------------------------+
-|         GAUCHE            |           DROITE               |
-|                           |                                |
-|  Type sélectionné:        |  Détails du contrat            |
-|  [Assurance maladie]      |                                |
-|                           |  - Formulaire                  |
-|  + Ajouter document PDF   |  - Champs du contrat           |
-|                           |  - (futur: auto-remplissage)   |
-|  Documents uploadés:      |                                |
-|  [police.pdf]             |                                |
-+---------------------------+--------------------------------+
-```
-
-### Modifications a effectuer
-
-**1. `src/pages/Insurance.tsx`**
-- Condition d'affichage: `{!selectedType && (...grille cubes...)}`
-- Quand `selectedType !== null`:
-  - Masquer completement la grille de cubes du centre
-  - Layout en 2 colonnes: gauche (upload) + droite (details)
-- Ajouter l'info du type selectionne dans le panneau gauche
-
+**Modification de `Insurance.tsx`:**
 ```tsx
-{/* Layout principal */}
-<div className="flex flex-1 gap-6">
-  {/* Panneau gauche */}
-  <div className="w-64 flex-shrink-0">
-    <InsuranceAddPanel
-      selectedType={selectedType}
-      selectedTypeLabel={selectedTypeLabel}
-      // ... autres props pour upload
-    />
-  </div>
+// Retirer:
+import InsuranceAddPanel from "@/components/insurance/InsuranceAddPanel";
 
-  {/* Centre: Cubes - UNIQUEMENT si aucun type selectionne */}
-  {!selectedType && (
-    <div className="flex-1">
-      <div className="grid gap-4 grid-cols-3">
-        {INSURANCE_TYPES.map((config) => (
-          <InsuranceTypeCube ... />
-        ))}
-      </div>
-    </div>
-  )}
-
-  {/* Droite: Details - UNIQUEMENT si type selectionne */}
-  {selectedType && (
-    <div className="flex-1 border-l pl-6">
-      <InsuranceDetailPanel ... />
-    </div>
-  )}
+// Retirer le bloc:
+<div className={`${isMobile ? 'w-full' : selectedType ? 'w-64' : 'w-48'} flex-shrink-0`}>
+  <InsuranceAddPanel ... />
 </div>
+
+// Ajouter un bouton "Ajouter" dans la vue principale (quand pas de selection)
+// Le bouton retour et upload seront dans InsuranceDetailPanel
 ```
 
-**2. `src/components/insurance/InsuranceAddPanel.tsx`**
-- Ajouter props: `selectedType`, `selectedTypeLabel`
-- Afficher le type selectionne avec bouton retour
-- Ajouter la zone d'upload de documents
-- Structure du panneau apres selection:
-  - Badge/indicateur du type selectionne
-  - Bouton "Retour aux categories" (reinitialise `selectedType`)
-  - Separateur
-  - Zone upload documents
-  - Liste des documents uploades
+**Modification de `InsuranceDetailPanel.tsx`:**
+- Ajouter un header avec bouton retour et label du type
+- Integrer le composant `InsuranceDocumentUpload` pour les documents
+- Ajouter le bouton "Nouveau contrat" dans ce panneau
 
-**3. Nouveau composant `src/components/insurance/InsuranceDocumentUpload.tsx`**
-- Zone de drop ou bouton "Choisir un fichier"
-- Formats acceptes: PDF, images, documents Office
-- Limite: 10MB par fichier
-- Progress bar pendant upload
-- Integration Supabase Storage (bucket "documents")
-
-**4. Modification base de donnees**
-- Ajouter colonne `contract_id` a la table `documents`
-- Mettre a jour les politiques RLS
-
-### Flux utilisateur
-
-1. L'utilisateur voit la grille de 8 cubes
-2. Il clique sur "Assurance maladie"
-3. La grille disparait completement
-4. Le panneau gauche affiche:
-   - "Assurance maladie" avec bouton retour
-   - Zone d'upload de documents
-5. Le panneau droit affiche les details/contrats
-6. L'utilisateur peut uploader des PDF
-7. Clic sur "Retour" pour revenir a la grille de cubes
-
-### Responsive mobile
-
-- Sur mobile: meme logique, mais layout empile verticalement
-- Le panneau details reste un Drawer
+### Impact
+- Interface plus epuree sans panneau gauche permanent
+- Toute la gestion se fait dans un seul panneau central/droit
+- Upload de documents accessible depuis le panneau de details
 
