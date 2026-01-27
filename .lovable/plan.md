@@ -1,70 +1,93 @@
 
 
-## Suppression de InsuranceAddPanel.tsx
+## Nettoyage de Insurance.tsx - Garder uniquement la nouvelle version
 
-### Objectif
-Supprimer le composant `InsuranceAddPanel` et reorganiser l'interface des assurances.
+### Probleme identifie
+Le fichier actuel contient deux systemes melanges :
+- **Nouveau** : Grille de 4 cubes + modale d'ajout avec PDF
+- **Ancien** : `InsuranceDetailPanel` avec sa propre logique de gestion
 
-### Fichiers a modifier
+### Modifications a effectuer
 
-**1. Supprimer le fichier:**
-- `src/components/insurance/InsuranceAddPanel.tsx`
+**1. Retirer l'import de InsuranceDetailPanel :**
+```tsx
+// SUPPRIMER cette ligne
+import InsuranceDetailPanel from "@/components/insurance/InsuranceDetailPanel";
+```
 
-**2. Modifier `src/pages/Insurance.tsx`:**
-- Retirer l'import de `InsuranceAddPanel`
-- Retirer le bloc JSX du panneau gauche (lignes 150-160)
-- Integrer les fonctionnalites essentielles directement:
-  - Bouton "Retour aux categories" → Deplacer dans `InsuranceDetailPanel`
-  - Bouton "Ajouter une assurance" → Deplacer dans la vue principale ou dans `InsuranceDetailPanel`
-  - Upload de documents → Deplacer dans `InsuranceDetailPanel`
+**2. Simplifier la vue de detail (lignes 459-476) :**
 
-### Nouveau layout propose
+Remplacer le bloc `InsuranceDetailPanel` par une liste simple des contrats avec :
+- Bouton "Retour" pour revenir aux categories
+- Liste des contrats existants avec options Modifier/Supprimer
+- Zone d'upload de documents integree
+
+**3. Structure finale du fichier :**
 
 ```
-AVANT selection:
+ETAT INITIAL (pas de categorie selectionnee) :
 +--------------------------------------------------+
-|              GRILLE CUBES                        |
-|  [LAMal] [Complementaire] [Menage] [RC]          |
-|  [Vehicule] [Juridique] [Vie] [Invalidite]       |
+|  Grille 4 cubes (Maladie, Menage, Auto, Vie)     |
 +--------------------------------------------------+
-|  + Ajouter une assurance (bouton centre en bas)  |
+|  Prime totale: X CHF  |  Contrats actifs: X      |
 +--------------------------------------------------+
 
-APRES selection d'un cube:
+ETAT DETAIL (categorie selectionnee) :
 +--------------------------------------------------+
-|  [← Retour] LAMal                                |
+|  [← Retour] Contrats : Assurance Maladie         |
+|  [+ Nouveau contrat] ← ouvre la modale PDF       |
 +--------------------------------------------------+
-|                                                  |
-|  Liste des contrats + Details                    |
-|  Zone upload documents                           |
-|  + Nouveau contrat                               |
-|                                                  |
+|  Liste des contrats (cartes simples)             |
+|  - Nom compagnie, N° police, prime               |
+|  - Boutons Modifier / Supprimer                  |
++--------------------------------------------------+
+|  (Si vide) Message "Aucun contrat"               |
 +--------------------------------------------------+
 ```
+
+### Fichiers concernes
+
+| Fichier | Action |
+|---------|--------|
+| `src/pages/Insurance.tsx` | Nettoyer : retirer InsuranceDetailPanel, creer liste inline |
+| `src/components/insurance/InsuranceDetailPanel.tsx` | Potentiellement supprimer si plus utilise |
 
 ### Details techniques
 
-**Modification de `Insurance.tsx`:**
+**Remplacer le bloc InsuranceDetailPanel (lignes 459-469) par :**
+
 ```tsx
-// Retirer:
-import InsuranceAddPanel from "@/components/insurance/InsuranceAddPanel";
+{/* Bouton retour */}
+<Button variant="ghost" onClick={handleBack} className="w-fit">
+  <ArrowLeft className="mr-2 h-4 w-4" />
+  Retour aux categories
+</Button>
 
-// Retirer le bloc:
-<div className={`${isMobile ? 'w-full' : selectedType ? 'w-64' : 'w-48'} flex-shrink-0`}>
-  <InsuranceAddPanel ... />
+{/* Liste des contrats de cette categorie */}
+<div className="space-y-4">
+  {analysis?.contracts
+    .filter(c => selectedCategory.types.includes(c.insurance_type))
+    .map(contract => (
+      <Card key={contract.id} className="p-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <h4 className="font-medium">{contract.company_name}</h4>
+            <p className="text-sm text-muted-foreground">N° {contract.contract_number}</p>
+          </div>
+          <Badge>{contract.annual_premium.toLocaleString('fr-CH')} CHF/an</Badge>
+        </div>
+        <div className="flex gap-2 mt-3">
+          <Button variant="outline" size="sm">Modifier</Button>
+          <Button variant="outline" size="sm" className="text-destructive">Supprimer</Button>
+        </div>
+      </Card>
+    ))}
 </div>
-
-// Ajouter un bouton "Ajouter" dans la vue principale (quand pas de selection)
-// Le bouton retour et upload seront dans InsuranceDetailPanel
 ```
 
-**Modification de `InsuranceDetailPanel.tsx`:**
-- Ajouter un header avec bouton retour et label du type
-- Integrer le composant `InsuranceDocumentUpload` pour les documents
-- Ajouter le bouton "Nouveau contrat" dans ce panneau
-
 ### Impact
-- Interface plus epuree sans panneau gauche permanent
-- Toute la gestion se fait dans un seul panneau central/droit
-- Upload de documents accessible depuis le panneau de details
+- Interface unifiee avec un seul systeme de navigation
+- La modale d'ajout avec PDF devient le point central pour creer des contrats
+- Suppression de la duplication du bouton "Nouveau contrat"
+- Code plus simple et maintenable
 
