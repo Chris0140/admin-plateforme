@@ -2,10 +2,10 @@ import { useEffect, useState, useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { calculateInsuranceAnalysis, InsuranceAnalysis, InsuranceContract } from "@/lib/insuranceCalculations";
-import InsuranceDetailPanel from "@/components/insurance/InsuranceDetailPanel";
+import { calculateInsuranceAnalysis, InsuranceAnalysis, InsuranceContract, deleteInsuranceContract } from "@/lib/insuranceCalculations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -13,13 +13,25 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Heart, Home, Car, Shield, Upload, Info, FileText } from "lucide-react";
+import { Plus, Heart, Home, Car, Shield, Upload, Info, FileText, ArrowLeft, Edit, Trash2 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import InsuranceContractForm from "@/components/insurance/InsuranceContractForm";
 
 interface CategoryConfig {
   id: string;
@@ -66,7 +78,6 @@ const Insurance = () => {
   const [analysis, setAnalysis] = useState<InsuranceAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [selectedContractId, setSelectedContractId] = useState<string | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -129,11 +140,6 @@ const Insurance = () => {
 
   const handleBack = () => {
     setActiveCategory(null);
-    setSelectedContractId(null);
-  };
-
-  const handleContractSelect = (contractId: string) => {
-    setSelectedContractId(contractId);
   };
 
   const getCategoryStats = useMemo(() => {
@@ -456,25 +462,105 @@ const Insurance = () => {
               </DialogContent>
             </Dialog>
 
-            {/* Contract list / Detail panel */}
-            <InsuranceDetailPanel
-              selectedType={activeCategory}
-              subTypes={selectedCategory.types}
-              typeLabel={selectedCategory.name}
-              contracts={analysis?.contracts || []}
-              onClose={handleBack}
-              onRefresh={loadData}
-              onContractSelect={handleContractSelect}
-              selectedContractId={selectedContractId}
-            />
+            {/* Back button */}
+            <Button variant="ghost" onClick={handleBack} className="w-fit">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Retour aux catégories
+            </Button>
 
-            {/* Empty state if no contracts */}
-            {analysis && analysis.contracts.filter(c => selectedCategory.types.includes(c.insurance_type)).length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-                <FileText size={64} className="mb-4 opacity-20" />
-                <p>Aucun contrat enregistré dans cette catégorie pour le moment.</p>
-              </div>
-            )}
+            {/* Contract list */}
+            {(() => {
+              const categoryContracts = analysis?.contracts.filter(c => 
+                selectedCategory.types.includes(c.insurance_type)
+              ) || [];
+              
+              if (categoryContracts.length === 0) {
+                return (
+                  <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                    <FileText size={64} className="mb-4 opacity-20" />
+                    <p>Aucun contrat enregistré dans cette catégorie pour le moment.</p>
+                  </div>
+                );
+              }
+              
+              return (
+                <div className="space-y-4">
+                  {categoryContracts.map(contract => (
+                    <Card key={contract.id} className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium">{contract.company_name}</h4>
+                          {contract.contract_number && (
+                            <p className="text-sm text-muted-foreground">
+                              N° {contract.contract_number}
+                            </p>
+                          )}
+                        </div>
+                        <Badge variant="secondary">
+                          {contract.annual_premium.toLocaleString('fr-CH')} CHF/an
+                        </Badge>
+                      </div>
+                      <div className="flex gap-2 mt-3">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-3 w-3 mr-1" />
+                              Modifier
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                            <DialogHeader>
+                              <DialogTitle>Modifier le contrat</DialogTitle>
+                            </DialogHeader>
+                            <InsuranceContractForm
+                              contractId={contract.id}
+                              onSuccess={() => loadData()}
+                              onCancel={() => {}}
+                            />
+                          </DialogContent>
+                        </Dialog>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Êtes-vous sûr de vouloir supprimer ce contrat ? Cette action est irréversible.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Annuler</AlertDialogCancel>
+                              <AlertDialogAction onClick={async () => {
+                                const result = await deleteInsuranceContract(contract.id);
+                                if (result.success) {
+                                  toast({
+                                    title: "Contrat supprimé",
+                                    description: "Le contrat a été supprimé avec succès.",
+                                  });
+                                  loadData();
+                                } else {
+                                  toast({
+                                    title: "Erreur",
+                                    description: result.error || "Impossible de supprimer le contrat.",
+                                    variant: "destructive",
+                                  });
+                                }
+                              }}>
+                                Supprimer
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
