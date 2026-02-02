@@ -1,135 +1,229 @@
 
 
-## Refonte de la page Prevoyance - Nouveau design visuel
+## Ajout de la gestion dynamique des enfants dans le formulaire Profil
 
 ### Objectif
-Transformer la page `/prevoyance` pour adopter le style visuel de l'image de reference avec :
-- 3 grands cubes arrondis pour les piliers (1er, 2eme, 3eme)
-- Une barre horizontale avec 3 boutons-pilules (Ma retraite, Invalidite, Deces)
+Quand l'utilisateur indique un nombre d'enfants superieur a 0, afficher dynamiquement des formulaires pour renseigner le nom, prenom et date de naissance de chaque enfant.
 
-### Nouveau layout propose
+### Structure de donnees existante
 
-```
-+----------------------------------------------------------+
-|                    Prevoyance                             |
-|      Vue d'ensemble de votre prevoyance suisse           |
-+----------------------------------------------------------+
-|                                                          |
-|  +---------------+  +---------------+  +---------------+ |
-|  |               |  |               |  |               | |
-|  |   1er pilier  |  |  2eme pilier  |  |  3eme pilier  | |
-|  |               |  |               |  |               | |
-|  +---------------+  +---------------+  +---------------+ |
-|                                                          |
-+----------------------------------------------------------+
-|                                                          |
-|  +---------------------------------------------------+   |
-|  | [Ma retraite]    [Invalidite]        [Deces]     |   |
-|  +---------------------------------------------------+   |
-|                                                          |
-+----------------------------------------------------------+
-```
+**Aucune migration necessaire** - Les tables existent deja :
 
-### Details techniques
-
-**Fichier a modifier : `src/pages/Prevoyance.tsx`**
-
-**1. Creer les 3 cubes de piliers :**
-- Grands rectangles arrondis (rounded-2xl ou rounded-3xl)
-- Fond clair/gris sur fond sombre (bg-muted ou bg-card)
-- Hauteur fixe ~180-200px
-- Texte centre "1er pilier", "2eme pilier", "3eme pilier"
-- Cliquables pour naviguer vers les sous-pages existantes
-
-**2. Creer la barre de navigation horizontale :**
-- Conteneur horizontal avec fond gradie (bg-gradient-to-r from-muted/50 to-muted)
-- 3 boutons en forme de pilule (rounded-full)
-- Labels : "Ma retraite", "Invalidite", "Deces"
-- Les boutons afficheront les donnees correspondantes selon la vue selectionnee
-
-**3. Logique de vue par type :**
-- Etat `selectedView`: 'retraite' | 'invalidite' | 'deces'
-- Chaque vue affiche les montants pertinents des 3 piliers :
-  - **Ma retraite** : Rentes AVS + LPP + 3e pilier a 65 ans
-  - **Invalidite** : Rentes invalidite des 3 piliers
-  - **Deces** : Capitaux deces / rentes survivants
-
-**4. Structure du composant :**
-
-```tsx
-// Configuration des piliers
-const PILLARS = [
-  { id: '1er', label: '1er pilier', path: '/prevoyance/avs' },
-  { id: '2eme', label: '2eme pilier', path: '/prevoyance/lpp' },
-  { id: '3eme', label: '3eme pilier', path: '/prevoyance/3e-pilier' },
-];
-
-// Configuration des vues
-const VIEWS = [
-  { id: 'retraite', label: 'Ma retraite' },
-  { id: 'invalidite', label: 'Invalidite' },
-  { id: 'deces', label: 'Deces' },
-];
-```
-
-**5. Styles CSS (Tailwind) :**
-
-```tsx
-// Cube de pilier
-<button className="
-  bg-muted/80 hover:bg-muted 
-  rounded-2xl 
-  h-40 md:h-48 
-  flex items-center justify-center
-  transition-all duration-300
-  hover:scale-[1.02] hover:shadow-xl
-  cursor-pointer
-  border border-border/50
-">
-  <span className="text-lg font-medium text-foreground">1er pilier</span>
-</button>
-
-// Barre de navigation
-<div className="
-  bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30
-  rounded-full
-  p-2
-  flex items-center justify-center gap-4
-">
-  <button className="
-    bg-background 
-    rounded-full 
-    px-8 py-3
-    shadow-md
-    hover:shadow-lg
-    transition-all
-  ">
-    Ma retraite
-  </button>
-</div>
-```
-
-### Gestion des donnees
-
-Les donnees existantes seront reutilisees :
-- `avsTotalRent` : Rente AVS vieillesse
-- `lppSummary.total_annual_rent_65` : Rente LPP
-- `thirdPillarSummary.totalProjectedAnnualRent` : Rente 3e pilier
-
-Nouvelles donnees a afficher selon la vue :
-- **Invalidite** : `lppSummary.disability_rent`, `thirdPillarSummary.disabilityRent`
-- **Deces** : `lppSummary.death_capital`, `thirdPillarSummary.deathCapital`
-
-### Impact
-
-| Fichier | Action |
-|---------|--------|
-| `src/pages/Prevoyance.tsx` | Refonte complete du JSX avec le nouveau design |
+| Table | Champs utilises |
+|-------|-----------------|
+| `profiles` | `nombre_enfants` (number) |
+| `dependants` | `first_name`, `last_name`, `date_of_birth`, `profile_id`, `relationship` |
 
 ### Comportement attendu
 
-1. **Vue initiale** : Grille 3 cubes + barre avec "Ma retraite" selectionne par defaut
-2. **Clic sur un cube** : Navigation vers la page detail du pilier
-3. **Clic sur un bouton de la barre** : Change la vue pour afficher les montants correspondants sous les cubes
-4. **Responsive** : Cubes empiles sur mobile, barre s'adapte
+1. **nombre_enfants = 0** : Rien de supplementaire n'est affiche
+2. **nombre_enfants >= 1** : Pour chaque enfant, afficher 3 champs :
+   - Prenom de l'enfant
+   - Nom de l'enfant  
+   - Date de naissance de l'enfant
+
+### Modifications a effectuer
+
+**Fichier : `src/pages/Profile.tsx`**
+
+#### 1. Ajouter un type pour les enfants
+
+```typescript
+interface ChildData {
+  id?: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth: string;
+}
+```
+
+#### 2. Ajouter un state pour les enfants
+
+```typescript
+const [children, setChildren] = useState<ChildData[]>([]);
+```
+
+#### 3. Synchroniser le nombre d'enfants avec le tableau
+
+Quand `nombre_enfants` change :
+- Si le nombre augmente : ajouter des objets vides au tableau
+- Si le nombre diminue : tronquer le tableau
+
+```typescript
+const handleChildrenCountChange = (count: number) => {
+  const newCount = Math.max(0, Math.min(20, count));
+  handleChange("nombre_enfants", newCount.toString());
+  
+  setChildren(prev => {
+    if (newCount > prev.length) {
+      // Ajouter des enfants vides
+      const newChildren = [...prev];
+      for (let i = prev.length; i < newCount; i++) {
+        newChildren.push({ first_name: "", last_name: "", date_of_birth: "" });
+      }
+      return newChildren;
+    } else {
+      // Tronquer le tableau
+      return prev.slice(0, newCount);
+    }
+  });
+};
+```
+
+#### 4. Afficher dynamiquement les formulaires enfants
+
+```text
++----------------------------------------------------------+
+|  Nombre d'enfants: [2]                                    |
++----------------------------------------------------------+
+|  ENFANT 1                                                 |
+|  +-------------------------+  +------------------------+  |
+|  | Prenom                  |  | Nom                    |  |
+|  +-------------------------+  +------------------------+  |
+|  +----------------------------------------------------+  |
+|  | Date de naissance                                  |  |
+|  +----------------------------------------------------+  |
++----------------------------------------------------------+
+|  ENFANT 2                                                 |
+|  +-------------------------+  +------------------------+  |
+|  | Prenom                  |  | Nom                    |  |
+|  +-------------------------+  +------------------------+  |
+|  +----------------------------------------------------+  |
+|  | Date de naissance                                  |  |
+|  +----------------------------------------------------+  |
++----------------------------------------------------------+
+```
+
+#### 5. Charger les enfants existants depuis la base
+
+Dans `fetchProfile` :
+
+```typescript
+// Charger les enfants depuis la table dependants
+const { data: dependants } = await supabase
+  .from("dependants")
+  .select("*")
+  .eq("profile_id", profile.id)
+  .eq("relationship", "enfant");
+
+if (dependants) {
+  setChildren(dependants.map(d => ({
+    id: d.id,
+    first_name: d.first_name,
+    last_name: d.last_name,
+    date_of_birth: d.date_of_birth,
+  })));
+}
+```
+
+#### 6. Sauvegarder les enfants
+
+Dans `handleSubmit` :
+
+```typescript
+// Supprimer les anciens enfants
+await supabase
+  .from("dependants")
+  .delete()
+  .eq("profile_id", profileId)
+  .eq("relationship", "enfant");
+
+// Inserer les nouveaux enfants
+if (children.length > 0) {
+  const childrenToInsert = children
+    .filter(c => c.first_name && c.last_name && c.date_of_birth)
+    .map(c => ({
+      profile_id: profileId,
+      first_name: c.first_name,
+      last_name: c.last_name,
+      date_of_birth: c.date_of_birth,
+      relationship: "enfant",
+    }));
+  
+  if (childrenToInsert.length > 0) {
+    await supabase.from("dependants").insert(childrenToInsert);
+  }
+}
+```
+
+#### 7. JSX pour afficher les enfants
+
+```tsx
+{/* Nombre d'enfants */}
+<div>
+  <Label>Nombre d'enfants</Label>
+  <Input
+    type="number"
+    min="0"
+    max="20"
+    value={formData.nombre_enfants}
+    onChange={(e) => handleChildrenCountChange(parseInt(e.target.value) || 0)}
+  />
+</div>
+
+{/* Formulaires dynamiques pour chaque enfant */}
+{children.length > 0 && (
+  <div className="space-y-6 mt-6 p-4 border rounded-lg bg-muted/20">
+    <h4 className="font-medium">Informations sur les enfants</h4>
+    {children.map((child, index) => (
+      <div key={index} className="space-y-4 p-4 border rounded-lg bg-background">
+        <p className="text-sm font-medium text-muted-foreground">
+          Enfant {index + 1}
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label>Prenom</Label>
+            <Input
+              value={child.first_name}
+              onChange={(e) => updateChild(index, "first_name", e.target.value)}
+              placeholder="Prenom de l'enfant"
+            />
+          </div>
+          <div>
+            <Label>Nom</Label>
+            <Input
+              value={child.last_name}
+              onChange={(e) => updateChild(index, "last_name", e.target.value)}
+              placeholder="Nom de l'enfant"
+            />
+          </div>
+        </div>
+        <div>
+          <Label>Date de naissance</Label>
+          <Input
+            type="date"
+            value={child.date_of_birth}
+            onChange={(e) => updateChild(index, "date_of_birth", e.target.value)}
+          />
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+```
+
+#### 8. Fonction de mise a jour d'un enfant
+
+```typescript
+const updateChild = (index: number, field: keyof ChildData, value: string) => {
+  setChildren(prev => {
+    const updated = [...prev];
+    updated[index] = { ...updated[index], [field]: value };
+    return updated;
+  });
+};
+```
+
+### Resume des fichiers concernes
+
+| Fichier | Action |
+|---------|--------|
+| `src/pages/Profile.tsx` | Ajouter la logique dynamique pour les formulaires enfants |
+
+### Points techniques
+
+- Utilisation de la table `dependants` existante avec `relationship = "enfant"`
+- Synchronisation automatique du nombre de formulaires avec le champ `nombre_enfants`
+- Validation : seuls les enfants avec tous les champs remplis sont sauvegardes
+- Style coherent avec le reste du formulaire (cards imbriquees)
 
