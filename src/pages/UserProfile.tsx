@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { calculateAllAVSPensions, formatCHF } from "@/lib/avsCalculations";
+import ChildrenFormSection, { type ChildData } from "@/components/profile/ChildrenFormSection";
 
 interface Profile {
   nom: string;
@@ -261,6 +262,8 @@ const UserProfile = () => {
   const [mobileImpotsOpen, setMobileImpotsOpen] = useState(false);
   const [mobileAssurancesOpen, setMobileAssurancesOpen] = useState(false);
   const [mobileDocumentsOpen, setMobileDocumentsOpen] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [childrenData, setChildrenData] = useState<ChildData[]>([]);
   
   const [budgetData, setBudgetData] = useState<BudgetData>({
     period_type: "mensuel",
@@ -403,6 +406,7 @@ const UserProfile = () => {
       
       if (profileData) {
         setProfile(profileData);
+        setProfileId(profileData.id);
         
         // Charger aussi les données de prévoyance pour état civil et nombre d'enfants
         const { data: prevoyanceDataForProfile } = await supabase
@@ -672,6 +676,41 @@ const UserProfile = () => {
         } else {
           console.log('Tax update réussi');
         }
+      }
+
+      // Sauvegarder les enfants dans la table dependants
+      if (profileId && childrenData.length > 0) {
+        // Supprimer les anciens enfants
+        await supabase
+          .from("dependants")
+          .delete()
+          .eq("profile_id", profileId)
+          .eq("relationship", "enfant");
+
+        // Insérer les nouveaux enfants
+        const childrenToInsert = childrenData
+          .filter(c => c.first_name && c.last_name && c.date_of_birth)
+          .map(c => ({
+            profile_id: profileId,
+            first_name: c.first_name,
+            last_name: c.last_name,
+            date_of_birth: c.date_of_birth,
+            relationship: "enfant",
+          }));
+        
+        if (childrenToInsert.length > 0) {
+          const { error: childrenError } = await supabase.from("dependants").insert(childrenToInsert);
+          if (childrenError) {
+            console.error('Erreur sauvegarde enfants:', childrenError);
+          }
+        }
+      } else if (profileId && childrenData.length === 0) {
+        // Supprimer tous les enfants si le nombre est 0
+        await supabase
+          .from("dependants")
+          .delete()
+          .eq("profile_id", profileId)
+          .eq("relationship", "enfant");
       }
 
       toast({
@@ -1874,11 +1913,18 @@ const UserProfile = () => {
                                 <FormControl>
                                   <Input {...field} placeholder="Nom de l'entreprise" />
                                 </FormControl>
-                                <FormMessage />
                               </FormItem>
                             )}
                           />
                         </div>
+                        
+                        {/* Formulaire dynamique enfants */}
+                        <ChildrenFormSection
+                          profileId={profileId}
+                          childrenCount={profileForm.watch("nombre_enfants") || 0}
+                          onChildrenChange={setChildrenData}
+                          isEditing={true}
+                        />
                         <Button type="submit" className="w-full md:w-auto">
                           <Save className="h-4 w-4 mr-2" />
                           Enregistrer
@@ -1936,6 +1982,16 @@ const UserProfile = () => {
                           <div>
                             <h3 className="text-sm font-medium text-muted-foreground mb-1">Nombre d'enfants</h3>
                             <p className="text-foreground">{prevoyanceData.nombre_enfants || 0}</p>
+                          </div>
+                          
+                          {/* Affichage des enfants en mode lecture */}
+                          <div className="col-span-full">
+                            <ChildrenFormSection
+                              profileId={profileId}
+                              childrenCount={prevoyanceData.nombre_enfants || 0}
+                              onChildrenChange={() => {}}
+                              isEditing={false}
+                            />
                           </div>
                           <div>
                             <h3 className="text-sm font-medium text-muted-foreground mb-1">Sexe</h3>
