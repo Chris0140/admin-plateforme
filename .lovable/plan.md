@@ -1,93 +1,135 @@
 
 
-## Nettoyage de Insurance.tsx - Garder uniquement la nouvelle version
+## Refonte de la page Prevoyance - Nouveau design visuel
 
-### Probleme identifie
-Le fichier actuel contient deux systemes melanges :
-- **Nouveau** : Grille de 4 cubes + modale d'ajout avec PDF
-- **Ancien** : `InsuranceDetailPanel` avec sa propre logique de gestion
+### Objectif
+Transformer la page `/prevoyance` pour adopter le style visuel de l'image de reference avec :
+- 3 grands cubes arrondis pour les piliers (1er, 2eme, 3eme)
+- Une barre horizontale avec 3 boutons-pilules (Ma retraite, Invalidite, Deces)
 
-### Modifications a effectuer
-
-**1. Retirer l'import de InsuranceDetailPanel :**
-```tsx
-// SUPPRIMER cette ligne
-import InsuranceDetailPanel from "@/components/insurance/InsuranceDetailPanel";
-```
-
-**2. Simplifier la vue de detail (lignes 459-476) :**
-
-Remplacer le bloc `InsuranceDetailPanel` par une liste simple des contrats avec :
-- Bouton "Retour" pour revenir aux categories
-- Liste des contrats existants avec options Modifier/Supprimer
-- Zone d'upload de documents integree
-
-**3. Structure finale du fichier :**
+### Nouveau layout propose
 
 ```
-ETAT INITIAL (pas de categorie selectionnee) :
-+--------------------------------------------------+
-|  Grille 4 cubes (Maladie, Menage, Auto, Vie)     |
-+--------------------------------------------------+
-|  Prime totale: X CHF  |  Contrats actifs: X      |
-+--------------------------------------------------+
-
-ETAT DETAIL (categorie selectionnee) :
-+--------------------------------------------------+
-|  [← Retour] Contrats : Assurance Maladie         |
-|  [+ Nouveau contrat] ← ouvre la modale PDF       |
-+--------------------------------------------------+
-|  Liste des contrats (cartes simples)             |
-|  - Nom compagnie, N° police, prime               |
-|  - Boutons Modifier / Supprimer                  |
-+--------------------------------------------------+
-|  (Si vide) Message "Aucun contrat"               |
-+--------------------------------------------------+
++----------------------------------------------------------+
+|                    Prevoyance                             |
+|      Vue d'ensemble de votre prevoyance suisse           |
++----------------------------------------------------------+
+|                                                          |
+|  +---------------+  +---------------+  +---------------+ |
+|  |               |  |               |  |               | |
+|  |   1er pilier  |  |  2eme pilier  |  |  3eme pilier  | |
+|  |               |  |               |  |               | |
+|  +---------------+  +---------------+  +---------------+ |
+|                                                          |
++----------------------------------------------------------+
+|                                                          |
+|  +---------------------------------------------------+   |
+|  | [Ma retraite]    [Invalidite]        [Deces]     |   |
+|  +---------------------------------------------------+   |
+|                                                          |
++----------------------------------------------------------+
 ```
-
-### Fichiers concernes
-
-| Fichier | Action |
-|---------|--------|
-| `src/pages/Insurance.tsx` | Nettoyer : retirer InsuranceDetailPanel, creer liste inline |
-| `src/components/insurance/InsuranceDetailPanel.tsx` | Potentiellement supprimer si plus utilise |
 
 ### Details techniques
 
-**Remplacer le bloc InsuranceDetailPanel (lignes 459-469) par :**
+**Fichier a modifier : `src/pages/Prevoyance.tsx`**
+
+**1. Creer les 3 cubes de piliers :**
+- Grands rectangles arrondis (rounded-2xl ou rounded-3xl)
+- Fond clair/gris sur fond sombre (bg-muted ou bg-card)
+- Hauteur fixe ~180-200px
+- Texte centre "1er pilier", "2eme pilier", "3eme pilier"
+- Cliquables pour naviguer vers les sous-pages existantes
+
+**2. Creer la barre de navigation horizontale :**
+- Conteneur horizontal avec fond gradie (bg-gradient-to-r from-muted/50 to-muted)
+- 3 boutons en forme de pilule (rounded-full)
+- Labels : "Ma retraite", "Invalidite", "Deces"
+- Les boutons afficheront les donnees correspondantes selon la vue selectionnee
+
+**3. Logique de vue par type :**
+- Etat `selectedView`: 'retraite' | 'invalidite' | 'deces'
+- Chaque vue affiche les montants pertinents des 3 piliers :
+  - **Ma retraite** : Rentes AVS + LPP + 3e pilier a 65 ans
+  - **Invalidite** : Rentes invalidite des 3 piliers
+  - **Deces** : Capitaux deces / rentes survivants
+
+**4. Structure du composant :**
 
 ```tsx
-{/* Bouton retour */}
-<Button variant="ghost" onClick={handleBack} className="w-fit">
-  <ArrowLeft className="mr-2 h-4 w-4" />
-  Retour aux categories
-</Button>
+// Configuration des piliers
+const PILLARS = [
+  { id: '1er', label: '1er pilier', path: '/prevoyance/avs' },
+  { id: '2eme', label: '2eme pilier', path: '/prevoyance/lpp' },
+  { id: '3eme', label: '3eme pilier', path: '/prevoyance/3e-pilier' },
+];
 
-{/* Liste des contrats de cette categorie */}
-<div className="space-y-4">
-  {analysis?.contracts
-    .filter(c => selectedCategory.types.includes(c.insurance_type))
-    .map(contract => (
-      <Card key={contract.id} className="p-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <h4 className="font-medium">{contract.company_name}</h4>
-            <p className="text-sm text-muted-foreground">N° {contract.contract_number}</p>
-          </div>
-          <Badge>{contract.annual_premium.toLocaleString('fr-CH')} CHF/an</Badge>
-        </div>
-        <div className="flex gap-2 mt-3">
-          <Button variant="outline" size="sm">Modifier</Button>
-          <Button variant="outline" size="sm" className="text-destructive">Supprimer</Button>
-        </div>
-      </Card>
-    ))}
+// Configuration des vues
+const VIEWS = [
+  { id: 'retraite', label: 'Ma retraite' },
+  { id: 'invalidite', label: 'Invalidite' },
+  { id: 'deces', label: 'Deces' },
+];
+```
+
+**5. Styles CSS (Tailwind) :**
+
+```tsx
+// Cube de pilier
+<button className="
+  bg-muted/80 hover:bg-muted 
+  rounded-2xl 
+  h-40 md:h-48 
+  flex items-center justify-center
+  transition-all duration-300
+  hover:scale-[1.02] hover:shadow-xl
+  cursor-pointer
+  border border-border/50
+">
+  <span className="text-lg font-medium text-foreground">1er pilier</span>
+</button>
+
+// Barre de navigation
+<div className="
+  bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30
+  rounded-full
+  p-2
+  flex items-center justify-center gap-4
+">
+  <button className="
+    bg-background 
+    rounded-full 
+    px-8 py-3
+    shadow-md
+    hover:shadow-lg
+    transition-all
+  ">
+    Ma retraite
+  </button>
 </div>
 ```
 
+### Gestion des donnees
+
+Les donnees existantes seront reutilisees :
+- `avsTotalRent` : Rente AVS vieillesse
+- `lppSummary.total_annual_rent_65` : Rente LPP
+- `thirdPillarSummary.totalProjectedAnnualRent` : Rente 3e pilier
+
+Nouvelles donnees a afficher selon la vue :
+- **Invalidite** : `lppSummary.disability_rent`, `thirdPillarSummary.disabilityRent`
+- **Deces** : `lppSummary.death_capital`, `thirdPillarSummary.deathCapital`
+
 ### Impact
-- Interface unifiee avec un seul systeme de navigation
-- La modale d'ajout avec PDF devient le point central pour creer des contrats
-- Suppression de la duplication du bouton "Nouveau contrat"
-- Code plus simple et maintenable
+
+| Fichier | Action |
+|---------|--------|
+| `src/pages/Prevoyance.tsx` | Refonte complete du JSX avec le nouveau design |
+
+### Comportement attendu
+
+1. **Vue initiale** : Grille 3 cubes + barre avec "Ma retraite" selectionne par defaut
+2. **Clic sur un cube** : Navigation vers la page detail du pilier
+3. **Clic sur un bouton de la barre** : Change la vue pour afficher les montants correspondants sous les cubes
+4. **Responsive** : Cubes empiles sur mobile, barre s'adapte
 
