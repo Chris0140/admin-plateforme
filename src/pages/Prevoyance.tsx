@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { calculateAllAVSPensionsStructured } from "@/lib/avsCalculations";
 import { calculateLPPAnalysis } from "@/lib/lppCalculations";
 import { calculateThirdPillarAnalysis } from "@/lib/thirdPillarCalculations";
+import RetirementChart from "@/components/prevoyance/RetirementChart";
 
 type ViewType = 'retraite' | 'invalidite' | 'deces';
 
@@ -18,6 +19,7 @@ interface AVSAccount {
   average_annual_income_determinant?: number;
   years_contributed?: number;
   is_active?: boolean;
+  number_of_children?: number;
 }
 
 const PILLARS = [
@@ -37,9 +39,14 @@ const Prevoyance = () => {
   const navigate = useNavigate();
   const [selectedView, setSelectedView] = useState<ViewType>('retraite');
 
+  // Profile data
+  const [currentAge, setCurrentAge] = useState<number>(40);
+  const [numberOfChildren, setNumberOfChildren] = useState<number>(0);
+
   // AVS States
   const [avsAccounts, setAvsAccounts] = useState<AVSAccount[]>([]);
   const [avsTotalRent, setAvsTotalRent] = useState(0);
+  const [avsChildRent, setAvsChildRent] = useState(0);
 
   // LPP Summary
   const [lppSummary, setLppSummary] = useState<any>(null);
@@ -60,16 +67,27 @@ const Prevoyance = () => {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, date_naissance')
+        .select('id, date_naissance, nombre_enfants')
         .eq('user_id', currentUser.id)
         .single();
 
       if (!profile) return;
 
+      // Calculate current age
+      if (profile.date_naissance) {
+        const birthDate = new Date(profile.date_naissance);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        setCurrentAge(age);
+      }
+
+      // Set number of children
+      setNumberOfChildren(profile.nombre_enfants || 0);
+
       // Load AVS accounts  
       const { data: avsAccountsData } = await supabase
         .from('avs_profiles')
-        .select('id, owner_name, avs_number, marital_status, average_annual_income_determinant, years_contributed, is_active')
+        .select('id, owner_name, avs_number, marital_status, average_annual_income_determinant, years_contributed, is_active, number_of_children')
         .eq('profile_id', profile.id)
         .eq('is_active', true);
 
@@ -77,6 +95,7 @@ const Prevoyance = () => {
         setAvsAccounts(avsAccountsData as AVSAccount[]);
 
         let totalRent = 0;
+        let totalChildRent = 0;
         for (const account of avsAccountsData) {
           if (account.average_annual_income_determinant) {
             const results = await calculateAllAVSPensionsStructured(
@@ -84,9 +103,12 @@ const Prevoyance = () => {
               account.years_contributed || 44
             );
             totalRent += results.oldAge.fullRent.annual;
+            // Child rent per child
+            totalChildRent = results.child.annual;
           }
         }
         setAvsTotalRent(totalRent);
+        setAvsChildRent(totalChildRent);
       }
 
       const lppAnalysis = await calculateLPPAnalysis(profile.id);
@@ -230,6 +252,18 @@ const Prevoyance = () => {
               {selectedView === 'deces' && '(estimation)'}
             </p>
           </div>
+        )}
+
+        {/* Retirement Chart - Only show in "Ma retraite" view */}
+        {selectedView === 'retraite' && hasData && (
+          <RetirementChart
+            currentAge={currentAge}
+            avsAnnualRent={avsTotalRent}
+            lppAnnualRent={lppSummary?.total_annual_rent_65 || 0}
+            thirdPillarAnnualRent={thirdPillarSummary?.totalProjectedAnnualRent || 0}
+            childRentAnnual={avsChildRent}
+            numberOfChildren={numberOfChildren}
+          />
         )}
       </div>
     </AppLayout>
