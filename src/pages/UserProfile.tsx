@@ -6,10 +6,11 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Users, UserPlus, Loader2 } from "lucide-react";
+import { User, Users, UserPlus, Loader2, Baby } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ProfileInformationsForm, { type ProfileInfoFormValues } from "@/components/profile/ProfileInformationsForm";
 import PartnerProfileTab from "@/components/profile/PartnerProfileTab";
+import ChildProfileTab from "@/components/profile/ChildProfileTab";
 import AddHouseholdMemberDialog from "@/components/profile/AddHouseholdMemberDialog";
 import type { ChildData } from "@/components/profile/ChildrenFormSection";
 import type { AdultData } from "@/components/profile/AdultFormSection";
@@ -38,6 +39,14 @@ interface PrevoyanceData {
   nombre_enfants?: number;
 }
 
+interface ChildDependant {
+  id: string;
+  first_name: string;
+  last_name: string;
+  date_of_birth: string;
+  parent_link?: string;
+}
+
 const UserProfile = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -52,6 +61,7 @@ const UserProfile = () => {
   });
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("mon-profil");
+  const [children, setChildren] = useState<ChildDependant[]>([]);
 
   const hasPartner = (profile?.nombre_adultes || 0) >= 1;
 
@@ -82,6 +92,17 @@ const UserProfile = () => {
       if (profileData) {
         setProfile(profileData);
         setProfileId(profileData.id);
+        
+        // Charger les enfants
+        const { data: childrenData } = await supabase
+          .from("dependants")
+          .select("id, first_name, last_name, date_of_birth, parent_link")
+          .eq("profile_id", profileData.id)
+          .eq("relationship", "enfant");
+        
+        if (childrenData) {
+          setChildren(childrenData);
+        }
         
         const { data: prevoyanceDataForProfile } = await supabase
           .from("prevoyance_data")
@@ -146,6 +167,15 @@ const UserProfile = () => {
   };
 
   const handlePartnerSaved = () => {
+    fetchUserData();
+  };
+
+  const handleChildDeleted = () => {
+    setActiveTab("mon-profil");
+    fetchUserData();
+  };
+
+  const handleChildSaved = () => {
     fetchUserData();
   };
 
@@ -333,10 +363,10 @@ const UserProfile = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="w-full justify-start bg-card/50 backdrop-blur border-b rounded-none h-12 p-0 gap-0 mb-6">
+            <TabsList className="w-full justify-start bg-card/50 backdrop-blur border-b rounded-none h-auto p-0 gap-0 mb-6 flex-wrap">
               <TabsTrigger 
                 value="mon-profil" 
-                className="h-full px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary transition-all"
+                className="h-12 px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary transition-all"
               >
                 <User className="h-4 w-4 mr-2" />
                 Mon profil
@@ -345,17 +375,28 @@ const UserProfile = () => {
               {hasPartner && (
                 <TabsTrigger 
                   value="conjoint"
-                  className="h-full px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary transition-all"
+                  className="h-12 px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary transition-all"
                 >
                   <Users className="h-4 w-4 mr-2" />
                   Conjoint/Partenaire
                 </TabsTrigger>
               )}
               
+              {children.map((child) => (
+                <TabsTrigger 
+                  key={child.id}
+                  value={`enfant-${child.id}`}
+                  className="h-12 px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary transition-all"
+                >
+                  <Baby className="h-4 w-4 mr-2" />
+                  {child.first_name || "Enfant"}
+                </TabsTrigger>
+              ))}
+              
               {!hasPartner && (
                 <Button
                   variant="ghost"
-                  className="h-full px-6 rounded-none text-muted-foreground hover:text-foreground"
+                  className="h-12 px-6 rounded-none text-muted-foreground hover:text-foreground"
                   onClick={() => setAddMemberDialogOpen(true)}
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
@@ -402,6 +443,18 @@ const UserProfile = () => {
                 />
               </TabsContent>
             )}
+
+            {children.map((child) => (
+              <TabsContent key={child.id} value={`enfant-${child.id}`} className="mt-0">
+                <ChildProfileTab
+                  childId={child.id}
+                  profileId={profileId}
+                  hasPartner={hasPartner}
+                  onChildDeleted={handleChildDeleted}
+                  onChildSaved={handleChildSaved}
+                />
+              </TabsContent>
+            ))}
           </Tabs>
         </div>
       </main>

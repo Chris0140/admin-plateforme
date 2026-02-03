@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { User, Briefcase, Trash2, Save, Edit, X } from "lucide-react";
+import { User, Briefcase, Phone, Trash2, Save, Edit, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog,
@@ -24,6 +24,13 @@ const genderOptions = [
   { value: "M", label: "Homme" },
   { value: "F", label: "Femme" },
   { value: "autre", label: "Autre" },
+];
+
+const etatCivilOptions = [
+  { value: "celibataire", label: "Célibataire" },
+  { value: "marie", label: "Marié(e)" },
+  { value: "divorce", label: "Divorcé(e)" },
+  { value: "veuf", label: "Veuf/Veuve" },
 ];
 
 const employmentStatusOptions = [
@@ -44,9 +51,13 @@ export interface PartnerData {
   last_name: string;
   date_of_birth: string;
   gender?: string;
+  etat_civil?: string;
   employment_status?: string;
   profession?: string;
   annual_income?: number;
+  telephone?: string;
+  adresse?: string;
+  localite?: string;
 }
 
 interface PartnerProfileTabProps {
@@ -72,9 +83,13 @@ const PartnerProfileTab = ({
     last_name: "",
     date_of_birth: "",
     gender: "",
+    etat_civil: "",
     employment_status: "",
     profession: "",
     annual_income: 0,
+    telephone: "",
+    adresse: "",
+    localite: "",
   });
 
   useEffect(() => {
@@ -103,9 +118,13 @@ const PartnerProfileTab = ({
           last_name: dependant.last_name,
           date_of_birth: dependant.date_of_birth,
           gender: dependant.gender || "",
+          etat_civil: "",
           employment_status: dependant.employment_status || "",
           profession: dependant.profession || "",
           annual_income: dependant.annual_income || 0,
+          telephone: "",
+          adresse: "",
+          localite: "",
         });
       } else {
         // Nouveau partenaire, activer le mode édition
@@ -229,6 +248,12 @@ const PartnerProfileTab = ({
     return found ? found.label : gender;
   };
 
+  const formatEtatCivil = (etatCivil: string | undefined) => {
+    if (!etatCivil) return "Non renseigné";
+    const found = etatCivilOptions.find((o) => o.value === etatCivil);
+    return found ? found.label : etatCivil;
+  };
+
   const formatEmploymentStatus = (status: string | undefined) => {
     if (!status) return "Non renseigné";
     const found = employmentStatusOptions.find((o) => o.value === status);
@@ -283,24 +308,24 @@ const PartnerProfileTab = ({
       <CardContent>
         {isEditing ? (
           <div className="space-y-8">
-            {/* Informations personnelles */}
+            {/* SECTION 1: INFORMATIONS PERSONNELLES */}
             <div className="space-y-4">
               <SectionHeader icon={User} title="Informations personnelles" description="Données d'identité du partenaire" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Prénom *</Label>
-                  <Input
-                    value={partner.first_name}
-                    onChange={(e) => updatePartner("first_name", e.target.value)}
-                    placeholder="Prénom"
-                  />
-                </div>
                 <div>
                   <Label>Nom</Label>
                   <Input
                     value={partner.last_name}
                     onChange={(e) => updatePartner("last_name", e.target.value)}
-                    placeholder="Nom"
+                    placeholder="Dupont"
+                  />
+                </div>
+                <div>
+                  <Label>Prénom *</Label>
+                  <Input
+                    value={partner.first_name}
+                    onChange={(e) => updatePartner("first_name", e.target.value)}
+                    placeholder="Marie"
                   />
                 </div>
                 <div>
@@ -329,12 +354,30 @@ const PartnerProfileTab = ({
                     onChange={(e) => updatePartner("date_of_birth", e.target.value)}
                   />
                 </div>
+                <div>
+                  <Label>État civil</Label>
+                  <Select
+                    onValueChange={(value) => updatePartner("etat_civil", value)}
+                    value={partner.etat_civil || ""}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {etatCivilOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
             <Separator />
 
-            {/* Situation professionnelle */}
+            {/* SECTION 2: SITUATION PROFESSIONNELLE */}
             <div className="space-y-4">
               <SectionHeader icon={Briefcase} title="Situation professionnelle" description="Activité et revenus du partenaire" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -378,6 +421,40 @@ const PartnerProfileTab = ({
               </div>
             </div>
 
+            <Separator />
+
+            {/* SECTION 3: COORDONNÉES */}
+            <div className="space-y-4">
+              <SectionHeader icon={Phone} title="Coordonnées" description="Informations de contact du partenaire" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Téléphone</Label>
+                  <Input
+                    type="tel"
+                    value={partner.telephone || ""}
+                    onChange={(e) => updatePartner("telephone", e.target.value)}
+                    placeholder="+41 79 123 45 67"
+                  />
+                </div>
+                <div>
+                  <Label>Adresse</Label>
+                  <Input
+                    value={partner.adresse || ""}
+                    onChange={(e) => updatePartner("adresse", e.target.value)}
+                    placeholder="Rue de la Gare 1"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Localité</Label>
+                <Input
+                  value={partner.localite || ""}
+                  onChange={(e) => updatePartner("localite", e.target.value)}
+                  placeholder="1000 Lausanne"
+                />
+              </div>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button onClick={handleSave} disabled={isSaving} className="flex-1 sm:flex-none">
                 <Save className="h-4 w-4 mr-2" />
@@ -411,17 +488,17 @@ const PartnerProfileTab = ({
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Informations personnelles - Mode lecture */}
+            {/* SECTION 1: INFORMATIONS PERSONNELLES - Mode lecture */}
             <div className="space-y-4">
               <SectionHeader icon={User} title="Informations personnelles" description="Données d'identité du partenaire" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Prénom</h4>
-                  <p className="text-foreground">{partner.first_name || "Non renseigné"}</p>
-                </div>
-                <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Nom</h4>
                   <p className="text-foreground">{partner.last_name || "Non renseigné"}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Prénom</h4>
+                  <p className="text-foreground">{partner.first_name || "Non renseigné"}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Genre</h4>
@@ -435,12 +512,16 @@ const PartnerProfileTab = ({
                       : "Non renseignée"}
                   </p>
                 </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">État civil</h4>
+                  <p className="text-foreground">{formatEtatCivil(partner.etat_civil)}</p>
+                </div>
               </div>
             </div>
 
             <Separator />
 
-            {/* Situation professionnelle - Mode lecture */}
+            {/* SECTION 2: SITUATION PROFESSIONNELLE - Mode lecture */}
             <div className="space-y-4">
               <SectionHeader icon={Briefcase} title="Situation professionnelle" description="Activité et revenus du partenaire" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -455,6 +536,27 @@ const PartnerProfileTab = ({
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Revenu annuel</h4>
                   <p className="text-foreground">{formatCurrency(partner.annual_income)}</p>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* SECTION 3: COORDONNÉES - Mode lecture */}
+            <div className="space-y-4">
+              <SectionHeader icon={Phone} title="Coordonnées" description="Informations de contact du partenaire" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Téléphone</h4>
+                  <p className="text-foreground">{partner.telephone || "Non renseigné"}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Adresse</h4>
+                  <p className="text-foreground">{partner.adresse || "Non renseignée"}</p>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Localité</h4>
+                  <p className="text-foreground">{partner.localite || "Non renseignée"}</p>
                 </div>
               </div>
             </div>
