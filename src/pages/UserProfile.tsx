@@ -6,15 +6,16 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Users, UserPlus, Loader2, Baby } from "lucide-react";
+import { User, Users, UserPlus, Loader2, Baby, Link2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ProfileInformationsForm, { type ProfileInfoFormValues } from "@/components/profile/ProfileInformationsForm";
 import PartnerProfileTab from "@/components/profile/PartnerProfileTab";
 import ChildProfileTab from "@/components/profile/ChildProfileTab";
 import AddHouseholdMemberDialog from "@/components/profile/AddHouseholdMemberDialog";
+import ClientNumberCard from "@/components/profile/ClientNumberCard";
+import LinkToHouseholdDialog from "@/components/profile/LinkToHouseholdDialog";
 import type { ChildData } from "@/components/profile/ChildrenFormSection";
 import type { AdultData } from "@/components/profile/AdultFormSection";
-
 interface Profile {
   nom: string;
   prenom: string;
@@ -32,6 +33,9 @@ interface Profile {
   profession?: string | null;
   employment_status?: string | null;
   annual_income?: number | null;
+  client_number?: string | null;
+  linked_to_client?: string | null;
+  household_role?: string | null;
 }
 
 interface PrevoyanceData {
@@ -66,11 +70,13 @@ const UserProfile = () => {
     nombre_enfants: 0,
   });
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("mon-profil");
   const [children, setChildren] = useState<ChildDependant[]>([]);
   const [partnerData, setPartnerData] = useState<PartnerDependant | null>(null);
+  const [linkedTitulaireName, setLinkedTitulaireName] = useState<string | null>(null);
   const hasPartner = (profile?.nombre_adultes || 0) >= 1;
-
+  const isLinkedPartner = profile?.household_role === "linked_partner" && profile?.linked_to_client;
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
@@ -122,6 +128,21 @@ const UserProfile = () => {
           setPartnerData(partnerDataResult);
         } else {
           setPartnerData(null);
+        }
+
+        // Si compte lié, récupérer le nom du titulaire
+        if (profileData.linked_to_client) {
+          const { data: titulaireData } = await supabase
+            .from("profiles")
+            .select("prenom, nom")
+            .eq("client_number", profileData.linked_to_client)
+            .single();
+          
+          if (titulaireData) {
+            setLinkedTitulaireName(`${titulaireData.prenom} ${titulaireData.nom}`);
+          }
+        } else {
+          setLinkedTitulaireName(null);
         }
         
         const { data: prevoyanceDataForProfile } = await supabase
@@ -197,6 +218,19 @@ const UserProfile = () => {
 
   const handleChildSaved = () => {
     fetchUserData();
+  };
+
+  const handleLinkSuccess = () => {
+    fetchUserData();
+    toast({
+      title: "Compte lié",
+      description: "Votre compte est maintenant lié au foyer",
+    });
+  };
+
+  const handleOpenLinkDialog = () => {
+    setAddMemberDialogOpen(false);
+    setLinkDialogOpen(true);
   };
 
   const handleProfileInfoSubmit = async (
@@ -426,33 +460,55 @@ const UserProfile = () => {
             </TabsList>
 
             <TabsContent value="mon-profil" className="mt-0">
-              <ProfileInformationsForm
-                profileId={profileId}
-                defaultValues={{
-                  nom: profile?.nom || "",
-                  prenom: profile?.prenom || "",
-                  email: profile?.email || "",
-                  date_naissance: profile?.date_naissance || "",
-                  localite: profile?.localite || "",
-                  adresse: profile?.adresse || "",
-                  telephone: profile?.telephone || "",
-                  etat_civil: profile?.etat_civil || prevoyanceData.etat_civil || "",
-                  nombre_enfants: profile?.nombre_enfants || prevoyanceData.nombre_enfants || 0,
-                  nombre_adultes: profile?.nombre_adultes || 0,
-                  household_relationship: profile?.household_relationship || "",
-                  gender: profile?.gender || "",
-                  profession: profile?.profession || "",
-                  employment_status: profile?.employment_status || "",
-                  annual_income: profile?.annual_income || 0,
-                }}
-                isEditing={editingProfile}
-                onEditToggle={setEditingProfile}
-                onSubmit={handleProfileInfoSubmit}
-                hasPartner={hasPartner}
-                partnerInfo={partnerData}
-                childrenInfo={children}
-                mainUserName={profile?.prenom || ""}
-              />
+              <div className="space-y-6">
+                <ClientNumberCard
+                  clientNumber={profile?.client_number || null}
+                  householdRole={profile?.household_role || null}
+                  linkedToClient={profile?.linked_to_client || null}
+                  linkedPartnerName={linkedTitulaireName}
+                />
+
+                {!isLinkedPartner && !hasPartner && (
+                  <div className="flex gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setLinkDialogOpen(true)}
+                      className="flex items-center gap-2"
+                    >
+                      <Link2 className="h-4 w-4" />
+                      Lier à un foyer existant
+                    </Button>
+                  </div>
+                )}
+
+                <ProfileInformationsForm
+                  profileId={profileId}
+                  defaultValues={{
+                    nom: profile?.nom || "",
+                    prenom: profile?.prenom || "",
+                    email: profile?.email || "",
+                    date_naissance: profile?.date_naissance || "",
+                    localite: profile?.localite || "",
+                    adresse: profile?.adresse || "",
+                    telephone: profile?.telephone || "",
+                    etat_civil: profile?.etat_civil || prevoyanceData.etat_civil || "",
+                    nombre_enfants: profile?.nombre_enfants || prevoyanceData.nombre_enfants || 0,
+                    nombre_adultes: profile?.nombre_adultes || 0,
+                    household_relationship: profile?.household_relationship || "",
+                    gender: profile?.gender || "",
+                    profession: profile?.profession || "",
+                    employment_status: profile?.employment_status || "",
+                    annual_income: profile?.annual_income || 0,
+                  }}
+                  isEditing={editingProfile}
+                  onEditToggle={setEditingProfile}
+                  onSubmit={handleProfileInfoSubmit}
+                  hasPartner={hasPartner}
+                  partnerInfo={partnerData}
+                  childrenInfo={children}
+                  mainUserName={profile?.prenom || ""}
+                />
+              </div>
             </TabsContent>
 
             {hasPartner && (
@@ -491,7 +547,17 @@ const UserProfile = () => {
         open={addMemberDialogOpen}
         onOpenChange={setAddMemberDialogOpen}
         onSelectRelationship={handleAddMember}
+        onOpenLinkDialog={handleOpenLinkDialog}
       />
+
+      {profileId && (
+        <LinkToHouseholdDialog
+          open={linkDialogOpen}
+          onOpenChange={setLinkDialogOpen}
+          onLinkSuccess={handleLinkSuccess}
+          currentProfileId={profileId}
+        />
+      )}
     </div>
   );
 };
