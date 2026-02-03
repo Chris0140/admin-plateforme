@@ -1,146 +1,182 @@
 
 
-## Affichage des onglets profil en barre horizontale avec icones
+## Systeme hybride : Profil simple OU Compte lie par numero client
 
 ### Objectif
-Transformer l'interface du profil utilisateur pour utiliser une barre d'onglets horizontale similaire a l'image de reference, avec des icones pour chaque onglet.
+Permettre deux modes de gestion du conjoint/partenaire :
+1. **Profil simple** : Le conjoint n'a pas de compte, ses informations sont gerees par le titulaire (systeme actuel)
+2. **Compte lie** : Le conjoint possede son propre compte et le lie via un numero client unique
 
-### Design de la barre d'onglets
+### Architecture du systeme
 
 ```text
-+------------------------------------------------------------------+
-|                      Profil utilisateur                           |
-+------------------------------------------------------------------+
-| [👤 Mon profil]  [👫 Conjoint/Partenaire]  [+ Ajouter au foyer]  |
-+------------------------------------------------------------------+
-|                                                                   |
-|  Contenu de l'onglet actif...                                    |
-|                                                                   |
-+------------------------------------------------------------------+
++---------------------------+          +---------------------------+
+|   OPTION 1: Profil simple |          |   OPTION 2: Compte lie    |
++---------------------------+          +---------------------------+
+|                           |          |                           |
+|   Titulaire (compte)      |          |   Titulaire (compte)      |
+|   └── Conjoint (profil)   |          |   client_number: CLI-00042|
+|       └── Enfants         |          |           ↑               |
+|                           |          |   Conjoint (compte)       |
+|   Tout stocke dans        |          |   linked_to_client:       |
+|   table "dependants"      |          |   CLI-00042               |
+|                           |          |                           |
++---------------------------+          +---------------------------+
 ```
 
-### Style de la barre d'onglets
+### Modifications de la base de donnees
 
-Basee sur l'image de reference, la barre d'onglets aura :
-- Fond sombre avec bordure inferieure
-- Onglets avec icone a gauche du texte
-- Onglet actif mis en surbrillance
-- Espacement regulier entre les onglets
-- Transition fluide au changement d'onglet
+Nouvelles colonnes dans la table `profiles` :
 
-### Implementation technique
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `client_number` | text UNIQUE | Numero client auto-genere (ex: CLI-00042) |
+| `linked_to_client` | text | Numero client du titulaire (si compte lie) |
+| `household_role` | text | Role: 'titulaire' ou 'linked_partner' |
 
-#### Composant Tabs (Radix UI)
+Nouvelle fonction PostgreSQL :
+- `generate_client_number()` : genere automatiquement CLI-XXXXX a la creation du profil
 
-Utilisation du composant Tabs existant avec personnalisation du style :
-
-```typescript
-<Tabs defaultValue="mon-profil" className="w-full">
-  <TabsList className="w-full justify-start bg-card border-b rounded-none px-0">
-    <TabsTrigger value="mon-profil" className="data-[state=active]:border-b-2 data-[state=active]:border-primary">
-      <User className="h-4 w-4 mr-2" />
-      Mon profil
-    </TabsTrigger>
-    {hasPartner && (
-      <TabsTrigger value="conjoint">
-        <Users className="h-4 w-4 mr-2" />
-        Conjoint/Partenaire
-      </TabsTrigger>
-    )}
-    {!hasPartner && (
-      <Button variant="ghost" onClick={openAddDialog}>
-        <UserPlus className="h-4 w-4 mr-2" />
-        Ajouter au foyer
-      </Button>
-    )}
-  </TabsList>
-  
-  <TabsContent value="mon-profil">
-    {/* Formulaire profil principal */}
-  </TabsContent>
-  
-  <TabsContent value="conjoint">
-    {/* Formulaire conjoint */}
-  </TabsContent>
-</Tabs>
-```
-
-### Modifications techniques
-
-| Fichier | Action |
-|---------|--------|
-| `src/pages/UserProfile.tsx` | Ajouter le systeme d'onglets avec Tabs |
-| `src/components/profile/ProfileInformationsForm.tsx` | Adapter en tant que contenu d'onglet |
-| Nouveau: `src/components/profile/AddHouseholdMemberDialog.tsx` | Dialog pour ajouter un membre |
-| Nouveau: `src/components/profile/PartnerProfileTab.tsx` | Formulaire complet du conjoint |
-
-### Structure des onglets
-
-| Onglet | Icone | Visible si |
-|--------|-------|------------|
-| Mon profil | User | Toujours |
-| Conjoint/Partenaire | Users | nombre_adultes >= 1 |
-| + Ajouter au foyer | UserPlus | nombre_adultes === 0 (bouton, pas onglet) |
-
-### Styles CSS pour la barre d'onglets
-
-```typescript
-// TabsList personnalise
-className="w-full justify-start bg-card/50 backdrop-blur border-b rounded-none h-12 p-0 gap-0"
-
-// TabsTrigger personnalise
-className="h-full px-6 rounded-none border-b-2 border-transparent 
-           data-[state=active]:border-primary data-[state=active]:bg-transparent
-           data-[state=active]:text-primary transition-all"
-```
-
-### Composant AddHouseholdMemberDialog
-
-Dialog qui s'ouvre au clic sur "+ Ajouter au foyer" :
-
-```typescript
-interface AddHouseholdMemberDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSelectRelationship: (relationship: string) => void;
-}
-
-// Options affichees :
-// - Marie(e)
-// - Concubinage
-// - Partenaire enregistre
-```
-
-### Composant PartnerProfileTab
-
-Formulaire complet pour le conjoint dans son propre onglet :
-- Affichage du type de lien en haut
-- Informations personnelles (Prenom, Nom, Genre, Date de naissance)
-- Situation professionnelle (Statut, Profession, Revenu annuel)
-- Bouton "Supprimer ce profil"
-
-### Section Foyer dans "Mon profil"
-
-Une fois un conjoint ajoute, la section Foyer du profil principal affiche :
-- Resume du conjoint avec nom, prenom et lien
-- Lien "Voir le profil" qui switch vers l'onglet Conjoint
-- Gestion des enfants (inchangee)
+Nouveau trigger :
+- Attribution automatique du numero client lors de l'insertion dans profiles
 
 ### Flux utilisateur
 
-1. L'utilisateur arrive → onglet "Mon profil" actif
-2. S'il n'a pas de conjoint → bouton "+ Ajouter au foyer" visible
-3. Clic sur le bouton → dialog avec choix du lien
-4. Selection → onglet "Conjoint/Partenaire" cree et actif
-5. Dans "Mon profil", resume du conjoint avec lien vers son onglet
-6. Possibilite de supprimer le conjoint depuis son onglet
+**Scenario A : Ajouter un conjoint sans compte (actuel)**
 
-### Comportement attendu
+```text
+1. Utilisateur clique "Ajouter au foyer"
+2. Choix du lien (Marie, Concubinage, Partenaire enregistre)
+3. Onglet Conjoint cree → saisie des infos
+4. Donnees sauvegardees dans table "dependants"
+```
 
-1. Barre d'onglets horizontale avec icones style dark/glassmorphism
-2. Onglet actif souligne avec la couleur primary
-3. Bouton d'ajout integre a la barre (pas un onglet)
-4. Transition fluide entre les onglets
-5. Formulaire complet du conjoint dans son propre onglet
-6. Resume visible dans le profil principal
+**Scenario B : Lier un conjoint avec son propre compte**
+
+```text
+1. Titulaire : copie son numero client CLI-00042
+2. Conjoint : cree son compte (inscription normale)
+3. Conjoint : va dans son profil → bouton "Lier a un foyer"
+4. Conjoint : saisit CLI-00042
+5. Systeme : verifie et cree la liaison
+6. Conjoint : voit les enfants partages du foyer
+```
+
+### Nouveaux composants UI
+
+| Composant | Description |
+|-----------|-------------|
+| `ClientNumberCard.tsx` | Affiche le numero client avec bouton copier |
+| `LinkToHouseholdDialog.tsx` | Dialog pour saisir un numero client et lier |
+
+### Modifications des fichiers existants
+
+| Fichier | Changements |
+|---------|-------------|
+| `UserProfile.tsx` | Afficher ClientNumberCard, detecter si compte lie |
+| `AddHouseholdMemberDialog.tsx` | Ajouter option "Lier un compte existant" |
+| `ProfileInformationsForm.tsx` | Afficher info de liaison si lie |
+
+### Interface du dialog "Ajouter au foyer"
+
+```text
+┌──────────────────────────────────────────────┐
+│         Ajouter au foyer                     │
+├──────────────────────────────────────────────┤
+│                                              │
+│  [♥ Marie(e)]                               │
+│     Vous etes legalement marie(e)            │
+│                                              │
+│  [👫 Concubinage]                            │
+│     Vous vivez en couple sans etre marie(e)  │
+│                                              │
+│  [📄 Partenaire enregistre]                  │
+│     Partenariat enregistre officiellement    │
+│                                              │
+│  ─────────── OU ───────────                  │
+│                                              │
+│  [🔗 Lier un compte existant]                │
+│     Votre partenaire a deja un compte        │
+│                                              │
+└──────────────────────────────────────────────┘
+```
+
+### Affichage du numero client
+
+Dans l'onglet "Mon profil", nouvelle section :
+
+```text
+┌─────────────────────────────────────┐
+│  📋 Votre numero client             │
+│                                     │
+│  CLI-00042          [📋 Copier]     │
+│                                     │
+│  Partagez ce numero avec votre      │
+│  conjoint pour lier vos comptes     │
+└─────────────────────────────────────┘
+```
+
+### Regles de gestion
+
+1. Chaque compte recoit automatiquement un numero client unique
+2. Un titulaire ne peut avoir qu'un seul compte lie
+3. Un compte ne peut etre lie qu'a un seul titulaire
+4. Les enfants du titulaire sont visibles par le compte lie
+5. Le conjoint peut choisir de se delier (retour a l'independance)
+6. Si un conjoint simple existe deja, impossible de lier un compte (et vice versa)
+
+### Migration SQL
+
+```sql
+-- 1. Ajouter les colonnes
+ALTER TABLE profiles
+ADD COLUMN client_number text UNIQUE,
+ADD COLUMN linked_to_client text,
+ADD COLUMN household_role text DEFAULT 'titulaire';
+
+-- 2. Creer la sequence pour le numero client
+CREATE SEQUENCE IF NOT EXISTS client_number_seq START 1;
+
+-- 3. Fonction de generation
+CREATE OR REPLACE FUNCTION generate_client_number()
+RETURNS text AS $$
+BEGIN
+  RETURN 'CLI-' || LPAD(nextval('client_number_seq')::text, 5, '0');
+END;
+$$ LANGUAGE plpgsql;
+
+-- 4. Trigger pour attribution automatique
+CREATE TRIGGER set_client_number
+  BEFORE INSERT ON profiles
+  FOR EACH ROW
+  WHEN (NEW.client_number IS NULL)
+  EXECUTE FUNCTION trigger_set_client_number();
+
+-- 5. Mettre a jour les profils existants
+UPDATE profiles 
+SET client_number = generate_client_number()
+WHERE client_number IS NULL;
+```
+
+### Acces aux donnees partagees
+
+Quand un compte est lie (`linked_to_client` non null) :
+- Recuperer le `profile_id` du titulaire via `client_number`
+- Lire les enfants de ce profil
+- Afficher en lecture seule ou avec droits limites
+
+### Securite RLS
+
+Nouvelles policies pour permettre :
+- Lecture des dependants du titulaire pour le compte lie
+- Pas de modification des dependants par le compte lie (lecture seule)
+
+### Resume des etapes d'implementation
+
+1. **Migration BDD** : Ajouter colonnes, fonction, trigger, mettre a jour les profils existants
+2. **ClientNumberCard** : Composant d'affichage du numero avec copie
+3. **LinkToHouseholdDialog** : Dialog pour lier via numero client
+4. **Modifier AddHouseholdMemberDialog** : Ajouter l'option "Lier un compte"
+5. **Modifier UserProfile** : Integrer ClientNumberCard et logique de liaison
+6. **Adapter RLS** : Policies pour acces partage des dependants
 
