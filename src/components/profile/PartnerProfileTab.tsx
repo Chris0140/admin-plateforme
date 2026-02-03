@@ -60,12 +60,21 @@ export interface PartnerData {
   localite?: string;
 }
 
+interface ChildInfo {
+  id: string;
+  first_name: string;
+  last_name: string;
+  parent_link?: string;
+}
+
 interface PartnerProfileTabProps {
   profileId: string | null;
   userId: string | undefined;
   householdRelationship: string;
   onPartnerDeleted: () => void;
   onPartnerSaved: () => void;
+  mainUserName?: string;
+  childrenInfo?: ChildInfo[];
 }
 
 const PartnerProfileTab = ({
@@ -74,6 +83,8 @@ const PartnerProfileTab = ({
   householdRelationship,
   onPartnerDeleted,
   onPartnerSaved,
+  mainUserName = "",
+  childrenInfo = [],
 }: PartnerProfileTabProps) => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -488,6 +499,25 @@ const PartnerProfileTab = ({
           </div>
         ) : (
           <div className="space-y-8">
+            {/* SECTION ENFANTS LIÉS */}
+            {childrenInfo.filter(c => c.parent_link === "conjoint" || c.parent_link === "commun").length > 0 && (
+              <div className="p-4 rounded-lg bg-muted/50 border">
+                <h4 className="text-sm font-medium text-muted-foreground mb-2">Enfants liés à ce profil</h4>
+                <div className="flex flex-wrap gap-2">
+                  {childrenInfo
+                    .filter(c => c.parent_link === "conjoint" || c.parent_link === "commun")
+                    .map((child) => (
+                      <span key={child.id} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-secondary text-secondary-foreground text-sm">
+                        {child.first_name} {child.last_name}
+                        <span className="text-xs opacity-70">
+                          ({child.parent_link === "commun" ? "commun" : "mon enfant"})
+                        </span>
+                      </span>
+                    ))}
+                </div>
+              </div>
+            )}
+
             {/* SECTION 1: INFORMATIONS PERSONNELLES - Mode lecture */}
             <div className="space-y-4">
               <SectionHeader icon={User} title="Informations personnelles" description="Données d'identité du partenaire" />

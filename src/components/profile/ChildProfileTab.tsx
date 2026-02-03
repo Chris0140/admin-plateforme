@@ -52,6 +52,8 @@ interface ChildProfileTabProps {
   hasPartner: boolean;
   onChildDeleted: () => void;
   onChildSaved: () => void;
+  mainUserName?: string;
+  partnerName?: string;
 }
 
 const ChildProfileTab = ({
@@ -60,6 +62,8 @@ const ChildProfileTab = ({
   hasPartner,
   onChildDeleted,
   onChildSaved,
+  mainUserName = "",
+  partnerName = "",
 }: ChildProfileTabProps) => {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -462,9 +466,16 @@ const ChildProfileTab = ({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground mb-1">Rattaché à</h4>
-                      <Badge variant={getParentLinkBadgeVariant(child.parent_link)}>
-                        {formatParentLink(child.parent_link)}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={getParentLinkBadgeVariant(child.parent_link)}>
+                          {child.parent_link === "principal" 
+                            ? `Enfant de ${mainUserName || "l'utilisateur principal"}`
+                            : child.parent_link === "conjoint"
+                            ? `Enfant de ${partnerName || "conjoint"}`
+                            : `Enfant commun${mainUserName && partnerName ? ` (${mainUserName} & ${partnerName})` : ""}`
+                          }
+                        </Badge>
+                      </div>
                     </div>
                     <div>
                       <h4 className="text-sm font-medium text-muted-foreground mb-1">Garde partagée</h4>

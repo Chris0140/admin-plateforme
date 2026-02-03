@@ -47,6 +47,12 @@ interface ChildDependant {
   parent_link?: string;
 }
 
+interface PartnerDependant {
+  id: string;
+  first_name: string;
+  last_name: string;
+}
+
 const UserProfile = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -62,7 +68,7 @@ const UserProfile = () => {
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("mon-profil");
   const [children, setChildren] = useState<ChildDependant[]>([]);
-
+  const [partnerData, setPartnerData] = useState<PartnerDependant | null>(null);
   const hasPartner = (profile?.nombre_adultes || 0) >= 1;
 
   useEffect(() => {
@@ -102,6 +108,20 @@ const UserProfile = () => {
         
         if (childrenData) {
           setChildren(childrenData);
+        }
+
+        // Charger le conjoint
+        const { data: partnerDataResult } = await supabase
+          .from("dependants")
+          .select("id, first_name, last_name")
+          .eq("profile_id", profileData.id)
+          .eq("relationship", "conjoint")
+          .maybeSingle();
+        
+        if (partnerDataResult) {
+          setPartnerData(partnerDataResult);
+        } else {
+          setPartnerData(null);
         }
         
         const { data: prevoyanceDataForProfile } = await supabase
@@ -429,6 +449,9 @@ const UserProfile = () => {
                 onEditToggle={setEditingProfile}
                 onSubmit={handleProfileInfoSubmit}
                 hasPartner={hasPartner}
+                partnerInfo={partnerData}
+                childrenInfo={children}
+                mainUserName={profile?.prenom || ""}
               />
             </TabsContent>
 
@@ -440,6 +463,8 @@ const UserProfile = () => {
                   householdRelationship={profile?.household_relationship || ""}
                   onPartnerDeleted={handlePartnerDeleted}
                   onPartnerSaved={handlePartnerSaved}
+                  mainUserName={profile?.prenom || ""}
+                  childrenInfo={children}
                 />
               </TabsContent>
             )}
@@ -452,6 +477,8 @@ const UserProfile = () => {
                   hasPartner={hasPartner}
                   onChildDeleted={handleChildDeleted}
                   onChildSaved={handleChildSaved}
+                  mainUserName={profile?.prenom || ""}
+                  partnerName={partnerData?.first_name || ""}
                 />
               </TabsContent>
             ))}
