@@ -55,6 +55,18 @@ const profileInfoSchema = z.object({
 
 export type ProfileInfoFormValues = z.infer<typeof profileInfoSchema>;
 
+interface PartnerInfo {
+  first_name: string;
+  last_name: string;
+}
+
+interface ChildInfo {
+  id: string;
+  first_name: string;
+  last_name: string;
+  parent_link?: string;
+}
+
 interface ProfileInformationsFormProps {
   profileId: string | null;
   defaultValues: ProfileInfoFormValues;
@@ -62,6 +74,9 @@ interface ProfileInformationsFormProps {
   onEditToggle: (editing: boolean) => void;
   onSubmit: (values: ProfileInfoFormValues, childrenData: ChildData[], adultData: AdultData | null) => Promise<void>;
   hasPartner?: boolean;
+  partnerInfo?: PartnerInfo | null;
+  childrenInfo?: ChildInfo[];
+  mainUserName?: string;
 }
 
 const ProfileInformationsForm = ({
@@ -71,6 +86,9 @@ const ProfileInformationsForm = ({
   onEditToggle,
   onSubmit,
   hasPartner = false,
+  partnerInfo = null,
+  childrenInfo = [],
+  mainUserName = "",
 }: ProfileInformationsFormProps) => {
   const form = useForm<ProfileInfoFormValues>({
     resolver: zodResolver(profileInfoSchema),
@@ -473,21 +491,51 @@ const ProfileInformationsForm = ({
             {/* SECTION 2: FOYER - Mode lecture */}
             <div className="space-y-4">
               <SectionHeader icon={Home} title="Foyer" description="Composition de votre foyer" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Nombre d'enfants</h4>
-                  <p className="text-foreground">{defaultValues.nombre_enfants || 0}</p>
+              
+              {/* Conjoint/Partenaire avec nom */}
+              {hasPartner && partnerInfo && (
+                <div className="p-4 rounded-lg bg-muted/50 border">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground mb-1">Conjoint/Partenaire</h4>
+                      <p className="text-foreground font-medium">
+                        {partnerInfo.first_name} {partnerInfo.last_name}
+                      </p>
+                    </div>
+                    <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                      {defaultValues.household_relationship === "marie" ? "Marié(e)" : 
+                       defaultValues.household_relationship === "concubinage" ? "Concubinage" : 
+                       defaultValues.household_relationship === "partenaire_enregistre" ? "Partenaire enregistré" : 
+                       "Partenaire"}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Enfants en mode lecture */}
-              <ChildrenFormSection
-                profileId={profileId}
-                childrenCount={defaultValues.nombre_enfants || 0}
-                onChildrenChange={() => {}}
-                isEditing={false}
-                hasPartner={hasPartner}
-              />
+              {/* Enfants avec lien parental */}
+              {childrenInfo.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-muted-foreground">Enfants ({childrenInfo.length})</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {childrenInfo.map((child) => (
+                      <div key={child.id} className="p-3 rounded-lg bg-muted/50 border flex items-center justify-between">
+                        <span className="font-medium">{child.first_name} {child.last_name}</span>
+                        {hasPartner && child.parent_link && (
+                          <span className="text-xs px-2 py-1 rounded-full bg-secondary text-secondary-foreground">
+                            {child.parent_link === "principal" ? `Mon enfant` :
+                             child.parent_link === "conjoint" ? `Enfant de ${partnerInfo?.first_name || "conjoint"}` :
+                             "Enfant commun"}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!hasPartner && !childrenInfo.length && (
+                <p className="text-muted-foreground text-sm">Aucun membre du foyer ajouté</p>
+              )}
             </div>
 
             <Separator />
