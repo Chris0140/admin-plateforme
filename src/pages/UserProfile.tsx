@@ -21,6 +21,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { calculateAllAVSPensions, formatCHF } from "@/lib/avsCalculations";
 import ChildrenFormSection, { type ChildData } from "@/components/profile/ChildrenFormSection";
+import ProfileInformationsForm, { type ProfileInfoFormValues } from "@/components/profile/ProfileInformationsForm";
 
 interface Profile {
   nom: string;
@@ -43,6 +44,8 @@ interface Profile {
   housing_status?: string | null;
   household_mode?: string | null;
   work_rate?: number | null;
+  employment_status?: string | null;
+  annual_income?: number | null;
 }
 
 interface Document {
@@ -117,7 +120,6 @@ interface TaxData {
 }
 
 const profileSchema = z.object({
-  appellation: z.string().min(1, "L'appellation est requise"),
   nom: z.string().trim().min(1, "Le nom est requis").max(100, "Le nom doit faire moins de 100 caractères"),
   prenom: z.string().trim().min(1, "Le prénom est requis").max(100, "Le prénom doit faire moins de 100 caractères"),
   email: z.string().trim().email("Email invalide").max(255, "L'email doit faire moins de 255 caractères"),
@@ -126,11 +128,11 @@ const profileSchema = z.object({
   adresse: z.string().trim().max(255, "L'adresse doit faire moins de 255 caractères").optional(),
   telephone: z.string().trim().max(20, "Le téléphone doit faire moins de 20 caractères").optional(),
   etat_civil: z.string().optional(),
-  nombre_enfants: z.number().min(0, "Le nombre doit être positif").optional(),
+  nombre_enfants: z.number().min(0, "Le nombre doit être positif").max(20).optional(),
   gender: z.string().optional(),
-  nationality: z.string().optional(),
   profession: z.string().optional(),
-  employer_name: z.string().optional(),
+  employment_status: z.string().optional(),
+  annual_income: z.number().min(0).optional(),
 });
 
 const budgetSchema = z.object({
@@ -297,7 +299,6 @@ const UserProfile = () => {
   const profileForm = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      appellation: "",
       nom: "",
       prenom: "",
       email: "",
@@ -305,6 +306,12 @@ const UserProfile = () => {
       localite: "",
       adresse: "",
       telephone: "",
+      etat_civil: "",
+      nombre_enfants: 0,
+      gender: "",
+      profession: "",
+      employment_status: "",
+      annual_income: 0,
     },
   });
 
@@ -425,7 +432,6 @@ const UserProfile = () => {
         }
         
         profileForm.reset({
-          appellation: profileData.appellation,
           nom: profileData.nom,
           prenom: profileData.prenom,
           email: profileData.email,
@@ -433,8 +439,12 @@ const UserProfile = () => {
           localite: profileData.localite,
           adresse: profileData.adresse || "",
           telephone: profileData.telephone || "",
-          etat_civil: prevoyanceDataForProfile?.etat_civil || "",
-          nombre_enfants: prevoyanceDataForProfile?.nombre_enfants || 0,
+          etat_civil: prevoyanceDataForProfile?.etat_civil || profileData.etat_civil || "",
+          nombre_enfants: prevoyanceDataForProfile?.nombre_enfants || profileData.nombre_enfants || 0,
+          gender: profileData.gender || "",
+          profession: profileData.profession || "",
+          employment_status: profileData.employment_status || "",
+          annual_income: profileData.annual_income || 0,
         });
       }
 
@@ -587,56 +597,48 @@ const UserProfile = () => {
     });
   };
 
-  const onSubmitProfile = async (values: z.infer<typeof profileSchema>) => {
+  // Handler for the new ProfileInformationsForm component
+  const handleProfileInfoSubmit = async (values: ProfileInfoFormValues, childrenDataParam: ChildData[]) => {
     try {
-      console.log('Sauvegarde profil - valeurs:', values);
+      console.log('Sauvegarde profil via nouveau formulaire:', values);
       
       const { error } = await supabase
         .from("profiles")
         .update({
-          appellation: values.appellation,
           nom: values.nom,
           prenom: values.prenom,
-          email: values.email,
           date_naissance: values.date_naissance,
           localite: values.localite,
           adresse: values.adresse || null,
           telephone: values.telephone || null,
           etat_civil: values.etat_civil || null,
           nombre_enfants: values.nombre_enfants || 0,
+          gender: values.gender || null,
+          profession: values.profession || null,
+          employment_status: values.employment_status || null,
+          annual_income: values.annual_income || 0,
         })
         .eq("user_id", user?.id);
 
       if (error) throw error;
-      console.log('Profiles update réussi');
 
-      // Synchroniser avec prevoyance_data - vérifier si l'entrée existe d'abord
+      // Synchroniser avec prevoyance_data
       const { data: existingPrevoyance } = await supabase
         .from("prevoyance_data")
         .select("id")
         .eq("user_id", user?.id)
         .maybeSingle();
 
-      console.log('Prevoyance existante:', existingPrevoyance);
-
       if (existingPrevoyance) {
-        // Update si existe
-        const { error: prevoyanceError } = await supabase
+        await supabase
           .from("prevoyance_data")
           .update({
             etat_civil: values.etat_civil || null,
             nombre_enfants: values.nombre_enfants || 0,
           })
           .eq("user_id", user?.id);
-        
-        if (prevoyanceError) {
-          console.error('Erreur update prevoyance:', prevoyanceError);
-          throw prevoyanceError;
-        }
-        console.log('Prevoyance update réussi');
       } else {
-        // Insert si n'existe pas
-        const { error: prevoyanceError } = await supabase
+        await supabase
           .from("prevoyance_data")
           .insert({
             user_id: user?.id,
@@ -647,48 +649,17 @@ const UserProfile = () => {
             pilier_3a: 0,
             pilier_3b: 0,
           });
-        
-        if (prevoyanceError) {
-          console.error('Erreur insert prevoyance:', prevoyanceError);
-          throw prevoyanceError;
-        }
-        console.log('Prevoyance insert réussi');
       }
 
-      // Synchroniser avec tax_data si existe
-      const { data: existingTaxData } = await supabase
-        .from("tax_data")
-        .select("id")
-        .eq("user_id", user?.id)
-        .maybeSingle();
-
-      if (existingTaxData) {
-        const { error: taxError } = await supabase
-          .from("tax_data")
-          .update({
-            etat_civil: values.etat_civil || "",
-            nombre_enfants: values.nombre_enfants || 0,
-          })
-          .eq("user_id", user?.id);
-        
-        if (taxError) {
-          console.error('Erreur update tax:', taxError);
-        } else {
-          console.log('Tax update réussi');
-        }
-      }
-
-      // Sauvegarder les enfants dans la table dependants
-      if (profileId && childrenData.length > 0) {
-        // Supprimer les anciens enfants
+      // Sauvegarder les enfants
+      if (profileId && childrenDataParam.length > 0) {
         await supabase
           .from("dependants")
           .delete()
           .eq("profile_id", profileId)
           .eq("relationship", "enfant");
 
-        // Insérer les nouveaux enfants
-        const childrenToInsert = childrenData
+        const childrenToInsert = childrenDataParam
           .filter(c => c.first_name && c.last_name && c.date_of_birth)
           .map(c => ({
             profile_id: profileId,
@@ -699,13 +670,9 @@ const UserProfile = () => {
           }));
         
         if (childrenToInsert.length > 0) {
-          const { error: childrenError } = await supabase.from("dependants").insert(childrenToInsert);
-          if (childrenError) {
-            console.error('Erreur sauvegarde enfants:', childrenError);
-          }
+          await supabase.from("dependants").insert(childrenToInsert);
         }
-      } else if (profileId && childrenData.length === 0) {
-        // Supprimer tous les enfants si le nombre est 0
+      } else if (profileId) {
         await supabase
           .from("dependants")
           .delete()
@@ -721,7 +688,7 @@ const UserProfile = () => {
       setEditingProfile(false);
       await fetchUserData();
     } catch (error) {
-      console.error('Erreur complète:', error);
+      console.error('Erreur sauvegarde profil:', error);
       toast({
         variant: "destructive",
         title: "Erreur",
@@ -729,6 +696,7 @@ const UserProfile = () => {
       });
     }
   };
+
 
   const onSubmitBudget = async (values: z.infer<typeof budgetSchema>) => {
     try {
@@ -1116,239 +1084,27 @@ const UserProfile = () => {
                 <CollapsibleContent>
                   <Separator />
                   <CardContent className="pt-4">
-                    <div className="flex justify-between items-center mb-4">
-                      {!editingProfile ? (
-                        <Button onClick={() => setEditingProfile(true)} variant="outline" size="sm" className="w-full">
-                          <Edit className="h-4 w-4 mr-2" />
-                          Modifier
-                        </Button>
-                      ) : (
-                        <Button onClick={() => setEditingProfile(false)} variant="outline" size="sm" className="w-full">
-                          <X className="h-4 w-4 mr-2" />
-                          Annuler
-                        </Button>
-                      )}
-                    </div>
-                    {editingProfile ? (
-                      <Form {...profileForm}>
-                        <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="space-y-4">
-                          <FormField
-                            control={profileForm.control}
-                            name="appellation"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Appellation</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Sélectionnez" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="Monsieur">Monsieur</SelectItem>
-                                    <SelectItem value="Madame">Madame</SelectItem>
-                                    <SelectItem value="Autre">Autre</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="nom"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nom</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="prenom"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Prénom</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="email"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                  <Input {...field} type="email" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="date_naissance"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Date de naissance</FormLabel>
-                                <FormControl>
-                                  <Input {...field} type="date" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="localite"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Localité</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="adresse"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Adresse (optionnel)</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="telephone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Téléphone (optionnel)</FormLabel>
-                                <FormControl>
-                                  <Input {...field} type="tel" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="etat_civil"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>État civil</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Sélectionner" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="celibataire">Célibataire</SelectItem>
-                                    <SelectItem value="marie">Marié(e)</SelectItem>
-                                    <SelectItem value="divorce">Divorcé(e)</SelectItem>
-                                    <SelectItem value="veuf">Veuf/Veuve</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="nombre_enfants"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nombre d'enfants</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    {...field} 
-                                    type="number" 
-                                    min="0"
-                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                    value={field.value}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <Button type="submit" className="w-full">
-                            <Save className="h-4 w-4 mr-2" />
-                            Enregistrer
-                          </Button>
-                        </form>
-                      </Form>
-                    ) : (
-                      <div className="space-y-4">
-                        {profile && (
-                          <>
-                            <div>
-                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Appellation</h3>
-                              <p className="text-foreground">{profile.appellation}</p>
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Nom</h3>
-                              <p className="text-foreground">{profile.nom}</p>
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Prénom</h3>
-                              <p className="text-foreground">{profile.prenom}</p>
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Email</h3>
-                              <p className="text-foreground">{profile.email}</p>
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Date de naissance</h3>
-                              <p className="text-foreground">{formatDate(profile.date_naissance)}</p>
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Localité</h3>
-                              <p className="text-foreground">{profile.localite}</p>
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Adresse</h3>
-                              <p className="text-foreground">{profile.adresse || "Non renseignée"}</p>
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Téléphone</h3>
-                              <p className="text-foreground">{profile.telephone || "Non renseigné"}</p>
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-medium text-muted-foreground mb-1">État civil</h3>
-                              <p className="text-foreground">
-                                {prevoyanceData.etat_civil 
-                                  ? prevoyanceData.etat_civil === "celibataire" ? "Célibataire"
-                                    : prevoyanceData.etat_civil === "marie" ? "Marié(e)"
-                                    : prevoyanceData.etat_civil === "divorce" ? "Divorcé(e)"
-                                    : prevoyanceData.etat_civil === "veuf" ? "Veuf/Veuve"
-                                    : prevoyanceData.etat_civil
-                                  : "Non renseigné"}
-                              </p>
-                            </div>
-                            <div>
-                              <h3 className="text-sm font-medium text-muted-foreground mb-1">Nombre d'enfants</h3>
-                              <p className="text-foreground">{prevoyanceData.nombre_enfants || 0}</p>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    )}
+                    <ProfileInformationsForm
+                      profileId={profileId}
+                      defaultValues={{
+                        nom: profile?.nom || "",
+                        prenom: profile?.prenom || "",
+                        email: profile?.email || "",
+                        date_naissance: profile?.date_naissance || "",
+                        localite: profile?.localite || "",
+                        adresse: profile?.adresse || "",
+                        telephone: profile?.telephone || "",
+                        etat_civil: profile?.etat_civil || prevoyanceData.etat_civil || "",
+                        nombre_enfants: profile?.nombre_enfants || prevoyanceData.nombre_enfants || 0,
+                        gender: profile?.gender || "",
+                        profession: profile?.profession || "",
+                        employment_status: profile?.employment_status || "",
+                        annual_income: profile?.annual_income || 0,
+                      }}
+                      isEditing={editingProfile}
+                      onEditToggle={setEditingProfile}
+                      onSubmit={handleProfileInfoSubmit}
+                    />
                   </CardContent>
                 </CollapsibleContent>
               </Card>
@@ -1676,351 +1432,27 @@ const UserProfile = () => {
 
             {/* Informations personnelles */}
             <TabsContent value="informations">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Informations personnelles</CardTitle>
-                    <CardDescription>
-                      Vos données d'identification et coordonnées
-                    </CardDescription>
-                  </div>
-                  {!editingProfile ? (
-                    <Button onClick={() => setEditingProfile(true)} variant="outline">
-                      <Edit className="h-4 w-4 mr-2" />
-                      Modifier
-                    </Button>
-                  ) : (
-                    <Button onClick={() => setEditingProfile(false)} variant="outline">
-                      <X className="h-4 w-4 mr-2" />
-                      Annuler
-                    </Button>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  {editingProfile ? (
-                    <Form {...profileForm}>
-                      <form onSubmit={profileForm.handleSubmit(onSubmitProfile)} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={profileForm.control}
-                            name="appellation"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Appellation</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Sélectionnez" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="Monsieur">Monsieur</SelectItem>
-                                    <SelectItem value="Madame">Madame</SelectItem>
-                                    <SelectItem value="Autre">Autre</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="nom"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nom</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="prenom"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Prénom</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="email"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                  <Input type="email" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="date_naissance"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Date de naissance</FormLabel>
-                                <FormControl>
-                                  <Input type="date" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="localite"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Localité</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="adresse"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Adresse</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="telephone"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Téléphone</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="etat_civil"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>État civil</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Sélectionner" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="celibataire">Célibataire</SelectItem>
-                                    <SelectItem value="marie">Marié(e)</SelectItem>
-                                    <SelectItem value="divorce">Divorcé(e)</SelectItem>
-                                    <SelectItem value="veuf">Veuf/Veuve</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="nombre_enfants"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nombre d'enfants</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    {...field} 
-                                    type="number" 
-                                    min="0"
-                                    onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                    value={field.value}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="gender"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Sexe</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Sélectionner" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="M">Homme</SelectItem>
-                                    <SelectItem value="F">Femme</SelectItem>
-                                    <SelectItem value="Autre">Autre</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="nationality"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nationalité</FormLabel>
-                                <FormControl>
-                                  <Input {...field} placeholder="Ex: Suisse" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="profession"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Profession</FormLabel>
-                                <FormControl>
-                                  <Input {...field} placeholder="Ex: Ingénieur" />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={profileForm.control}
-                            name="employer_name"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Employeur</FormLabel>
-                                <FormControl>
-                                  <Input {...field} placeholder="Nom de l'entreprise" />
-                                </FormControl>
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        
-                        {/* Formulaire dynamique enfants */}
-                        <ChildrenFormSection
-                          profileId={profileId}
-                          childrenCount={profileForm.watch("nombre_enfants") || 0}
-                          onChildrenChange={setChildrenData}
-                          isEditing={true}
-                        />
-                        <Button type="submit" className="w-full md:w-auto">
-                          <Save className="h-4 w-4 mr-2" />
-                          Enregistrer
-                        </Button>
-                      </form>
-                    </Form>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {profile && (
-                        <>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Appellation</h3>
-                            <p className="text-foreground">{profile.appellation}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Nom</h3>
-                            <p className="text-foreground">{profile.nom}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Prénom</h3>
-                            <p className="text-foreground">{profile.prenom}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Email</h3>
-                            <p className="text-foreground">{profile.email}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Date de naissance</h3>
-                            <p className="text-foreground">{formatDate(profile.date_naissance)}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Localité</h3>
-                            <p className="text-foreground">{profile.localite}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Adresse</h3>
-                            <p className="text-foreground">{profile.adresse || "Non renseignée"}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Téléphone</h3>
-                            <p className="text-foreground">{profile.telephone || "Non renseigné"}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">État civil</h3>
-                            <p className="text-foreground">
-                              {prevoyanceData.etat_civil 
-                                ? prevoyanceData.etat_civil === "celibataire" ? "Célibataire"
-                                  : prevoyanceData.etat_civil === "marie" ? "Marié(e)"
-                                  : prevoyanceData.etat_civil === "divorce" ? "Divorcé(e)"
-                                  : prevoyanceData.etat_civil === "veuf" ? "Veuf/Veuve"
-                                  : prevoyanceData.etat_civil
-                                : "Non renseigné"}
-                            </p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Nombre d'enfants</h3>
-                            <p className="text-foreground">{prevoyanceData.nombre_enfants || 0}</p>
-                          </div>
-                          
-                          {/* Affichage des enfants en mode lecture */}
-                          <div className="col-span-full">
-                            <ChildrenFormSection
-                              profileId={profileId}
-                              childrenCount={prevoyanceData.nombre_enfants || 0}
-                              onChildrenChange={() => {}}
-                              isEditing={false}
-                            />
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Sexe</h3>
-                            <p className="text-foreground">
-                              {profile.gender 
-                                ? profile.gender === "M" ? "Homme"
-                                  : profile.gender === "F" ? "Femme"
-                                  : profile.gender
-                                : "Non renseigné"}
-                            </p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Nationalité</h3>
-                            <p className="text-foreground">{profile.nationality || "Non renseignée"}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Profession</h3>
-                            <p className="text-foreground">{profile.profession || "Non renseignée"}</p>
-                          </div>
-                          <div>
-                            <h3 className="text-sm font-medium text-muted-foreground mb-1">Employeur</h3>
-                            <p className="text-foreground">{profile.employer_name || "Non renseigné"}</p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <ProfileInformationsForm
+                profileId={profileId}
+                defaultValues={{
+                  nom: profile?.nom || "",
+                  prenom: profile?.prenom || "",
+                  email: profile?.email || "",
+                  date_naissance: profile?.date_naissance || "",
+                  localite: profile?.localite || "",
+                  adresse: profile?.adresse || "",
+                  telephone: profile?.telephone || "",
+                  etat_civil: profile?.etat_civil || prevoyanceData.etat_civil || "",
+                  nombre_enfants: profile?.nombre_enfants || prevoyanceData.nombre_enfants || 0,
+                  gender: profile?.gender || "",
+                  profession: profile?.profession || "",
+                  employment_status: profile?.employment_status || "",
+                  annual_income: profile?.annual_income || 0,
+                }}
+                isEditing={editingProfile}
+                onEditToggle={setEditingProfile}
+                onSubmit={handleProfileInfoSubmit}
+              />
             </TabsContent>
 
             {/* Budget */}

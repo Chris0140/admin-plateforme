@@ -1103,6 +1103,7 @@ export type Database = {
       profiles: {
         Row: {
           adresse: string | null
+          annual_income: number | null
           appellation: string
           canton: string | null
           commune: string | null
@@ -1110,6 +1111,7 @@ export type Database = {
           date_naissance: string
           email: string
           employer_name: string | null
+          employment_status: string | null
           etat_civil: string | null
           gender: string | null
           household_mode: string | null
@@ -1130,6 +1132,7 @@ export type Database = {
         }
         Insert: {
           adresse?: string | null
+          annual_income?: number | null
           appellation: string
           canton?: string | null
           commune?: string | null
@@ -1137,6 +1140,7 @@ export type Database = {
           date_naissance: string
           email: string
           employer_name?: string | null
+          employment_status?: string | null
           etat_civil?: string | null
           gender?: string | null
           household_mode?: string | null
@@ -1157,6 +1161,7 @@ export type Database = {
         }
         Update: {
           adresse?: string | null
+          annual_income?: number | null
           appellation?: string
           canton?: string | null
           commune?: string | null
@@ -1164,6 +1169,7 @@ export type Database = {
           date_naissance?: string
           email?: string
           employer_name?: string | null
+          employment_status?: string | null
           etat_civil?: string | null
           gender?: string | null
           household_mode?: string | null
