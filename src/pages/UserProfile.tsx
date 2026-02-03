@@ -273,6 +273,7 @@ const UserProfile = () => {
             last_name: c.last_name,
             date_of_birth: c.date_of_birth,
             relationship: "enfant",
+            parent_link: c.parent_link || "principal",
           }));
         
         if (childrenToInsert.length > 0) {
@@ -386,6 +387,7 @@ const UserProfile = () => {
                 isEditing={editingProfile}
                 onEditToggle={setEditingProfile}
                 onSubmit={handleProfileInfoSubmit}
+                hasPartner={hasPartner}
               />
             </TabsContent>
 
