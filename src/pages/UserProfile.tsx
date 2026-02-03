@@ -9,6 +9,7 @@ import { User, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ProfileInformationsForm, { type ProfileInfoFormValues } from "@/components/profile/ProfileInformationsForm";
 import type { ChildData } from "@/components/profile/ChildrenFormSection";
+import type { AdultData } from "@/components/profile/AdultFormSection";
 
 interface Profile {
   nom: string;
@@ -21,16 +22,10 @@ interface Profile {
   telephone: string | null;
   etat_civil?: string | null;
   nombre_enfants?: number | null;
+  nombre_adultes?: number | null;
+  household_relationship?: string | null;
   gender?: string | null;
-  nationality?: string | null;
   profession?: string | null;
-  employer_name?: string | null;
-  canton?: string | null;
-  commune?: string | null;
-  permit_type?: string | null;
-  housing_status?: string | null;
-  household_mode?: string | null;
-  work_rate?: number | null;
   employment_status?: string | null;
   annual_income?: number | null;
 }
@@ -81,7 +76,6 @@ const UserProfile = () => {
         setProfile(profileData);
         setProfileId(profileData.id);
         
-        // Charger aussi les données de prévoyance pour état civil et nombre d'enfants
         const { data: prevoyanceDataForProfile } = await supabase
           .from("prevoyance_data")
           .select("etat_civil, nombre_enfants")
@@ -106,9 +100,13 @@ const UserProfile = () => {
     }
   };
 
-  const handleProfileInfoSubmit = async (values: ProfileInfoFormValues, childrenDataParam: ChildData[]) => {
+  const handleProfileInfoSubmit = async (
+    values: ProfileInfoFormValues, 
+    childrenDataParam: ChildData[],
+    adultDataParam: AdultData | null
+  ) => {
     try {
-      console.log('Sauvegarde profil via nouveau formulaire:', values);
+      console.log('Sauvegarde profil:', values);
       
       const { error } = await supabase
         .from("profiles")
@@ -121,6 +119,8 @@ const UserProfile = () => {
           telephone: values.telephone || null,
           etat_civil: values.etat_civil || null,
           nombre_enfants: values.nombre_enfants || 0,
+          nombre_adultes: values.nombre_adultes || 0,
+          household_relationship: values.household_relationship || null,
           gender: values.gender || null,
           profession: values.profession || null,
           employment_status: values.employment_status || null,
@@ -157,6 +157,55 @@ const UserProfile = () => {
             pilier_3a: 0,
             pilier_3b: 0,
           });
+      }
+
+      // Gérer le conjoint/partenaire
+      if (profileId) {
+        // Supprimer l'ancien conjoint si nombre_adultes = 0
+        if ((values.nombre_adultes || 0) === 0) {
+          await supabase
+            .from("dependants")
+            .delete()
+            .eq("profile_id", profileId)
+            .eq("relationship", "conjoint");
+        } else if (adultDataParam && adultDataParam.first_name && adultDataParam.date_of_birth) {
+          // Upsert le conjoint
+          const { data: existingAdult } = await supabase
+            .from("dependants")
+            .select("id")
+            .eq("profile_id", profileId)
+            .eq("relationship", "conjoint")
+            .maybeSingle();
+
+          if (existingAdult) {
+            await supabase
+              .from("dependants")
+              .update({
+                first_name: adultDataParam.first_name,
+                last_name: adultDataParam.last_name,
+                date_of_birth: adultDataParam.date_of_birth,
+                gender: adultDataParam.gender || null,
+                employment_status: adultDataParam.employment_status || null,
+                profession: adultDataParam.profession || null,
+                annual_income: adultDataParam.annual_income || 0,
+              })
+              .eq("id", existingAdult.id);
+          } else {
+            await supabase
+              .from("dependants")
+              .insert({
+                profile_id: profileId,
+                first_name: adultDataParam.first_name,
+                last_name: adultDataParam.last_name,
+                date_of_birth: adultDataParam.date_of_birth,
+                gender: adultDataParam.gender || null,
+                relationship: "conjoint",
+                employment_status: adultDataParam.employment_status || null,
+                profession: adultDataParam.profession || null,
+                annual_income: adultDataParam.annual_income || 0,
+              });
+          }
+        }
       }
 
       // Sauvegarder les enfants
@@ -233,35 +282,29 @@ const UserProfile = () => {
             </p>
           </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center gap-3">
-              <User className="h-5 w-5 text-primary" />
-              <CardTitle>Informations</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProfileInformationsForm
-                profileId={profileId}
-                defaultValues={{
-                  nom: profile?.nom || "",
-                  prenom: profile?.prenom || "",
-                  email: profile?.email || "",
-                  date_naissance: profile?.date_naissance || "",
-                  localite: profile?.localite || "",
-                  adresse: profile?.adresse || "",
-                  telephone: profile?.telephone || "",
-                  etat_civil: profile?.etat_civil || prevoyanceData.etat_civil || "",
-                  nombre_enfants: profile?.nombre_enfants || prevoyanceData.nombre_enfants || 0,
-                  gender: profile?.gender || "",
-                  profession: profile?.profession || "",
-                  employment_status: profile?.employment_status || "",
-                  annual_income: profile?.annual_income || 0,
-                }}
-                isEditing={editingProfile}
-                onEditToggle={setEditingProfile}
-                onSubmit={handleProfileInfoSubmit}
-              />
-            </CardContent>
-          </Card>
+          <ProfileInformationsForm
+            profileId={profileId}
+            defaultValues={{
+              nom: profile?.nom || "",
+              prenom: profile?.prenom || "",
+              email: profile?.email || "",
+              date_naissance: profile?.date_naissance || "",
+              localite: profile?.localite || "",
+              adresse: profile?.adresse || "",
+              telephone: profile?.telephone || "",
+              etat_civil: profile?.etat_civil || prevoyanceData.etat_civil || "",
+              nombre_enfants: profile?.nombre_enfants || prevoyanceData.nombre_enfants || 0,
+              nombre_adultes: profile?.nombre_adultes || 0,
+              household_relationship: profile?.household_relationship || "",
+              gender: profile?.gender || "",
+              profession: profile?.profession || "",
+              employment_status: profile?.employment_status || "",
+              annual_income: profile?.annual_income || 0,
+            }}
+            isEditing={editingProfile}
+            onEditToggle={setEditingProfile}
+            onSubmit={handleProfileInfoSubmit}
+          />
         </div>
       </main>
       <Footer />

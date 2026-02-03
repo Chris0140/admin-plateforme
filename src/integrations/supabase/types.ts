@@ -468,42 +468,51 @@ export type Database = {
       }
       dependants: {
         Row: {
+          annual_income: number | null
           created_at: string | null
           date_of_birth: string
+          employment_status: string | null
           first_name: string
           gender: string | null
           id: string
           is_disabled: boolean | null
           is_student: boolean | null
           last_name: string
+          profession: string | null
           profile_id: string
           relationship: string
           shared_custody: boolean | null
           updated_at: string | null
         }
         Insert: {
+          annual_income?: number | null
           created_at?: string | null
           date_of_birth: string
+          employment_status?: string | null
           first_name: string
           gender?: string | null
           id?: string
           is_disabled?: boolean | null
           is_student?: boolean | null
           last_name: string
+          profession?: string | null
           profile_id: string
           relationship: string
           shared_custody?: boolean | null
           updated_at?: string | null
         }
         Update: {
+          annual_income?: number | null
           created_at?: string | null
           date_of_birth?: string
+          employment_status?: string | null
           first_name?: string
           gender?: string | null
           id?: string
           is_disabled?: boolean | null
           is_student?: boolean | null
           last_name?: string
+          profession?: string | null
           profile_id?: string
           relationship?: string
           shared_custody?: boolean | null
@@ -1115,11 +1124,13 @@ export type Database = {
           etat_civil: string | null
           gender: string | null
           household_mode: string | null
+          household_relationship: string | null
           housing_status: string | null
           id: string
           localite: string
           nationality: string | null
           nom: string
+          nombre_adultes: number | null
           nombre_enfants: number | null
           permit_type: string | null
           phone_verified: boolean | null
@@ -1144,11 +1155,13 @@ export type Database = {
           etat_civil?: string | null
           gender?: string | null
           household_mode?: string | null
+          household_relationship?: string | null
           housing_status?: string | null
           id?: string
           localite: string
           nationality?: string | null
           nom: string
+          nombre_adultes?: number | null
           nombre_enfants?: number | null
           permit_type?: string | null
           phone_verified?: boolean | null
@@ -1173,11 +1186,13 @@ export type Database = {
           etat_civil?: string | null
           gender?: string | null
           household_mode?: string | null
+          household_relationship?: string | null
           housing_status?: string | null
           id?: string
           localite?: string
           nationality?: string | null
           nom?: string
+          nombre_adultes?: number | null
           nombre_enfants?: number | null
           permit_type?: string | null
           phone_verified?: boolean | null
