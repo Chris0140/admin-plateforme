@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Edit, Save, X, User, Home, Briefcase, Phone } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import ChildrenFormSection, { type ChildData } from "./ChildrenFormSection";
-import AdultFormSection, { type AdultData } from "./AdultFormSection";
+import type { AdultData } from "./AdultFormSection";
 
 const genderOptions = [
   { value: "M", label: "Homme" },
@@ -29,12 +29,6 @@ const employmentStatusOptions = [
   { value: "employe", label: "Employé" },
   { value: "independant", label: "Indépendant" },
   { value: "sans_activite", label: "Sans activité" },
-];
-
-const householdRelationshipOptions = [
-  { value: "marie", label: "Marié(e)" },
-  { value: "concubinage", label: "Concubinage" },
-  { value: "partenaire_enregistre", label: "Partenaire enregistré" },
 ];
 
 const profileInfoSchema = z.object({
@@ -113,11 +107,6 @@ const ProfileInformationsForm = ({
     return found ? found.label : status;
   };
 
-  const formatHouseholdRelationship = (rel: string | null | undefined) => {
-    if (!rel) return "Non renseigné";
-    const found = householdRelationshipOptions.find(o => o.value === rel);
-    return found ? found.label : rel;
-  };
 
   const formatCurrency = (value: number | null | undefined) => {
     if (value === null || value === undefined || value === 0) return "Non renseigné";
@@ -269,65 +258,8 @@ const ProfileInformationsForm = ({
               {/* SECTION 2: FOYER */}
               <div className="space-y-4">
                 <SectionHeader icon={Home} title="Foyer" description="Composition de votre foyer" />
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="nombre_adultes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nombre d'adultes dans le foyer</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min="0"
-                            max="1"
-                            {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                            value={field.value ?? 0}
-                          />
-                        </FormControl>
-                        <p className="text-xs text-muted-foreground">0 = seul(e), 1 = avec conjoint/partenaire</p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  {adultsCount >= 1 && (
-                    <FormField
-                      control={form.control}
-                      name="household_relationship"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Lien</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value || ""}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Sélectionner" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {householdRelationshipOptions.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-                </div>
-
-                {/* Section profil adulte */}
-                <AdultFormSection
-                  profileId={profileId}
-                  adultsCount={adultsCount}
-                  onAdultChange={setAdultData}
-                  isEditing={true}
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <FormField
                     control={form.control}
                     name="nombre_enfants"
@@ -540,30 +472,10 @@ const ProfileInformationsForm = ({
               <SectionHeader icon={Home} title="Foyer" description="Composition de votre foyer" />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Adultes dans le foyer</h4>
-                  <p className="text-foreground">
-                    {(defaultValues.nombre_adultes || 0) === 0 ? "Seul(e)" : "Avec conjoint/partenaire"}
-                  </p>
-                </div>
-                {(defaultValues.nombre_adultes || 0) >= 1 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Lien</h4>
-                    <p className="text-foreground">{formatHouseholdRelationship(defaultValues.household_relationship)}</p>
-                  </div>
-                )}
-                <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Nombre d'enfants</h4>
                   <p className="text-foreground">{defaultValues.nombre_enfants || 0}</p>
                 </div>
               </div>
-
-              {/* Affichage adulte en mode lecture */}
-              <AdultFormSection
-                profileId={profileId}
-                adultsCount={defaultValues.nombre_adultes || 0}
-                onAdultChange={() => {}}
-                isEditing={false}
-              />
 
               {/* Enfants en mode lecture */}
               <ChildrenFormSection

@@ -4,10 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, Users, UserPlus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import ProfileInformationsForm, { type ProfileInfoFormValues } from "@/components/profile/ProfileInformationsForm";
+import PartnerProfileTab from "@/components/profile/PartnerProfileTab";
+import AddHouseholdMemberDialog from "@/components/profile/AddHouseholdMemberDialog";
 import type { ChildData } from "@/components/profile/ChildrenFormSection";
 import type { AdultData } from "@/components/profile/AdultFormSection";
 
@@ -47,6 +50,10 @@ const UserProfile = () => {
     etat_civil: "",
     nombre_enfants: 0,
   });
+  const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("mon-profil");
+
+  const hasPartner = (profile?.nombre_adultes || 0) >= 1;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -98,6 +105,48 @@ const UserProfile = () => {
     } finally {
       setLoadingData(false);
     }
+  };
+
+  const handleAddMember = async (relationship: string) => {
+    if (!user?.id) return;
+
+    try {
+      // Mettre à jour le profil avec le nouveau membre
+      await supabase
+        .from("profiles")
+        .update({
+          nombre_adultes: 1,
+          household_relationship: relationship,
+        })
+        .eq("user_id", user.id);
+
+      // Rafraîchir les données
+      await fetchUserData();
+      
+      // Basculer vers l'onglet du partenaire
+      setActiveTab("conjoint");
+      
+      toast({
+        title: "Membre ajouté",
+        description: "Vous pouvez maintenant remplir les informations du partenaire",
+      });
+    } catch (error) {
+      console.error("Erreur ajout membre:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible d'ajouter le membre",
+      });
+    }
+  };
+
+  const handlePartnerDeleted = () => {
+    setActiveTab("mon-profil");
+    fetchUserData();
+  };
+
+  const handlePartnerSaved = () => {
+    fetchUserData();
   };
 
   const handleProfileInfoSubmit = async (
@@ -282,32 +331,85 @@ const UserProfile = () => {
             </p>
           </div>
 
-          <ProfileInformationsForm
-            profileId={profileId}
-            defaultValues={{
-              nom: profile?.nom || "",
-              prenom: profile?.prenom || "",
-              email: profile?.email || "",
-              date_naissance: profile?.date_naissance || "",
-              localite: profile?.localite || "",
-              adresse: profile?.adresse || "",
-              telephone: profile?.telephone || "",
-              etat_civil: profile?.etat_civil || prevoyanceData.etat_civil || "",
-              nombre_enfants: profile?.nombre_enfants || prevoyanceData.nombre_enfants || 0,
-              nombre_adultes: profile?.nombre_adultes || 0,
-              household_relationship: profile?.household_relationship || "",
-              gender: profile?.gender || "",
-              profession: profile?.profession || "",
-              employment_status: profile?.employment_status || "",
-              annual_income: profile?.annual_income || 0,
-            }}
-            isEditing={editingProfile}
-            onEditToggle={setEditingProfile}
-            onSubmit={handleProfileInfoSubmit}
-          />
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="w-full justify-start bg-card/50 backdrop-blur border-b rounded-none h-12 p-0 gap-0 mb-6">
+              <TabsTrigger 
+                value="mon-profil" 
+                className="h-full px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary transition-all"
+              >
+                <User className="h-4 w-4 mr-2" />
+                Mon profil
+              </TabsTrigger>
+              
+              {hasPartner && (
+                <TabsTrigger 
+                  value="conjoint"
+                  className="h-full px-6 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary transition-all"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Conjoint/Partenaire
+                </TabsTrigger>
+              )}
+              
+              {!hasPartner && (
+                <Button
+                  variant="ghost"
+                  className="h-full px-6 rounded-none text-muted-foreground hover:text-foreground"
+                  onClick={() => setAddMemberDialogOpen(true)}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Ajouter au foyer
+                </Button>
+              )}
+            </TabsList>
+
+            <TabsContent value="mon-profil" className="mt-0">
+              <ProfileInformationsForm
+                profileId={profileId}
+                defaultValues={{
+                  nom: profile?.nom || "",
+                  prenom: profile?.prenom || "",
+                  email: profile?.email || "",
+                  date_naissance: profile?.date_naissance || "",
+                  localite: profile?.localite || "",
+                  adresse: profile?.adresse || "",
+                  telephone: profile?.telephone || "",
+                  etat_civil: profile?.etat_civil || prevoyanceData.etat_civil || "",
+                  nombre_enfants: profile?.nombre_enfants || prevoyanceData.nombre_enfants || 0,
+                  nombre_adultes: profile?.nombre_adultes || 0,
+                  household_relationship: profile?.household_relationship || "",
+                  gender: profile?.gender || "",
+                  profession: profile?.profession || "",
+                  employment_status: profile?.employment_status || "",
+                  annual_income: profile?.annual_income || 0,
+                }}
+                isEditing={editingProfile}
+                onEditToggle={setEditingProfile}
+                onSubmit={handleProfileInfoSubmit}
+              />
+            </TabsContent>
+
+            {hasPartner && (
+              <TabsContent value="conjoint" className="mt-0">
+                <PartnerProfileTab
+                  profileId={profileId}
+                  userId={user?.id}
+                  householdRelationship={profile?.household_relationship || ""}
+                  onPartnerDeleted={handlePartnerDeleted}
+                  onPartnerSaved={handlePartnerSaved}
+                />
+              </TabsContent>
+            )}
+          </Tabs>
         </div>
       </main>
       <Footer />
+
+      <AddHouseholdMemberDialog
+        open={addMemberDialogOpen}
+        onOpenChange={setAddMemberDialogOpen}
+        onSelectRelationship={handleAddMember}
+      />
     </div>
   );
 };
