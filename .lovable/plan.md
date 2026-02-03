@@ -1,229 +1,140 @@
 
-
-## Ajout de la gestion dynamique des enfants dans le formulaire Profil
+## Refonte de l'onglet "Informations" du Profil Utilisateur
 
 ### Objectif
-Quand l'utilisateur indique un nombre d'enfants superieur a 0, afficher dynamiquement des formulaires pour renseigner le nom, prenom et date de naissance de chaque enfant.
+Remplacer le contenu actuel de l'onglet "Informations" par un formulaire unique et simplifie avec les champs demandes.
 
-### Structure de donnees existante
+### Migration de base de donnees requise
 
-**Aucune migration necessaire** - Les tables existent deja :
+La table `profiles` necessite 2 nouvelles colonnes :
 
-| Table | Champs utilises |
-|-------|-----------------|
-| `profiles` | `nombre_enfants` (number) |
-| `dependants` | `first_name`, `last_name`, `date_of_birth`, `profile_id`, `relationship` |
-
-### Comportement attendu
-
-1. **nombre_enfants = 0** : Rien de supplementaire n'est affiche
-2. **nombre_enfants >= 1** : Pour chaque enfant, afficher 3 champs :
-   - Prenom de l'enfant
-   - Nom de l'enfant  
-   - Date de naissance de l'enfant
-
-### Modifications a effectuer
-
-**Fichier : `src/pages/Profile.tsx`**
-
-#### 1. Ajouter un type pour les enfants
-
-```typescript
-interface ChildData {
-  id?: string;
-  first_name: string;
-  last_name: string;
-  date_of_birth: string;
-}
+```sql
+ALTER TABLE profiles 
+ADD COLUMN employment_status text DEFAULT NULL,
+ADD COLUMN annual_income numeric DEFAULT 0;
 ```
 
-#### 2. Ajouter un state pour les enfants
+- `employment_status` : 'employe', 'independant', 'sans_activite'
+- `annual_income` : revenu annuel brut en CHF
 
-```typescript
-const [children, setChildren] = useState<ChildData[]>([]);
-```
+### Nouveau formulaire "Informations"
 
-#### 3. Synchroniser le nombre d'enfants avec le tableau
-
-Quand `nombre_enfants` change :
-- Si le nombre augmente : ajouter des objets vides au tableau
-- Si le nombre diminue : tronquer le tableau
-
-```typescript
-const handleChildrenCountChange = (count: number) => {
-  const newCount = Math.max(0, Math.min(20, count));
-  handleChange("nombre_enfants", newCount.toString());
-  
-  setChildren(prev => {
-    if (newCount > prev.length) {
-      // Ajouter des enfants vides
-      const newChildren = [...prev];
-      for (let i = prev.length; i < newCount; i++) {
-        newChildren.push({ first_name: "", last_name: "", date_of_birth: "" });
-      }
-      return newChildren;
-    } else {
-      // Tronquer le tableau
-      return prev.slice(0, newCount);
-    }
-  });
-};
-```
-
-#### 4. Afficher dynamiquement les formulaires enfants
+Le formulaire sera organise avec les champs suivants dans une grille responsive :
 
 ```text
 +----------------------------------------------------------+
-|  Nombre d'enfants: [2]                                    |
+|                    Informations                           |
+|  Vos donnees personnelles et professionnelles            |
 +----------------------------------------------------------+
-|  ENFANT 1                                                 |
-|  +-------------------------+  +------------------------+  |
-|  | Prenom                  |  | Nom                    |  |
-|  +-------------------------+  +------------------------+  |
-|  +----------------------------------------------------+  |
-|  | Date de naissance                                  |  |
-|  +----------------------------------------------------+  |
+|  +-------------------------+  +------------------------+ |
+|  | Nom                    |  | Prenom                  | |
+|  +-------------------------+  +------------------------+ |
+|  +-------------------------+  +------------------------+ |
+|  | Genre (menu)           |  | Date de naissance       | |
+|  +-------------------------+  +------------------------+ |
+|  +-------------------------+  +------------------------+ |
+|  | Etat civil (menu)      |  | Nombre d'enfants        | |
+|  +-------------------------+  +------------------------+ |
+|                                                          |
+|  [Si nombre_enfants > 0 : formulaires dynamiques]       |
+|                                                          |
+|  +-------------------------+  +------------------------+ |
+|  | Statut (menu)          |  | Profession              | |
+|  +-------------------------+  +------------------------+ |
+|  +----------------------------------------------------+ |
+|  | Revenu annuel (CHF)                                | |
+|  +----------------------------------------------------+ |
+|                                                          |
+|  COORDONNEES                                             |
+|  +----------------------------------------------------+ |
+|  | Email (lecture seule)                              | |
+|  +----------------------------------------------------+ |
+|  +-------------------------+  +------------------------+ |
+|  | Telephone              |  | Adresse                 | |
+|  +-------------------------+  +------------------------+ |
+|  +-------------------------+  +------------------------+ |
+|  | Localite               |  |                         | |
+|  +-------------------------+  +------------------------+ |
 +----------------------------------------------------------+
-|  ENFANT 2                                                 |
-|  +-------------------------+  +------------------------+  |
-|  | Prenom                  |  | Nom                    |  |
-|  +-------------------------+  +------------------------+  |
-|  +----------------------------------------------------+  |
-|  | Date de naissance                                  |  |
-|  +----------------------------------------------------+  |
+|          [Enregistrer les modifications]                 |
 +----------------------------------------------------------+
 ```
 
-#### 5. Charger les enfants existants depuis la base
+### Champs du formulaire
 
-Dans `fetchProfile` :
+| Champ | Type | Options/Validation |
+|-------|------|-------------------|
+| Nom | Input texte | Obligatoire |
+| Prenom | Input texte | Obligatoire |
+| Genre | Select | Homme, Femme, Autre |
+| Date de naissance | Input date | Obligatoire |
+| Etat civil | Select | Celibataire, Marie(e), Divorce(e), Veuf(ve) |
+| Nombre d'enfants | Input number | 0-20, avec formulaires dynamiques si > 0 |
+| Statut | Select | Employe, Independant, Sans activite |
+| Profession | Input texte | Optionnel |
+| Revenu annuel | Input number | En CHF, min 0 |
+| Email | Input texte | Lecture seule |
+| Telephone | Input tel | Optionnel |
+| Adresse | Input texte | Optionnel |
+| Localite | Input texte | Obligatoire |
+
+### Options du menu Statut
 
 ```typescript
-// Charger les enfants depuis la table dependants
-const { data: dependants } = await supabase
-  .from("dependants")
-  .select("*")
-  .eq("profile_id", profile.id)
-  .eq("relationship", "enfant");
-
-if (dependants) {
-  setChildren(dependants.map(d => ({
-    id: d.id,
-    first_name: d.first_name,
-    last_name: d.last_name,
-    date_of_birth: d.date_of_birth,
-  })));
-}
+const statusOptions = [
+  { value: "employe", label: "Employe" },
+  { value: "independant", label: "Independant" },
+  { value: "sans_activite", label: "Sans activite" },
+];
 ```
 
-#### 6. Sauvegarder les enfants
+### Elements supprimes
 
-Dans `handleSubmit` :
+Les champs suivants seront retires de l'onglet Informations :
+- Appellation (Monsieur/Madame)
+- Nationalite
+- Employeur
+- Sexe (remplace par Genre)
 
-```typescript
-// Supprimer les anciens enfants
-await supabase
-  .from("dependants")
-  .delete()
-  .eq("profile_id", profileId)
-  .eq("relationship", "enfant");
-
-// Inserer les nouveaux enfants
-if (children.length > 0) {
-  const childrenToInsert = children
-    .filter(c => c.first_name && c.last_name && c.date_of_birth)
-    .map(c => ({
-      profile_id: profileId,
-      first_name: c.first_name,
-      last_name: c.last_name,
-      date_of_birth: c.date_of_birth,
-      relationship: "enfant",
-    }));
-  
-  if (childrenToInsert.length > 0) {
-    await supabase.from("dependants").insert(childrenToInsert);
-  }
-}
-```
-
-#### 7. JSX pour afficher les enfants
-
-```tsx
-{/* Nombre d'enfants */}
-<div>
-  <Label>Nombre d'enfants</Label>
-  <Input
-    type="number"
-    min="0"
-    max="20"
-    value={formData.nombre_enfants}
-    onChange={(e) => handleChildrenCountChange(parseInt(e.target.value) || 0)}
-  />
-</div>
-
-{/* Formulaires dynamiques pour chaque enfant */}
-{children.length > 0 && (
-  <div className="space-y-6 mt-6 p-4 border rounded-lg bg-muted/20">
-    <h4 className="font-medium">Informations sur les enfants</h4>
-    {children.map((child, index) => (
-      <div key={index} className="space-y-4 p-4 border rounded-lg bg-background">
-        <p className="text-sm font-medium text-muted-foreground">
-          Enfant {index + 1}
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <Label>Prenom</Label>
-            <Input
-              value={child.first_name}
-              onChange={(e) => updateChild(index, "first_name", e.target.value)}
-              placeholder="Prenom de l'enfant"
-            />
-          </div>
-          <div>
-            <Label>Nom</Label>
-            <Input
-              value={child.last_name}
-              onChange={(e) => updateChild(index, "last_name", e.target.value)}
-              placeholder="Nom de l'enfant"
-            />
-          </div>
-        </div>
-        <div>
-          <Label>Date de naissance</Label>
-          <Input
-            type="date"
-            value={child.date_of_birth}
-            onChange={(e) => updateChild(index, "date_of_birth", e.target.value)}
-          />
-        </div>
-      </div>
-    ))}
-  </div>
-)}
-```
-
-#### 8. Fonction de mise a jour d'un enfant
-
-```typescript
-const updateChild = (index: number, field: keyof ChildData, value: string) => {
-  setChildren(prev => {
-    const updated = [...prev];
-    updated[index] = { ...updated[index], [field]: value };
-    return updated;
-  });
-};
-```
-
-### Resume des fichiers concernes
+### Modifications techniques
 
 | Fichier | Action |
 |---------|--------|
-| `src/pages/Profile.tsx` | Ajouter la logique dynamique pour les formulaires enfants |
+| Migration SQL | Ajouter colonnes `employment_status`, `annual_income` |
+| `src/pages/UserProfile.tsx` | Refonte de l'onglet Informations avec le nouveau formulaire |
 
-### Points techniques
+### Schema de validation Zod mis a jour
 
-- Utilisation de la table `dependants` existante avec `relationship = "enfant"`
-- Synchronisation automatique du nombre de formulaires avec le champ `nombre_enfants`
-- Validation : seuls les enfants avec tous les champs remplis sont sauvegardes
-- Style coherent avec le reste du formulaire (cards imbriquees)
+```typescript
+const profileSchema = z.object({
+  nom: z.string().trim().min(1, "Le nom est requis"),
+  prenom: z.string().trim().min(1, "Le prenom est requis"),
+  gender: z.string().optional(),
+  date_naissance: z.string().min(1, "La date de naissance est requise"),
+  etat_civil: z.string().optional(),
+  nombre_enfants: z.number().min(0).max(20).optional(),
+  employment_status: z.string().optional(),
+  profession: z.string().optional(),
+  annual_income: z.number().min(0).optional(),
+  email: z.string().email(),
+  telephone: z.string().optional(),
+  adresse: z.string().optional(),
+  localite: z.string().min(1, "La localite est requise"),
+});
+```
 
+### Gestion dynamique des enfants
+
+La fonctionnalite existante `ChildrenFormSection` sera conservee :
+- Si `nombre_enfants = 0` : rien n'est affiche
+- Si `nombre_enfants >= 1` : formulaires dynamiques pour chaque enfant (Prenom, Nom, Date de naissance)
+
+### Comportement attendu
+
+1. L'utilisateur voit un formulaire unique et simplifie
+2. Le bouton "Modifier" permet d'editer les champs
+3. Le champ Email reste en lecture seule
+4. Les enfants sont geres dynamiquement selon le nombre saisi
+5. Le statut professionnel (employe/independant/sans activite) est un menu deroulant
+6. Le revenu annuel est sauvegarde dans la nouvelle colonne `annual_income`
+7. Sauvegarde vers Supabase au clic sur "Enregistrer"
