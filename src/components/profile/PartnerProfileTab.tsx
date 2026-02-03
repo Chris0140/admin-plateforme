@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { User, Briefcase, Phone, Trash2, Save, Edit, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -45,20 +48,21 @@ const householdRelationshipLabels: Record<string, string> = {
   partenaire_enregistre: "Partenaire enregistré",
 };
 
-export interface PartnerData {
-  id?: string;
-  first_name: string;
-  last_name: string;
-  date_of_birth: string;
-  gender?: string;
-  etat_civil?: string;
-  employment_status?: string;
-  profession?: string;
-  annual_income?: number;
-  telephone?: string;
-  adresse?: string;
-  localite?: string;
-}
+const partnerFormSchema = z.object({
+  last_name: z.string().trim().max(100).optional(),
+  first_name: z.string().trim().min(1, "Le prénom est requis").max(100),
+  gender: z.string().optional(),
+  date_of_birth: z.string().min(1, "La date de naissance est requise"),
+  etat_civil: z.string().optional(),
+  employment_status: z.string().optional(),
+  profession: z.string().optional(),
+  annual_income: z.number().min(0).optional(),
+  telephone: z.string().trim().max(20).optional(),
+  adresse: z.string().trim().max(255).optional(),
+  localite: z.string().trim().max(100).optional(),
+});
+
+type PartnerFormValues = z.infer<typeof partnerFormSchema>;
 
 interface ChildInfo {
   id: string;
@@ -89,18 +93,23 @@ const PartnerProfileTab = ({
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [partner, setPartner] = useState<PartnerData>({
-    first_name: "",
-    last_name: "",
-    date_of_birth: "",
-    gender: "",
-    etat_civil: "",
-    employment_status: "",
-    profession: "",
-    annual_income: 0,
-    telephone: "",
-    adresse: "",
-    localite: "",
+  const [partnerId, setPartnerId] = useState<string | null>(null);
+
+  const form = useForm<PartnerFormValues>({
+    resolver: zodResolver(partnerFormSchema),
+    defaultValues: {
+      first_name: "",
+      last_name: "",
+      date_of_birth: "",
+      gender: "",
+      etat_civil: "",
+      employment_status: "",
+      profession: "",
+      annual_income: 0,
+      telephone: "",
+      adresse: "",
+      localite: "",
+    },
   });
 
   useEffect(() => {
@@ -123,8 +132,8 @@ const PartnerProfileTab = ({
       if (error) throw error;
 
       if (dependant) {
-        setPartner({
-          id: dependant.id,
+        setPartnerId(dependant.id);
+        form.reset({
           first_name: dependant.first_name,
           last_name: dependant.last_name,
           date_of_birth: dependant.date_of_birth,
@@ -138,7 +147,6 @@ const PartnerProfileTab = ({
           localite: "",
         });
       } else {
-        // Nouveau partenaire, activer le mode édition
         setIsEditing(true);
       }
     } catch (error) {
@@ -146,58 +154,45 @@ const PartnerProfileTab = ({
     }
   };
 
-  const updatePartner = (field: keyof PartnerData, value: string | number) => {
-    setPartner((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = async () => {
-    if (!profileId || !partner.first_name || !partner.date_of_birth) {
-      toast({
-        variant: "destructive",
-        title: "Erreur",
-        description: "Veuillez remplir au moins le prénom et la date de naissance",
-      });
-      return;
-    }
+  const handleSave = async (values: PartnerFormValues) => {
+    if (!profileId) return;
 
     setIsSaving(true);
     try {
-      if (partner.id) {
-        // Mise à jour
+      if (partnerId) {
         const { error } = await supabase
           .from("dependants")
           .update({
-            first_name: partner.first_name,
-            last_name: partner.last_name,
-            date_of_birth: partner.date_of_birth,
-            gender: partner.gender || null,
-            employment_status: partner.employment_status || null,
-            profession: partner.profession || null,
-            annual_income: partner.annual_income || 0,
+            first_name: values.first_name,
+            last_name: values.last_name || "",
+            date_of_birth: values.date_of_birth,
+            gender: values.gender || null,
+            employment_status: values.employment_status || null,
+            profession: values.profession || null,
+            annual_income: values.annual_income || 0,
           })
-          .eq("id", partner.id);
+          .eq("id", partnerId);
 
         if (error) throw error;
       } else {
-        // Création
         const { data, error } = await supabase
           .from("dependants")
           .insert({
             profile_id: profileId,
-            first_name: partner.first_name,
-            last_name: partner.last_name,
-            date_of_birth: partner.date_of_birth,
-            gender: partner.gender || null,
+            first_name: values.first_name,
+            last_name: values.last_name || "",
+            date_of_birth: values.date_of_birth,
+            gender: values.gender || null,
             relationship: "conjoint",
-            employment_status: partner.employment_status || null,
-            profession: partner.profession || null,
-            annual_income: partner.annual_income || 0,
+            employment_status: values.employment_status || null,
+            profession: values.profession || null,
+            annual_income: values.annual_income || 0,
           })
           .select()
           .single();
 
         if (error) throw error;
-        setPartner((prev) => ({ ...prev, id: data.id }));
+        setPartnerId(data.id);
       }
 
       toast({
@@ -222,14 +217,12 @@ const PartnerProfileTab = ({
     if (!profileId || !userId) return;
 
     try {
-      // Supprimer le dependant
       await supabase
         .from("dependants")
         .delete()
         .eq("profile_id", profileId)
         .eq("relationship", "conjoint");
 
-      // Réinitialiser les champs du profil
       await supabase
         .from("profiles")
         .update({
@@ -293,6 +286,8 @@ const PartnerProfileTab = ({
     </div>
   );
 
+  const values = form.watch();
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -318,185 +313,249 @@ const PartnerProfileTab = ({
       </CardHeader>
       <CardContent>
         {isEditing ? (
-          <div className="space-y-8">
-            {/* SECTION 1: INFORMATIONS PERSONNELLES */}
-            <div className="space-y-4">
-              <SectionHeader icon={User} title="Informations personnelles" description="Données d'identité du partenaire" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Nom</Label>
-                  <Input
-                    value={partner.last_name}
-                    onChange={(e) => updatePartner("last_name", e.target.value)}
-                    placeholder="Dupont"
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSave)} className="space-y-8">
+              {/* SECTION 1: INFORMATIONS PERSONNELLES */}
+              <div className="space-y-4">
+                <SectionHeader icon={User} title="Informations personnelles" description="Données d'identité du partenaire" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="last_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nom</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Dupont" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div>
-                  <Label>Prénom *</Label>
-                  <Input
-                    value={partner.first_name}
-                    onChange={(e) => updatePartner("first_name", e.target.value)}
-                    placeholder="Marie"
+                  <FormField
+                    control={form.control}
+                    name="first_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prénom *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Marie" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div>
-                  <Label>Genre</Label>
-                  <Select
-                    onValueChange={(value) => updatePartner("gender", value)}
-                    value={partner.gender || ""}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {genderOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Date de naissance *</Label>
-                  <Input
-                    type="date"
-                    value={partner.date_of_birth}
-                    onChange={(e) => updatePartner("date_of_birth", e.target.value)}
+                  <FormField
+                    control={form.control}
+                    name="gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Genre</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionner" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {genderOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div>
-                  <Label>État civil</Label>
-                  <Select
-                    onValueChange={(value) => updatePartner("etat_civil", value)}
-                    value={partner.etat_civil || ""}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {etatCivilOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* SECTION 2: SITUATION PROFESSIONNELLE */}
-            <div className="space-y-4">
-              <SectionHeader icon={Briefcase} title="Situation professionnelle" description="Activité et revenus du partenaire" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Statut</Label>
-                  <Select
-                    onValueChange={(value) => updatePartner("employment_status", value)}
-                    value={partner.employment_status || ""}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employmentStatusOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Profession</Label>
-                  <Input
-                    value={partner.profession || ""}
-                    onChange={(e) => updatePartner("profession", e.target.value)}
-                    placeholder="Ex: Ingénieur"
+                  <FormField
+                    control={form.control}
+                    name="date_of_birth"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date de naissance *</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="etat_civil"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>État civil</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionner" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {etatCivilOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
               </div>
-              <div>
-                <Label>Revenu annuel (CHF)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="1000"
-                  value={partner.annual_income || 0}
-                  onChange={(e) => updatePartner("annual_income", parseFloat(e.target.value) || 0)}
-                  placeholder="80000"
+
+              <Separator />
+
+              {/* SECTION 2: SITUATION PROFESSIONNELLE */}
+              <div className="space-y-4">
+                <SectionHeader icon={Briefcase} title="Situation professionnelle" description="Activité et revenus du partenaire" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="employment_status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Statut</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionner" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {employmentStatusOptions.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="profession"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Profession</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Ex: Ingénieur" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name="annual_income"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Revenu annuel (CHF)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1000"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          value={field.value ?? 0}
+                          placeholder="80000"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-            </div>
 
-            <Separator />
+              <Separator />
 
-            {/* SECTION 3: COORDONNÉES */}
-            <div className="space-y-4">
-              <SectionHeader icon={Phone} title="Coordonnées" description="Informations de contact du partenaire" />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Téléphone</Label>
-                  <Input
-                    type="tel"
-                    value={partner.telephone || ""}
-                    onChange={(e) => updatePartner("telephone", e.target.value)}
-                    placeholder="+41 79 123 45 67"
+              {/* SECTION 3: COORDONNÉES */}
+              <div className="space-y-4">
+                <SectionHeader icon={Phone} title="Coordonnées" description="Informations de contact du partenaire" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="telephone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Téléphone</FormLabel>
+                        <FormControl>
+                          <Input type="tel" {...field} placeholder="+41 79 123 45 67" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="adresse"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Adresse</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Rue de la Gare 1" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
-                <div>
-                  <Label>Adresse</Label>
-                  <Input
-                    value={partner.adresse || ""}
-                    onChange={(e) => updatePartner("adresse", e.target.value)}
-                    placeholder="Rue de la Gare 1"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label>Localité</Label>
-                <Input
-                  value={partner.localite || ""}
-                  onChange={(e) => updatePartner("localite", e.target.value)}
-                  placeholder="1000 Lausanne"
+                <FormField
+                  control={form.control}
+                  name="localite"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Localité</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="1000 Lausanne" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
               </div>
-            </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Button onClick={handleSave} disabled={isSaving} className="flex-1 sm:flex-none">
-                <Save className="h-4 w-4 mr-2" />
-                {isSaving ? "Enregistrement..." : "Enregistrer"}
-              </Button>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="flex-1 sm:flex-none">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Supprimer ce profil
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Cette action supprimera définitivement le profil du conjoint/partenaire du foyer.
-                      Cette action est irréversible.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Annuler</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>
-                      Supprimer
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <Button type="submit" disabled={isSaving} className="flex-1 sm:flex-none">
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? "Enregistrement..." : "Enregistrer les modifications"}
+                </Button>
+                
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button type="button" variant="destructive" className="flex-1 sm:flex-none">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Supprimer ce profil
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Cette action supprimera définitivement le profil du conjoint/partenaire du foyer.
+                        Cette action est irréversible.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Annuler</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleDelete}>
+                        Supprimer
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </form>
+          </Form>
         ) : (
           <div className="space-y-8">
             {/* SECTION ENFANTS LIÉS */}
@@ -524,27 +583,27 @@ const PartnerProfileTab = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Nom</h4>
-                  <p className="text-foreground">{partner.last_name || "Non renseigné"}</p>
+                  <p className="text-foreground">{values.last_name || "Non renseigné"}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Prénom</h4>
-                  <p className="text-foreground">{partner.first_name || "Non renseigné"}</p>
+                  <p className="text-foreground">{values.first_name || "Non renseigné"}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Genre</h4>
-                  <p className="text-foreground">{formatGender(partner.gender)}</p>
+                  <p className="text-foreground">{formatGender(values.gender)}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Date de naissance</h4>
                   <p className="text-foreground">
-                    {partner.date_of_birth
-                      ? new Date(partner.date_of_birth).toLocaleDateString("fr-CH")
+                    {values.date_of_birth
+                      ? new Date(values.date_of_birth).toLocaleDateString("fr-CH")
                       : "Non renseignée"}
                   </p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">État civil</h4>
-                  <p className="text-foreground">{formatEtatCivil(partner.etat_civil)}</p>
+                  <p className="text-foreground">{formatEtatCivil(values.etat_civil)}</p>
                 </div>
               </div>
             </div>
@@ -557,15 +616,15 @@ const PartnerProfileTab = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Statut</h4>
-                  <p className="text-foreground">{formatEmploymentStatus(partner.employment_status)}</p>
+                  <p className="text-foreground">{formatEmploymentStatus(values.employment_status)}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Profession</h4>
-                  <p className="text-foreground">{partner.profession || "Non renseignée"}</p>
+                  <p className="text-foreground">{values.profession || "Non renseignée"}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Revenu annuel</h4>
-                  <p className="text-foreground">{formatCurrency(partner.annual_income)}</p>
+                  <p className="text-foreground">{formatCurrency(values.annual_income)}</p>
                 </div>
               </div>
             </div>
@@ -578,15 +637,15 @@ const PartnerProfileTab = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Téléphone</h4>
-                  <p className="text-foreground">{partner.telephone || "Non renseigné"}</p>
+                  <p className="text-foreground">{values.telephone || "Non renseigné"}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Adresse</h4>
-                  <p className="text-foreground">{partner.adresse || "Non renseignée"}</p>
+                  <p className="text-foreground">{values.adresse || "Non renseignée"}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground mb-1">Localité</h4>
-                  <p className="text-foreground">{partner.localite || "Non renseignée"}</p>
+                  <p className="text-foreground">{values.localite || "Non renseignée"}</p>
                 </div>
               </div>
             </div>
