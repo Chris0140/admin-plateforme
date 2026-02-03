@@ -1,219 +1,146 @@
 
 
-## Reorganisation du Profil Utilisateur par Categories
+## Affichage des onglets profil en barre horizontale avec icones
 
 ### Objectif
-Reorganiser le formulaire du profil en sections distinctes :
-1. **Informations personnelles** : Nom, prenom, genre, date de naissance, etat civil
-2. **Foyer** : Gestion des adultes (avec type de lien) et des enfants
+Transformer l'interface du profil utilisateur pour utiliser une barre d'onglets horizontale similaire a l'image de reference, avec des icones pour chaque onglet.
 
-### Migration de base de donnees requise
-
-La table `profiles` necessite une nouvelle colonne pour le nombre d'adultes dans le foyer :
-
-```sql
-ALTER TABLE profiles 
-ADD COLUMN nombre_adultes integer DEFAULT 0,
-ADD COLUMN household_relationship text DEFAULT NULL;
-```
-
-- `nombre_adultes` : nombre d'adultes supplementaires dans le foyer (0 ou 1)
-- `household_relationship` : 'marie', 'concubinage', 'partenaire_enregistre'
-
-### Structure du formulaire
+### Design de la barre d'onglets
 
 ```text
-+----------------------------------------------------------+
-|                 INFORMATIONS PERSONNELLES                 |
-|  Vos donnees d'identite                                   |
-+----------------------------------------------------------+
-|  +-------------------------+  +------------------------+  |
-|  | Nom                    |  | Prenom                  |  |
-|  +-------------------------+  +------------------------+  |
-|  +-------------------------+  +------------------------+  |
-|  | Genre (menu)           |  | Date de naissance       |  |
-|  +-------------------------+  +------------------------+  |
-|  +-------------------------+                              |
-|  | Etat civil (menu)      |                              |
-|  +-------------------------+                              |
-+----------------------------------------------------------+
-|                         FOYER                             |
-|  Composition de votre foyer                               |
-+----------------------------------------------------------+
-|  +-------------------------+  +------------------------+  |
-|  | Nombre d'adultes (0-1) |  | Lien (si >= 1)         |  |
-|  +-------------------------+  +------------------------+  |
-|                                                           |
-|  [Si nombre_adultes = 1 : Onglet profil conjoint]        |
-|  +-----------------------------------------------------+ |
-|  | PROFIL DU CONJOINT/PARTENAIRE                       | |
-|  | - Prenom, Nom, Genre, Date de naissance             | |
-|  | - Statut professionnel, Profession, Revenu annuel   | |
-|  +-----------------------------------------------------+ |
-|                                                           |
-|  +-------------------------+                              |
-|  | Nombre d'enfants (0-20)|                              |
-|  +-------------------------+                              |
-|                                                           |
-|  [Si nombre_enfants >= 1 : Formulaires dynamiques]       |
-|  +-----------------------------------------------------+ |
-|  | ENFANT 1 : Prenom, Nom, Date de naissance           | |
-|  +-----------------------------------------------------+ |
-|  | ENFANT 2 : Prenom, Nom, Date de naissance           | |
-|  +-----------------------------------------------------+ |
-+----------------------------------------------------------+
-|                   SITUATION PROFESSIONNELLE               |
-+----------------------------------------------------------+
-|  +-------------------------+  +------------------------+  |
-|  | Statut (menu)          |  | Profession              |  |
-|  +-------------------------+  +------------------------+  |
-|  +-----------------------------------------------------+ |
-|  | Revenu annuel (CHF)                                 | |
-|  +-----------------------------------------------------+ |
-+----------------------------------------------------------+
-|                      COORDONNEES                          |
-+----------------------------------------------------------+
-|  +-----------------------------------------------------+ |
-|  | Email (lecture seule)                               | |
-|  +-----------------------------------------------------+ |
-|  +-------------------------+  +------------------------+  |
-|  | Telephone              |  | Adresse                 |  |
-|  +-------------------------+  +------------------------+  |
-|  +-------------------------+                              |
-|  | Localite               |                              |
-|  +-------------------------+                              |
-+----------------------------------------------------------+
-|          [Enregistrer les modifications]                  |
-+----------------------------------------------------------+
++------------------------------------------------------------------+
+|                      Profil utilisateur                           |
++------------------------------------------------------------------+
+| [👤 Mon profil]  [👫 Conjoint/Partenaire]  [+ Ajouter au foyer]  |
++------------------------------------------------------------------+
+|                                                                   |
+|  Contenu de l'onglet actif...                                    |
+|                                                                   |
++------------------------------------------------------------------+
 ```
 
-### Options du menu "Lien" (relation foyer)
+### Style de la barre d'onglets
+
+Basee sur l'image de reference, la barre d'onglets aura :
+- Fond sombre avec bordure inferieure
+- Onglets avec icone a gauche du texte
+- Onglet actif mis en surbrillance
+- Espacement regulier entre les onglets
+- Transition fluide au changement d'onglet
+
+### Implementation technique
+
+#### Composant Tabs (Radix UI)
+
+Utilisation du composant Tabs existant avec personnalisation du style :
 
 ```typescript
-const householdRelationshipOptions = [
-  { value: "marie", label: "Marie(e)" },
-  { value: "concubinage", label: "Concubinage" },
-  { value: "partenaire_enregistre", label: "Partenaire enregistre" },
-];
+<Tabs defaultValue="mon-profil" className="w-full">
+  <TabsList className="w-full justify-start bg-card border-b rounded-none px-0">
+    <TabsTrigger value="mon-profil" className="data-[state=active]:border-b-2 data-[state=active]:border-primary">
+      <User className="h-4 w-4 mr-2" />
+      Mon profil
+    </TabsTrigger>
+    {hasPartner && (
+      <TabsTrigger value="conjoint">
+        <Users className="h-4 w-4 mr-2" />
+        Conjoint/Partenaire
+      </TabsTrigger>
+    )}
+    {!hasPartner && (
+      <Button variant="ghost" onClick={openAddDialog}>
+        <UserPlus className="h-4 w-4 mr-2" />
+        Ajouter au foyer
+      </Button>
+    )}
+  </TabsList>
+  
+  <TabsContent value="mon-profil">
+    {/* Formulaire profil principal */}
+  </TabsContent>
+  
+  <TabsContent value="conjoint">
+    {/* Formulaire conjoint */}
+  </TabsContent>
+</Tabs>
 ```
-
-### Gestion des adultes du foyer
-
-La table `dependants` sera reutilisee avec `relationship = "conjoint"` ou `"partenaire"` :
-
-| Champ | Description |
-|-------|-------------|
-| first_name | Prenom du conjoint/partenaire |
-| last_name | Nom du conjoint/partenaire |
-| date_of_birth | Date de naissance |
-| gender | Genre |
-| relationship | "conjoint" ou "partenaire" |
-
-### Nouveau composant : AdultFormSection
-
-Similaire a `ChildrenFormSection`, ce composant gerera :
-- L'affichage conditionnel si `nombre_adultes >= 1`
-- Le formulaire complet du conjoint/partenaire avec :
-  - Informations personnelles (Prenom, Nom, Genre, Date de naissance)
-  - Situation professionnelle (Statut, Profession, Revenu annuel)
-- Sauvegarde dans la table `dependants` avec `relationship = "conjoint"`
 
 ### Modifications techniques
 
 | Fichier | Action |
 |---------|--------|
-| Migration SQL | Ajouter colonnes `nombre_adultes`, `household_relationship` |
-| `src/components/profile/ProfileInformationsForm.tsx` | Reorganiser en sections avec separateurs visuels |
-| `src/components/profile/AdultFormSection.tsx` | Nouveau composant pour gerer le profil adulte du foyer |
-| `src/components/profile/ChildrenFormSection.tsx` | Aucune modification necessaire |
-| `src/pages/UserProfile.tsx` | Mettre a jour le schema et la logique de sauvegarde |
+| `src/pages/UserProfile.tsx` | Ajouter le systeme d'onglets avec Tabs |
+| `src/components/profile/ProfileInformationsForm.tsx` | Adapter en tant que contenu d'onglet |
+| Nouveau: `src/components/profile/AddHouseholdMemberDialog.tsx` | Dialog pour ajouter un membre |
+| Nouveau: `src/components/profile/PartnerProfileTab.tsx` | Formulaire complet du conjoint |
 
-### Schema Zod mis a jour
+### Structure des onglets
+
+| Onglet | Icone | Visible si |
+|--------|-------|------------|
+| Mon profil | User | Toujours |
+| Conjoint/Partenaire | Users | nombre_adultes >= 1 |
+| + Ajouter au foyer | UserPlus | nombre_adultes === 0 (bouton, pas onglet) |
+
+### Styles CSS pour la barre d'onglets
 
 ```typescript
-const profileInfoSchema = z.object({
-  // Informations personnelles
-  nom: z.string().trim().min(1, "Le nom est requis"),
-  prenom: z.string().trim().min(1, "Le prenom est requis"),
-  gender: z.string().optional(),
-  date_naissance: z.string().min(1, "La date de naissance est requise"),
-  etat_civil: z.string().optional(),
-  
-  // Foyer
-  nombre_adultes: z.number().min(0).max(1).optional(),
-  household_relationship: z.string().optional(),
-  nombre_enfants: z.number().min(0).max(20).optional(),
-  
-  // Situation professionnelle
-  employment_status: z.string().optional(),
-  profession: z.string().optional(),
-  annual_income: z.number().min(0).optional(),
-  
-  // Coordonnees
-  email: z.string().email(),
-  telephone: z.string().optional(),
-  adresse: z.string().optional(),
-  localite: z.string().min(1, "La localite est requise"),
-});
+// TabsList personnalise
+className="w-full justify-start bg-card/50 backdrop-blur border-b rounded-none h-12 p-0 gap-0"
+
+// TabsTrigger personnalise
+className="h-full px-6 rounded-none border-b-2 border-transparent 
+           data-[state=active]:border-primary data-[state=active]:bg-transparent
+           data-[state=active]:text-primary transition-all"
 ```
 
-### Interface AdultData
+### Composant AddHouseholdMemberDialog
+
+Dialog qui s'ouvre au clic sur "+ Ajouter au foyer" :
 
 ```typescript
-interface AdultData {
-  id?: string;
-  first_name: string;
-  last_name: string;
-  date_of_birth: string;
-  gender?: string;
-  employment_status?: string;
-  profession?: string;
-  annual_income?: number;
+interface AddHouseholdMemberDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSelectRelationship: (relationship: string) => void;
 }
+
+// Options affichees :
+// - Marie(e)
+// - Concubinage
+// - Partenaire enregistre
 ```
 
-### Logique conditionnelle
+### Composant PartnerProfileTab
 
-1. **Nombre d'adultes = 0** : Masquer le champ "Lien" et le formulaire adulte
-2. **Nombre d'adultes = 1** : 
-   - Afficher le menu "Lien" (Marie, Concubinage, Partenaire enregistre)
-   - Afficher le formulaire complet du conjoint/partenaire
-3. **Nombre d'enfants > 0** : Afficher les formulaires enfants (existant)
+Formulaire complet pour le conjoint dans son propre onglet :
+- Affichage du type de lien en haut
+- Informations personnelles (Prenom, Nom, Genre, Date de naissance)
+- Situation professionnelle (Statut, Profession, Revenu annuel)
+- Bouton "Supprimer ce profil"
 
-### Sauvegarde dans la base de donnees
+### Section Foyer dans "Mon profil"
 
-Pour l'adulte du foyer, utilisation de la table `dependants` :
+Une fois un conjoint ajoute, la section Foyer du profil principal affiche :
+- Resume du conjoint avec nom, prenom et lien
+- Lien "Voir le profil" qui switch vers l'onglet Conjoint
+- Gestion des enfants (inchangee)
 
-```typescript
-// Sauvegarder le conjoint/partenaire
-await supabase.from("dependants").upsert({
-  profile_id: profileId,
-  first_name: adultData.first_name,
-  last_name: adultData.last_name,
-  date_of_birth: adultData.date_of_birth,
-  gender: adultData.gender,
-  relationship: "conjoint", // ou "partenaire" selon household_relationship
-});
-```
+### Flux utilisateur
 
-Note : Les champs professionnels du conjoint (employment_status, profession, annual_income) ne sont pas stockes dans `dependants`. Une extension de la table serait necessaire pour les stocker, ou une table separee `household_adults`.
-
-### Alternative : Extension de la table dependants
-
-Pour stocker les informations professionnelles du conjoint, ajouter des colonnes a `dependants` :
-
-```sql
-ALTER TABLE dependants 
-ADD COLUMN employment_status text DEFAULT NULL,
-ADD COLUMN profession text DEFAULT NULL,
-ADD COLUMN annual_income numeric DEFAULT 0;
-```
+1. L'utilisateur arrive → onglet "Mon profil" actif
+2. S'il n'a pas de conjoint → bouton "+ Ajouter au foyer" visible
+3. Clic sur le bouton → dialog avec choix du lien
+4. Selection → onglet "Conjoint/Partenaire" cree et actif
+5. Dans "Mon profil", resume du conjoint avec lien vers son onglet
+6. Possibilite de supprimer le conjoint depuis son onglet
 
 ### Comportement attendu
 
-1. Le formulaire est divise en 4 sections visuellement distinctes
-2. Le champ "Lien" n'apparait que si nombre_adultes >= 1
-3. Le formulaire conjoint s'affiche comme un sous-onglet/accordion
-4. Les enfants restent geres par le composant existant
-5. Toutes les donnees sont synchronisees avec Supabase a l'enregistrement
+1. Barre d'onglets horizontale avec icones style dark/glassmorphism
+2. Onglet actif souligne avec la couleur primary
+3. Bouton d'ajout integre a la barre (pas un onglet)
+4. Transition fluide entre les onglets
+5. Formulaire complet du conjoint dans son propre onglet
+6. Resume visible dans le profil principal
 
