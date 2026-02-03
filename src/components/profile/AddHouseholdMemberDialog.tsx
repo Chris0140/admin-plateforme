@@ -6,7 +6,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Heart, Users, FileCheck } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Heart, Users, FileCheck, Link2 } from "lucide-react";
 
 const relationshipOptions = [
   { 
@@ -33,16 +34,24 @@ interface AddHouseholdMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectRelationship: (relationship: string) => void;
+  onOpenLinkDialog?: () => void;
 }
 
 const AddHouseholdMemberDialog = ({
   open,
   onOpenChange,
   onSelectRelationship,
+  onOpenLinkDialog,
 }: AddHouseholdMemberDialogProps) => {
   const handleSelect = (relationship: string) => {
     onSelectRelationship(relationship);
     onOpenChange(false);
+  };
+
+  const handleOpenLink = () => {
+    if (onOpenLinkDialog) {
+      onOpenLinkDialog();
+    }
   };
 
   return (
@@ -69,6 +78,25 @@ const AddHouseholdMemberDialog = ({
               </div>
             </Button>
           ))}
+
+          <div className="relative my-2">
+            <Separator />
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
+              OU
+            </span>
+          </div>
+
+          <Button
+            variant="secondary"
+            className="w-full justify-start h-auto py-4 px-4"
+            onClick={handleOpenLink}
+          >
+            <Link2 className="h-5 w-5 mr-3 text-primary" />
+            <div className="text-left">
+              <div className="font-medium">Lier un compte existant</div>
+              <div className="text-sm text-muted-foreground">Votre partenaire a déjà un compte</div>
+            </div>
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

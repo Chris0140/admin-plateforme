@@ -1118,6 +1118,7 @@ export type Database = {
           annual_income: number | null
           appellation: string
           canton: string | null
+          client_number: string | null
           commune: string | null
           created_at: string
           date_naissance: string
@@ -1128,8 +1129,10 @@ export type Database = {
           gender: string | null
           household_mode: string | null
           household_relationship: string | null
+          household_role: string | null
           housing_status: string | null
           id: string
+          linked_to_client: string | null
           localite: string
           nationality: string | null
           nom: string
@@ -1149,6 +1152,7 @@ export type Database = {
           annual_income?: number | null
           appellation: string
           canton?: string | null
+          client_number?: string | null
           commune?: string | null
           created_at?: string
           date_naissance: string
@@ -1159,8 +1163,10 @@ export type Database = {
           gender?: string | null
           household_mode?: string | null
           household_relationship?: string | null
+          household_role?: string | null
           housing_status?: string | null
           id?: string
+          linked_to_client?: string | null
           localite: string
           nationality?: string | null
           nom: string
@@ -1180,6 +1186,7 @@ export type Database = {
           annual_income?: number | null
           appellation?: string
           canton?: string | null
+          client_number?: string | null
           commune?: string | null
           created_at?: string
           date_naissance?: string
@@ -1190,8 +1197,10 @@ export type Database = {
           gender?: string | null
           household_mode?: string | null
           household_relationship?: string | null
+          household_role?: string | null
           housing_status?: string | null
           id?: string
+          linked_to_client?: string | null
           localite?: string
           nationality?: string | null
           nom?: string
@@ -1380,6 +1389,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_client_number: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
