@@ -61,6 +61,7 @@ interface ProfileInformationsFormProps {
   isEditing: boolean;
   onEditToggle: (editing: boolean) => void;
   onSubmit: (values: ProfileInfoFormValues, childrenData: ChildData[], adultData: AdultData | null) => Promise<void>;
+  hasPartner?: boolean;
 }
 
 const ProfileInformationsForm = ({
@@ -69,6 +70,7 @@ const ProfileInformationsForm = ({
   isEditing,
   onEditToggle,
   onSubmit,
+  hasPartner = false,
 }: ProfileInformationsFormProps) => {
   const form = useForm<ProfileInfoFormValues>({
     resolver: zodResolver(profileInfoSchema),
@@ -288,6 +290,7 @@ const ProfileInformationsForm = ({
                   childrenCount={childrenCount}
                   onChildrenChange={setChildrenData}
                   isEditing={true}
+                  hasPartner={hasPartner}
                 />
               </div>
 
@@ -483,6 +486,7 @@ const ProfileInformationsForm = ({
                 childrenCount={defaultValues.nombre_enfants || 0}
                 onChildrenChange={() => {}}
                 isEditing={false}
+                hasPartner={hasPartner}
               />
             </div>
 

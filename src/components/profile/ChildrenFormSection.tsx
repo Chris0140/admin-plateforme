@@ -2,20 +2,30 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface ChildData {
   id?: string;
   first_name: string;
   last_name: string;
   date_of_birth: string;
+  parent_link?: string;
 }
+
+const parentLinkOptions = [
+  { value: "principal", label: "Mon enfant" },
+  { value: "conjoint", label: "Enfant du conjoint" },
+  { value: "commun", label: "Enfant commun" },
+];
 
 interface ChildrenFormSectionProps {
   profileId: string | null;
   childrenCount: number;
   onChildrenChange: (children: ChildData[]) => void;
   isEditing: boolean;
+  hasPartner?: boolean;
 }
 
 const ChildrenFormSection = ({
@@ -23,6 +33,7 @@ const ChildrenFormSection = ({
   childrenCount,
   onChildrenChange,
   isEditing,
+  hasPartner = false,
 }: ChildrenFormSectionProps) => {
   const [children, setChildren] = useState<ChildData[]>([]);
   const { toast } = useToast();
@@ -65,6 +76,7 @@ const ChildrenFormSection = ({
             first_name: d.first_name,
             last_name: d.last_name,
             date_of_birth: d.date_of_birth,
+            parent_link: d.parent_link || "principal",
           }))
         );
       }
@@ -80,7 +92,12 @@ const ChildrenFormSection = ({
       if (newCount > prev.length) {
         const newChildren = [...prev];
         for (let i = prev.length; i < newCount; i++) {
-          newChildren.push({ first_name: "", last_name: "", date_of_birth: "" });
+          newChildren.push({ 
+            first_name: "", 
+            last_name: "", 
+            date_of_birth: "",
+            parent_link: hasPartner ? "commun" : "principal"
+          });
         }
         return newChildren;
       } else {
@@ -97,6 +114,23 @@ const ChildrenFormSection = ({
     });
   };
 
+  const formatParentLink = (parentLink: string | undefined) => {
+    if (!parentLink) return "Mon enfant";
+    const found = parentLinkOptions.find((o) => o.value === parentLink);
+    return found ? found.label : parentLink;
+  };
+
+  const getParentLinkBadgeVariant = (parentLink: string | undefined): "default" | "secondary" | "outline" => {
+    switch (parentLink) {
+      case "commun":
+        return "default";
+      case "conjoint":
+        return "secondary";
+      default:
+        return "outline";
+    }
+  };
+
   if (children.length === 0) {
     return null;
   }
@@ -110,16 +144,23 @@ const ChildrenFormSection = ({
           {children.map((child, index) => (
             <div
               key={child.id || index}
-              className="p-3 rounded-lg bg-muted/30 text-sm"
+              className="p-3 rounded-lg bg-muted/30 text-sm flex items-center justify-between"
             >
-              <p className="font-medium">
-                {child.first_name} {child.last_name}
-              </p>
-              {child.date_of_birth && (
-                <p className="text-muted-foreground">
-                  Né(e) le{" "}
-                  {new Date(child.date_of_birth).toLocaleDateString("fr-CH")}
+              <div>
+                <p className="font-medium">
+                  {child.first_name} {child.last_name}
                 </p>
+                {child.date_of_birth && (
+                  <p className="text-muted-foreground">
+                    Né(e) le{" "}
+                    {new Date(child.date_of_birth).toLocaleDateString("fr-CH")}
+                  </p>
+                )}
+              </div>
+              {hasPartner && (
+                <Badge variant={getParentLinkBadgeVariant(child.parent_link)}>
+                  {formatParentLink(child.parent_link)}
+                </Badge>
               )}
             </div>
           ))}
@@ -137,9 +178,16 @@ const ChildrenFormSection = ({
           key={child.id || index}
           className="space-y-4 p-4 border rounded-lg bg-background"
         >
-          <p className="text-sm font-medium text-muted-foreground">
-            Enfant {index + 1}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-muted-foreground">
+              Enfant {index + 1}
+            </p>
+            {hasPartner && (
+              <Badge variant={getParentLinkBadgeVariant(child.parent_link)}>
+                {formatParentLink(child.parent_link)}
+              </Badge>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>Prénom</Label>
@@ -158,13 +206,35 @@ const ChildrenFormSection = ({
               />
             </div>
           </div>
-          <div>
-            <Label>Date de naissance</Label>
-            <Input
-              type="date"
-              value={child.date_of_birth}
-              onChange={(e) => updateChild(index, "date_of_birth", e.target.value)}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>Date de naissance</Label>
+              <Input
+                type="date"
+                value={child.date_of_birth}
+                onChange={(e) => updateChild(index, "date_of_birth", e.target.value)}
+              />
+            </div>
+            {hasPartner && (
+              <div>
+                <Label>Lien parental</Label>
+                <Select
+                  onValueChange={(value) => updateChild(index, "parent_link", value)}
+                  value={child.parent_link || "principal"}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {parentLinkOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         </div>
       ))}

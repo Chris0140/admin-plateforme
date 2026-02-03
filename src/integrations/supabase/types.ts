@@ -478,6 +478,7 @@ export type Database = {
           is_disabled: boolean | null
           is_student: boolean | null
           last_name: string
+          parent_link: string | null
           profession: string | null
           profile_id: string
           relationship: string
@@ -495,6 +496,7 @@ export type Database = {
           is_disabled?: boolean | null
           is_student?: boolean | null
           last_name: string
+          parent_link?: string | null
           profession?: string | null
           profile_id: string
           relationship: string
@@ -512,6 +514,7 @@ export type Database = {
           is_disabled?: boolean | null
           is_student?: boolean | null
           last_name?: string
+          parent_link?: string | null
           profession?: string | null
           profile_id?: string
           relationship?: string
