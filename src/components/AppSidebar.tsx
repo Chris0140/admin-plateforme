@@ -38,9 +38,9 @@ const mainNavItems: NavItem[] = [
   { icon: TrendingUp, label: "Prévoyance", href: "/prevoyance" },
   { icon: Shield, label: "Assurances", href: "/assurances" },
   { icon: Scale, label: "Comparateur", href: "/comparateur" },
+  { icon: Calculator, label: "Impôts", href: "/simulateur-impots" },
   { icon: Building2, label: "Immobilier", href: "/immobilier" },
   { icon: LineChart, label: "Investissement", href: "/investissement" },
-  { icon: Calculator, label: "Impôts", href: "/simulateur-impots" },
   { icon: Briefcase, label: "Service", href: "/service" },
 ];
 
