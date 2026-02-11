@@ -42,6 +42,7 @@ const Prevoyance = () => {
   // Profile data
   const [currentAge, setCurrentAge] = useState<number>(40);
   const [numberOfChildren, setNumberOfChildren] = useState<number>(0);
+  const [annualSalary, setAnnualSalary] = useState<number>(0);
 
   // AVS States
   const [avsAccounts, setAvsAccounts] = useState<AVSAccount[]>([]);
@@ -67,7 +68,7 @@ const Prevoyance = () => {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, date_naissance, nombre_enfants')
+        .select('id, date_naissance, nombre_enfants, annual_income')
         .eq('user_id', currentUser.id)
         .single();
 
@@ -83,6 +84,7 @@ const Prevoyance = () => {
 
       // Set number of children
       setNumberOfChildren(profile.nombre_enfants || 0);
+      setAnnualSalary(profile.annual_income || 0);
 
       // Load AVS accounts  
       const { data: avsAccountsData } = await supabase
@@ -258,6 +260,7 @@ const Prevoyance = () => {
         {selectedView === 'retraite' && hasData && (
           <RetirementChart
             currentAge={currentAge}
+            annualSalary={annualSalary}
             avsAnnualRent={avsTotalRent}
             lppAnnualRent={lppSummary?.total_annual_rent_65 || 0}
             thirdPillarAnnualRent={thirdPillarSummary?.totalProjectedAnnualRent || 0}
